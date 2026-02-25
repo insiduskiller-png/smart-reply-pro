@@ -8,6 +8,7 @@ import {
   patchUserProfile,
   upsertUserProfile,
 } from "@/lib/supabase";
+import { getUserProfile, insertGeneration, patchUserProfile } from "@/lib/supabase";
 
 function sanitize(value: string) {
   return value.replace(/[<>]/g, "").slice(0, 4000);
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
   if (!rate.allowed) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
+  if (!rate.allowed) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
 
   const body = await request.json();
   const input = sanitize(body.input || "");
@@ -37,6 +39,11 @@ export async function POST(request: Request) {
   const lastReset = profile?.last_usage_reset
     ? new Date(profile.last_usage_reset)
     : now;
+  const profile = await getUserProfile(user.id);
+  const isPro = profile?.subscription_status === "pro";
+
+  const lastReset = profile?.last_usage_reset ? new Date(profile.last_usage_reset) : new Date();
+  const now = new Date();
   let usageCount = profile?.daily_usage_count ?? 0;
 
   if (lastReset.toDateString() !== now.toDateString()) {
@@ -49,6 +56,11 @@ export async function POST(request: Request) {
 
   if (!isPro && usageCount >= 5) {
     return NextResponse.json({ error: "Daily limit reached" }, { status: 403 });
+    await patchUserProfile(user.id, { daily_usage_count: 0, last_usage_reset: now.toISOString() });
+  }
+
+  if (!isPro && usageCount >= 5) {
+    return NextResponse.json({ error: "Daily free limit reached" }, { status: 403 });
   }
 
   const detectedTone = await detectTone(input);
@@ -75,6 +87,9 @@ export async function POST(request: Request) {
           modifier: body.modifier,
           variant: "Softer",
         }),
+        generateReply({ input, context, tone, modifier: body.modifier, variant: "Balanced" }),
+        generateReply({ input, context, tone, modifier: body.modifier, variant: "Stronger" }),
+        generateReply({ input, context, tone, modifier: body.modifier, variant: "Softer" }),
       ])
     : [await generateReply({ input, context, tone, modifier: body.modifier })];
 
@@ -91,6 +106,7 @@ export async function POST(request: Request) {
       last_usage_reset: now.toISOString(),
     });
   }
+  await patchUserProfile(user.id, { daily_usage_count: usageCount + 1 });
 
   return NextResponse.json({ outputs, detectedTone });
 }
