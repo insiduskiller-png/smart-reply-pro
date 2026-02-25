@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { sendPasswordResetEmail } from "@/lib/supabase-auth";
+import { isValidEmail, normalizeEmail } from "@/lib/security";
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const email = normalizeEmail(body.email);
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);

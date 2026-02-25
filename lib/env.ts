@@ -5,6 +5,26 @@ function readRequired(keys: string[]) {
   }
 }
 
+function readFromAliases(...keys: string[]) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value) return value;
+  }
+  return "";
+}
+
+export function getSupabaseEnv() {
+  const supabaseUrl = readFromAliases("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL");
+  const supabaseAnonKey = readFromAliases("SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+    throw new Error(
+      "Missing environment variables: SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL), SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY), SUPABASE_SERVICE_ROLE_KEY",
+    );
+  }
+
+  return { supabaseUrl, supabaseAnonKey, supabaseServiceKey };
 export function getSupabaseEnv() {
   const keys = [
     "NEXT_PUBLIC_SUPABASE_URL",
@@ -54,6 +74,14 @@ export function getStripeWebhookEnv() {
   return {
     stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  };
+}
+
+export function validateProductionEnv() {
+  getOpenAiEnv();
+  getSupabaseEnv();
+  getStripeCheckoutEnv();
+  getStripeWebhookEnv();
 export function getStripeEnv() {
   const keys = [
     "STRIPE_SECRET_KEY",

@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/auth";
 import { upsertUserProfile } from "@/lib/supabase";
 import { signInWithPassword } from "@/lib/supabase-auth";
+import { isValidEmail, normalizeEmail, sanitizeText } from "@/lib/security";
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const email = normalizeEmail(body.email);
+  const password = sanitizeText(body.password, 256);
+
+  if (!email || !password || !isValidEmail(email)) {
+    return NextResponse.json({ error: "Valid credentials are required" }, { status: 400 });
 import { supabasePasswordLogin, upsertUserProfile } from "@/lib/supabase";
 
 export async function POST(request: Request) {

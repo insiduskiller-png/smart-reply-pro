@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { updateUserPassword } from "@/lib/supabase-auth";
+import { sanitizeText } from "@/lib/security";
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const accessToken = sanitizeText(body.accessToken, 2000);
+  const password = sanitizeText(body.password, 256);
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
