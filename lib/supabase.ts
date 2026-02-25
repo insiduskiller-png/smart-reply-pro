@@ -64,6 +64,23 @@ export async function patchUserProfile(userId: string, values: Record<string, un
   });
 }
 
+export async function patchUserProfileByStripeCustomerId(
+  stripeCustomerId: string,
+  values: Record<string, unknown>,
+) {
+  const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+  await fetch(
+    `${supabaseUrl}/rest/v1/users?stripe_customer_id=eq.${encodeURIComponent(stripeCustomerId)}`,
+    {
+      method: "PATCH",
+      headers: headers(supabaseServiceKey),
+      body: JSON.stringify(values),
+    },
+  );
+}
+
+export async function insertGeneration(values: Record<string, unknown>) {
+  const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
 export async function insertGeneration(values: Record<string, unknown>) {
   const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
   const { supabaseUrl, supabaseServiceKey } = getEnv();
