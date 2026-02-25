@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createCheckoutSession } from "@/lib/stripe";
-import { getSiteUrl } from "@/lib/env";
 
+export async function POST(request: Request) {
 export async function POST() {
   const user = await requireUser();
   if (!user) {
@@ -10,11 +10,11 @@ export async function POST() {
   }
 
   try {
-    const baseUrl = getSiteUrl();
+    const origin = new URL(request.url).origin;
     const session = await createCheckoutSession({
       customerEmail: user.email,
       userId: user.id,
-      baseUrl,
+      baseUrl: origin,
     });
 
     if (!session.url) {
@@ -24,6 +24,7 @@ export async function POST() {
       );
     }
 
+    const session = await createCheckoutSession(user.email, user.id);
     return NextResponse.json({ url: session.url });
   } catch (error) {
     return NextResponse.json(
@@ -36,4 +37,8 @@ export async function POST() {
       { status: 500 },
     );
   }
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const session = await createCheckoutSession(user.email, user.id);
+  return NextResponse.json({ url: session.url });
 }

@@ -36,5 +36,12 @@ export async function POST(request: Request) {
       { error: error instanceof Error ? error.message : "Power score failed" },
       { status: 500 },
     );
+  const { input, context } = await request.json();
+  const raw = await powerScoreAnalysis(input, context);
+
+  try {
+    return NextResponse.json(JSON.parse(raw));
+  } catch {
+    return NextResponse.json({ score: 50, leverage: "Balanced", risks: ["Parsing fallback"], manipulation_detected: false });
   }
 }
