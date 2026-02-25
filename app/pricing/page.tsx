@@ -14,6 +14,7 @@ export default function PricingPage() {
     try {
       const response = await fetch("/api/checkout", { method: "POST" });
       const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (response.status === 401) {
         window.location.href = "/login?next=/pricing";
@@ -26,11 +27,24 @@ export default function PricingPage() {
       }
 
       window.location.assign(data.url);
+      if (!response.ok || !data.url) {
+        setError(data.error || "Upgrade is currently unavailable. Please try again.");
+        return;
+      }
+
+      window.location.href = data.url;
     } catch {
       setError("Network error while creating checkout session.");
     } finally {
       setLoading(false);
     }
+
+  async function startCheckout() {
+    setLoading(true);
+    const response = await fetch("/api/checkout", { method: "POST" });
+    const data = await response.json();
+    if (data.url) window.location.href = data.url;
+    setLoading(false);
   }
 
   return (
@@ -43,6 +57,7 @@ export default function PricingPage() {
             <li>5 generations/day</li>
             <li>Single output</li>
             <li>No power score</li>
+            <li>5 generations/day</li><li>Single output</li><li>No power score</li>
           </ul>
         </section>
         <section className="card border-sky-500 p-6">
@@ -67,6 +82,11 @@ export default function PricingPage() {
               Log in
             </Link>
           </p>
+            Already have an account? <Link className="text-sky-400" href="/login">Log in</Link>
+          </p>
+            <li>Unlimited generations</li><li>Power score engine</li><li>3 response variants + escalation tools</li>
+          </ul>
+          <button className="mt-6 rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950 disabled:opacity-60" onClick={startCheckout} disabled={loading}>{loading ? "Redirecting..." : "Upgrade to Pro"}</button>
         </section>
       </div>
     </main>

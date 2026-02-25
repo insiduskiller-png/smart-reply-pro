@@ -82,6 +82,44 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 2. Install deps and run:
 
+
+create table if not exists generations (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  input_text text not null,
+  style text not null,
+  generated_output text not null,
+  created_at timestamptz not null default now()
+);
+```
+3. Enable Email auth in Supabase Auth settings.
+4. Copy project URL, anon key, and service role key.
+
+## 2) Stripe Setup
+1. Create a product priced at **€12/month** and copy `price_...` id.
+2. Configure checkout and webhook endpoint: `https://your-domain.com/api/webhook`.
+3. Copy Stripe secret key and webhook signing secret.
+
+## 3) OpenAI Setup
+1. Create an OpenAI API key.
+2. Add it to environment variables.
+
+## 4) Local Development
+1. Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+OPENAI_API_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_PRICE_ID=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+2. Install deps and run:
+
 ```bash
 npm install
 npm run dev

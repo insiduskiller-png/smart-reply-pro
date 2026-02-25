@@ -6,6 +6,14 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const email = normalizeEmail(body.email);
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+
   if (!email || !isValidEmail(email)) {
     return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
   }

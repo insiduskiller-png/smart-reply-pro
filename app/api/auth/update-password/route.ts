@@ -7,6 +7,11 @@ export async function POST(request: Request) {
   const accessToken = sanitizeText(body.accessToken, 2000);
   const password = sanitizeText(body.password, 256);
 
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const accessToken = typeof body.accessToken === "string" ? body.accessToken : "";
+  const password = typeof body.password === "string" ? body.password : "";
+
   if (!accessToken || !password || password.length < 8) {
     return NextResponse.json(
       { error: "Access token and password (min 8 chars) are required" },

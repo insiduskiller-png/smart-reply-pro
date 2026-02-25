@@ -65,6 +65,25 @@ export default function DashboardClient({ profile }: { profile: Profile }) {
     } finally {
       setPowerLoading(false);
     }
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input, context, tone, modifier }),
+    });
+    const data = await response.json();
+    setOutputs(data.outputs || []);
+    setToneDetection(data.detectedTone || "");
+    setLoading(false);
+  }
+
+  async function loadPowerScore() {
+    const response = await fetch("/api/power-score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input, context }),
+    });
+    const data = await response.json();
+    setScore(data);
   }
 
   return (
@@ -86,6 +105,10 @@ export default function DashboardClient({ profile }: { profile: Profile }) {
           {isPro ? <button className="rounded-md border border-slate-700 px-4 py-2 disabled:opacity-60" onClick={loadPowerScore} disabled={loading || powerLoading}>{powerLoading ? "Analyzing..." : "Power score"}</button> : null}
           {isPro ? <button className="rounded-md border border-slate-700 px-4 py-2 disabled:opacity-60" onClick={() => generate("Rewrite this response with 20% stronger dominance.")} disabled={loading || powerLoading}>Escalate</button> : null}
           {isPro ? <button className="rounded-md border border-slate-700 px-4 py-2 disabled:opacity-60" onClick={() => generate("Rewrite this response reducing friction by 30%.")} disabled={loading || powerLoading}>De-escalate</button> : null}
+          <button className="rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950" onClick={() => generate()} disabled={loading}>Generate</button>
+          {isPro ? <button className="rounded-md border border-slate-700 px-4 py-2" onClick={loadPowerScore}>Power score</button> : null}
+          {isPro ? <button className="rounded-md border border-slate-700 px-4 py-2" onClick={() => generate("Rewrite this response with 20% stronger dominance.")}>Escalate</button> : null}
+          {isPro ? <button className="rounded-md border border-slate-700 px-4 py-2" onClick={() => generate("Rewrite this response reducing friction by 30%.")}>De-escalate</button> : null}
         </div>
       </div>
 
