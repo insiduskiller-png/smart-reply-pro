@@ -1,38 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Reply Pro
 
-## Getting Started
+Premium SaaS app built with Next.js App Router, TypeScript, TailwindCSS, Supabase, Stripe, and OpenAI.
 
-First, run the development server:
+## Features
+- Supabase email/password login
+- Protected dashboard with middleware gate
+- AI reply generation with strategic system prompt
+- Free vs Pro quotas (5/day for free)
+- Pro-only power score analysis
+- Pro-only multi-variant generation + escalate/de-escalate rewrites
+- Stripe Checkout + webhook subscription updates
+- Rate-limited API endpoints
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project Structure
+```
+app/
+  login/
+  dashboard/
+  pricing/
+  api/
+    generate/
+    power-score/
+    webhook/
+  layout.tsx
+  page.tsx
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 1) Supabase Setup
+1. Create a Supabase project.
+2. Add these tables in SQL editor:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```sql
+create table if not exists users (
+  id uuid primary key,
+  email text not null unique,
+  stripe_customer_id text,
+  subscription_status text not null default 'free',
+  daily_usage_count int not null default 0,
+  last_usage_reset timestamptz not null default now()
+);
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+create table if not exists generations (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  input_text text not null,
+  style text not null,
+  generated_output text not null,
+  created_at timestamptz not null default now()
+);
+```
+3. Enable Email auth in Supabase Auth settings.
+4. Copy project URL, anon key, and service role key.
 
-## Learn More
+## 2) Stripe Setup
+1. Create a product priced at **€12/month** and copy `price_...` id.
+2. Configure checkout and webhook endpoint: `https://your-domain.com/api/webhook`.
+3. Copy Stripe secret key and webhook signing secret.
 
-To learn more about Next.js, take a look at the following resources:
+## 3) OpenAI Setup
+1. Create an OpenAI API key.
+2. Add it to environment variables.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 4) Local Development
+1. Create `.env.local`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Required (production-safe)
+OPENAI_API_KEY=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_PRICE_ID=
+STRIPE_WEBHOOK_SECRET=
 
-## Deploy on Vercel
+# Optional aliases accepted by this app
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. Install deps and run:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# smart-reply-pro
-# smart-reply-pro
+```bash
+npm install
+npm run dev
+```
+
+## 5) Vercel Deploy
+1. Push to GitHub and import project in Vercel.
+2. Add all environment variables in Vercel settings.
+3. Set Stripe webhook to deployed `/api/webhook` URL.
+4. Deploy.
+
