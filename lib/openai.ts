@@ -1,3 +1,4 @@
+import { getOpenAiEnv } from "./env";
 import { getEnv } from "./env";
 
 const SYSTEM_PROMPT = `You are a strategic communication engine.
@@ -8,6 +9,7 @@ Keep responses concise, structured, and confident.
 Align output strictly with selected communication mode.`;
 
 async function callOpenAI(messages: Array<{ role: string; content: string }>) {
+  const { openAiApiKey } = getOpenAiEnv();
   const { openAiApiKey } = getEnv();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

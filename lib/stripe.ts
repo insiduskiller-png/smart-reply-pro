@@ -1,4 +1,8 @@
 import crypto from "node:crypto";
+import { getStripeEnv } from "./env";
+
+function stripeHeaders() {
+  const { stripeSecretKey } = getStripeEnv();
 import { getEnv } from "./env";
 
 function stripeHeaders() {
@@ -7,6 +11,7 @@ function stripeHeaders() {
 }
 
 export async function createCheckoutSession(customerEmail: string, userId: string) {
+  const { stripePriceId, appUrl } = getStripeEnv();
   const { stripePriceId, appUrl } = getEnv();
   const body = new URLSearchParams({
     mode: "subscription",
@@ -24,6 +29,7 @@ export async function createCheckoutSession(customerEmail: string, userId: strin
 
 export function verifyStripeSignature(payload: string, signature: string | null) {
   if (!signature) return false;
+  const { stripeWebhookSecret } = getStripeEnv();
   const { stripeWebhookSecret } = getEnv();
   const elements = Object.fromEntries(signature.split(",").map((pair) => pair.split("=") as [string, string]));
   const signedPayload = `${elements.t}.${payload}`;

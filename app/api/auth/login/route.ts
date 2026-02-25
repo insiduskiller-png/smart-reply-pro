@@ -14,6 +14,12 @@ export async function POST(request: Request) {
     await setSessionCookie(auth.access_token);
     await upsertUserProfile({ id: auth.user.id, email: auth.user.email });
     return NextResponse.json({ success: true });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Invalid credentials";
+    return NextResponse.json({ error: message }, { status: 401 });
   } catch {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }

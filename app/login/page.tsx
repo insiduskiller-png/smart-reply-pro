@@ -7,25 +7,35 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
+    setLoading(true);
 
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!response.ok) {
-      setError("Login failed. Check your credentials.");
-      return;
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        setError(payload?.error || "Login failed. Check your credentials.");
+        return;
+      }
+
+      const next = new URLSearchParams(window.location.search).get("next") || "/dashboard";
+      router.push(next);
+      router.refresh();
+    } catch {
+      setError("Login request failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
