@@ -13,6 +13,7 @@ export default function PricingPage() {
 
     try {
       const response = await fetch("/api/checkout", { method: "POST" });
+      const data = await response.json().catch(() => null);
       const data = await response.json();
 
       if (response.status === 401) {
@@ -20,6 +21,12 @@ export default function PricingPage() {
         return;
       }
 
+      if (!response.ok || !data?.url) {
+        setError(data?.error || "Checkout failed. Please try again in a moment.");
+        return;
+      }
+
+      window.location.assign(data.url);
       if (!response.ok || !data.url) {
         setError(data.error || "Upgrade is currently unavailable. Please try again.");
         return;
@@ -70,6 +77,11 @@ export default function PricingPage() {
           </button>
           {error ? <p className="mt-3 text-sm text-rose-400">{error}</p> : null}
           <p className="mt-3 text-xs text-slate-400">
+            Already have an account?{" "}
+            <Link className="text-sky-400" href="/login">
+              Log in
+            </Link>
+          </p>
             Already have an account? <Link className="text-sky-400" href="/login">Log in</Link>
           </p>
             <li>Unlimited generations</li><li>Power score engine</li><li>3 response variants + escalation tools</li>

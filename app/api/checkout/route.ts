@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createCheckoutSession } from "@/lib/stripe";
 
+export async function POST(request: Request) {
 export async function POST() {
   const user = await requireUser();
   if (!user) {
@@ -9,6 +10,20 @@ export async function POST() {
   }
 
   try {
+    const origin = new URL(request.url).origin;
+    const session = await createCheckoutSession({
+      customerEmail: user.email,
+      userId: user.id,
+      baseUrl: origin,
+    });
+
+    if (!session.url) {
+      return NextResponse.json(
+        { error: "Stripe did not return a checkout URL." },
+        { status: 500 },
+      );
+    }
+
     const session = await createCheckoutSession(user.email, user.id);
     return NextResponse.json({ url: session.url });
   } catch (error) {

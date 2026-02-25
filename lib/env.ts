@@ -41,6 +41,19 @@ export function getOpenAiEnv() {
   return { openAiApiKey: process.env.OPENAI_API_KEY! };
 }
 
+export function getStripeCheckoutEnv() {
+  readRequired(["STRIPE_SECRET_KEY", "STRIPE_PRICE_ID"]);
+  return {
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+    stripePriceId: process.env.STRIPE_PRICE_ID!,
+  };
+}
+
+export function getStripeWebhookEnv() {
+  readRequired(["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]);
+  return {
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
 export function getStripeEnv() {
   const keys = [
     "STRIPE_SECRET_KEY",
