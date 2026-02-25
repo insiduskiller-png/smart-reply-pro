@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import RecoveryHashRedirect from "@/components/auth/recovery-hash-redirect";
 
 export const metadata: Metadata = {
   title: "Smart Reply Pro",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </nav>
         </header>
+        <RecoveryHashRedirect />
         {children}
       </body>
     </html>

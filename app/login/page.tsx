@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetState, setResetState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const router = useRouter();
 
   async function onSubmit(event: FormEvent) {
@@ -38,10 +39,75 @@ export default function LoginPage() {
     }
   }
 
+  async function onForgotPassword() {
+    if (!email) {
+      setError("Enter your email first, then click Forgot password.");
+      return;
+    }
+
+    setResetState("sending");
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        setResetState("error");
+        const payload = await response.json().catch(() => null);
+        setError(payload?.error || "Unable to send reset link.");
+        return;
+      }
+
+      setResetState("sent");
+    } catch {
+      setResetState("error");
+      setError("Unable to send reset link. Please try again.");
+    }
+  }
+
   return (
     <main className="mx-auto max-w-md px-6 py-16">
       <form className="card space-y-4 p-6" onSubmit={onSubmit}>
         <h1 className="text-2xl font-semibold">Login</h1>
+        <input
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+          placeholder="Email"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+          placeholder="Password"
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error ? <p className="text-sm text-rose-400">{error}</p> : null}
+        {resetState === "sent" ? (
+          <p className="text-sm text-emerald-400">Reset link sent. Check your email.</p>
+        ) : null}
+        <button
+          className="w-full rounded-md bg-sky-500 px-3 py-2 font-medium text-slate-950 disabled:opacity-60"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
+        <button
+          className="w-full rounded-md border border-slate-700 px-3 py-2 text-sm disabled:opacity-60"
+          onClick={onForgotPassword}
+          type="button"
+          disabled={resetState === "sending"}
+        >
+          {resetState === "sending" ? "Sending reset link..." : "Forgot password"}
+        </button>
         <input className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         {error ? <p className="text-sm text-rose-400">{error}</p> : null}
