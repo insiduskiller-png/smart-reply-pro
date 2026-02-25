@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createCheckoutSession } from "@/lib/stripe";
+import { getSiteUrl } from "@/lib/env";
 
-export async function POST(request: Request) {
+export async function POST() {
   const user = await requireUser();
   if (!user) {
     return NextResponse.json({ error: "Please log in to upgrade." }, { status: 401 });
   }
 
   try {
-    const origin = new URL(request.url).origin;
+    const baseUrl = getSiteUrl();
     const session = await createCheckoutSession({
       customerEmail: user.email,
       userId: user.id,
-      baseUrl: origin,
+      baseUrl,
     });
 
     if (!session.url) {

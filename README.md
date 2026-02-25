@@ -73,6 +73,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_PRICE_ID=
 STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # Optional aliases accepted by this app
 NEXT_PUBLIC_SUPABASE_URL=
@@ -89,7 +90,7 @@ npm run dev
 
 ## 5) Vercel Deploy
 1. Push to GitHub and import project in Vercel.
-2. Add all environment variables in Vercel settings.
+2. Add all environment variables in Vercel settings, including `NEXT_PUBLIC_SITE_URL` (your production domain).
 3. Set Stripe webhook to deployed `/api/webhook` URL.
 4. Deploy.
 

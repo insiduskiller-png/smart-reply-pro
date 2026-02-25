@@ -48,6 +48,17 @@ export function getStripeWebhookEnv() {
   };
 }
 
+export function getSiteUrl() {
+  const configured = readFromAliases("NEXT_PUBLIC_SITE_URL", "NEXT_PUBLIC_APP_URL");
+  const fallback = "http://localhost:3000";
+
+  try {
+    return new URL(configured || fallback).toString().replace(/\/$/, "");
+  } catch {
+    return fallback;
+  }
+}
+
 export function validateProductionEnv() {
   getOpenAiEnv();
   getSupabaseEnv();
