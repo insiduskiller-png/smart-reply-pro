@@ -42,30 +42,10 @@ export default function LoginPage() {
     <main className="mx-auto max-w-md px-6 py-16">
       <form className="card space-y-4 p-6" onSubmit={onSubmit}>
         <h1 className="text-2xl font-semibold">Login</h1>
-        <input
-          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-          placeholder="Email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-          placeholder="Password"
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <input className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         {error ? <p className="text-sm text-rose-400">{error}</p> : null}
-        <button
-          className="w-full rounded-md bg-sky-500 px-3 py-2 font-medium text-slate-950 disabled:opacity-60"
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Signing in..." : "Sign in"}
-        </button>
+        <button className="w-full rounded-md bg-sky-500 px-3 py-2 font-medium text-slate-950" type="submit">Sign in</button>
       </form>
     </main>
   );

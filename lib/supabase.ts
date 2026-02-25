@@ -1,4 +1,5 @@
 import { getSupabaseEnv } from "./env";
+import { getEnv } from "./env";
 
 function headers(apiKey: string, bearer?: string) {
   return {
@@ -10,6 +11,7 @@ function headers(apiKey: string, bearer?: string) {
 
 export async function supabasePasswordLogin(email: string, password: string) {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
+  const { supabaseUrl, supabaseAnonKey } = getEnv();
   const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: headers(supabaseAnonKey),
@@ -22,6 +24,7 @@ export async function supabasePasswordLogin(email: string, password: string) {
 
 export async function getSupabaseUser(accessToken: string) {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
+  const { supabaseUrl, supabaseAnonKey } = getEnv();
   const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
     headers: headers(supabaseAnonKey, accessToken),
     cache: "no-store",
@@ -32,6 +35,7 @@ export async function getSupabaseUser(accessToken: string) {
 
 export async function upsertUserProfile(user: { id: string; email: string }) {
   const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+  const { supabaseUrl, supabaseServiceKey } = getEnv();
   await fetch(`${supabaseUrl}/rest/v1/users`, {
     method: "POST",
     headers: { ...headers(supabaseServiceKey), Prefer: "resolution=merge-duplicates" },
@@ -41,6 +45,7 @@ export async function upsertUserProfile(user: { id: string; email: string }) {
 
 export async function getUserProfile(userId: string) {
   const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+  const { supabaseUrl, supabaseServiceKey } = getEnv();
   const response = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=*`, {
     headers: headers(supabaseServiceKey),
     cache: "no-store",
@@ -51,6 +56,7 @@ export async function getUserProfile(userId: string) {
 
 export async function patchUserProfile(userId: string, values: Record<string, unknown>) {
   const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+  const { supabaseUrl, supabaseServiceKey } = getEnv();
   await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}`, {
     method: "PATCH",
     headers: headers(supabaseServiceKey),
@@ -60,6 +66,7 @@ export async function patchUserProfile(userId: string, values: Record<string, un
 
 export async function insertGeneration(values: Record<string, unknown>) {
   const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+  const { supabaseUrl, supabaseServiceKey } = getEnv();
   await fetch(`${supabaseUrl}/rest/v1/generations`, {
     method: "POST",
     headers: headers(supabaseServiceKey),

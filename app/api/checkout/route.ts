@@ -22,4 +22,8 @@ export async function POST() {
       { status: 500 },
     );
   }
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const session = await createCheckoutSession(user.email, user.id);
+  return NextResponse.json({ url: session.url });
 }
