@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { detectTone, generateReply } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
+import {
+  getUserProfile,
+  insertGeneration,
+  patchUserProfile,
+  upsertUserProfile,
+} from "@/lib/supabase";
 import { getUserProfile, insertGeneration, patchUserProfile } from "@/lib/supabase";
 
 function sanitize(value: string) {
@@ -13,6 +19,9 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const rate = enforceRateLimit(user.id);
+  if (!rate.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
   if (!rate.allowed) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
 
   const body = await request.json();
@@ -22,6 +31,14 @@ export async function POST(request: Request) {
 
   if (!input) return NextResponse.json({ error: "Input required" }, { status: 400 });
 
+  await upsertUserProfile({ id: user.id, email: user.email });
+  const profile = await getUserProfile(user.id);
+  const isPro = profile?.subscription_status === "pro";
+
+  const now = new Date();
+  const lastReset = profile?.last_usage_reset
+    ? new Date(profile.last_usage_reset)
+    : now;
   const profile = await getUserProfile(user.id);
   const isPro = profile?.subscription_status === "pro";
 
@@ -31,6 +48,14 @@ export async function POST(request: Request) {
 
   if (lastReset.toDateString() !== now.toDateString()) {
     usageCount = 0;
+    await patchUserProfile(user.id, {
+      daily_usage_count: 0,
+      last_usage_reset: now.toISOString(),
+    });
+  }
+
+  if (!isPro && usageCount >= 5) {
+    return NextResponse.json({ error: "Daily limit reached" }, { status: 403 });
     await patchUserProfile(user.id, { daily_usage_count: 0, last_usage_reset: now.toISOString() });
   }
 
@@ -41,6 +66,27 @@ export async function POST(request: Request) {
   const detectedTone = await detectTone(input);
   const outputs = isPro
     ? await Promise.all([
+        generateReply({
+          input,
+          context,
+          tone,
+          modifier: body.modifier,
+          variant: "Balanced",
+        }),
+        generateReply({
+          input,
+          context,
+          tone,
+          modifier: body.modifier,
+          variant: "Stronger",
+        }),
+        generateReply({
+          input,
+          context,
+          tone,
+          modifier: body.modifier,
+          variant: "Softer",
+        }),
         generateReply({ input, context, tone, modifier: body.modifier, variant: "Balanced" }),
         generateReply({ input, context, tone, modifier: body.modifier, variant: "Stronger" }),
         generateReply({ input, context, tone, modifier: body.modifier, variant: "Softer" }),
@@ -54,6 +100,12 @@ export async function POST(request: Request) {
     generated_output: outputs[0],
   });
 
+  if (!isPro) {
+    await patchUserProfile(user.id, {
+      daily_usage_count: usageCount + 1,
+      last_usage_reset: now.toISOString(),
+    });
+  }
   await patchUserProfile(user.id, { daily_usage_count: usageCount + 1 });
 
   return NextResponse.json({ outputs, detectedTone });
