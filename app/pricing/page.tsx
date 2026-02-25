@@ -31,6 +31,13 @@ export default function PricingPage() {
     } finally {
       setLoading(false);
     }
+
+  async function startCheckout() {
+    setLoading(true);
+    const response = await fetch("/api/checkout", { method: "POST" });
+    const data = await response.json();
+    if (data.url) window.location.href = data.url;
+    setLoading(false);
   }
 
   return (
@@ -43,6 +50,7 @@ export default function PricingPage() {
             <li>5 generations/day</li>
             <li>Single output</li>
             <li>No power score</li>
+            <li>5 generations/day</li><li>Single output</li><li>No power score</li>
           </ul>
         </section>
         <section className="card border-sky-500 p-6">
@@ -64,6 +72,9 @@ export default function PricingPage() {
           <p className="mt-3 text-xs text-slate-400">
             Already have an account? <Link className="text-sky-400" href="/login">Log in</Link>
           </p>
+            <li>Unlimited generations</li><li>Power score engine</li><li>3 response variants + escalation tools</li>
+          </ul>
+          <button className="mt-6 rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950 disabled:opacity-60" onClick={startCheckout} disabled={loading}>{loading ? "Redirecting..." : "Upgrade to Pro"}</button>
         </section>
       </div>
     </main>

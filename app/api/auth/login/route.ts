@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/auth";
 import { upsertUserProfile } from "@/lib/supabase";
 import { signInWithPassword } from "@/lib/supabase-auth";
+import { supabasePasswordLogin, upsertUserProfile } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
@@ -24,5 +25,17 @@ export async function POST(request: Request) {
       },
       { status: 401 },
     );
+    const auth = await supabasePasswordLogin(email, password);
+    await setSessionCookie(auth.access_token);
+    await upsertUserProfile({ id: auth.user.id, email: auth.user.email });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Invalid credentials";
+    return NextResponse.json({ error: message }, { status: 401 });
+  } catch {
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 }
