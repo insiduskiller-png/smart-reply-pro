@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import RecoveryHashRedirect from "@/components/auth/recovery-hash-redirect";
+import NavbarUser from "@/components/navbar-user";
 
 export const metadata: Metadata = {
   title: "Smart Reply Pro",
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex gap-4 text-sm text-slate-300">
               <Link href="/pricing">Pricing</Link>
               <Link href="/dashboard">Dashboard</Link>
-              <Link href="/login">Login</Link>
+              <NavbarUser />
             </div>
           </nav>
         </header>

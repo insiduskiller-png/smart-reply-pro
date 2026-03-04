@@ -1,10 +1,11 @@
 export type Tone =
-  | "Professional"
-  | "Assertive"
-  | "Polite Decline"
-  | "Strategic"
-  | "CEO Mode"
-  | "Friendly";
+  | "Neutral"
+  | "Direct"
+  | "Polite"
+  | "Friendly"
+  | "Tactical Control"
+  | "Precision Authority"
+  | "Psychological Edge";
 
 export type ToneDetection =
   | "Aggressive"

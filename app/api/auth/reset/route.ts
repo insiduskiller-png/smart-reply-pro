@@ -3,30 +3,30 @@ import { sendPasswordResetEmail } from "@/lib/supabase-auth";
 import { isValidEmail, normalizeEmail } from "@/lib/security";
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const email = normalizeEmail(body.email);
-
-function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-
-  if (!email || !isValidEmail(email)) {
-    return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
-  }
-
-  const origin = new URL(request.url).origin;
-  const redirectTo = `${origin}/`;
-
   try {
-    await sendPasswordResetEmail(email, redirectTo);
-    return NextResponse.json({ success: true });
+    const body = await request.json().catch(() => ({}));
+    const email = normalizeEmail(body.email);
+
+    if (!email || !isValidEmail(email)) {
+      return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
+    }
+
+    const redirectUrl = "http://localhost:3000/reset-password";
+
+    try {
+      await sendPasswordResetEmail(email, redirectUrl);
+      return NextResponse.json({ success: true, message: "Password reset email sent" });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unable to send reset email";
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 500 },
+      );
+    }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Server error";
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to send reset email" },
+      { error: errorMessage },
       { status: 500 },
     );
   }

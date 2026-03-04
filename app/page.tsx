@@ -1,4 +1,5 @@
 import Link from "next/link";
+import RotatingInsight from "@/components/rotating-insight";
 
 export default function Home() {
   return (
@@ -10,10 +11,12 @@ export default function Home() {
           Smart Reply Pro analyzes tone, pressure, and manipulation signals so you can respond with confidence.
         </p>
         <div className="mt-8 flex gap-3">
-          <Link href="/dashboard" className="rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950">Start free</Link>
-          <Link href="/pricing" className="rounded-md border border-slate-700 px-4 py-2">View pricing</Link>
+          <Link href="/login" className="rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950">Sign in</Link>
+          <Link href="/register" className="rounded-md border border-slate-700 px-4 py-2">Create account</Link>
         </div>
       </section>
+
+      <RotatingInsight />
     </main>
   );
 }

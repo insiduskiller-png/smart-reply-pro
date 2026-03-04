@@ -1,50 +1,66 @@
 import { NextResponse } from "next/server";
-import { setSessionCookie } from "@/lib/auth";
-import { upsertUserProfile } from "@/lib/supabase";
-import { signInWithPassword } from "@/lib/supabase-auth";
-import { isValidEmail, normalizeEmail, sanitizeText } from "@/lib/security";
+import { supabase, ensureUserProfile } from "@/lib/supabase";
 
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const email = normalizeEmail(body.email);
-  const password = sanitizeText(body.password, 256);
-
-  if (!email || !password || !isValidEmail(email)) {
-    return NextResponse.json({ error: "Valid credentials are required" }, { status: 400 });
-import { supabasePasswordLogin, upsertUserProfile } from "@/lib/supabase";
-
-export async function POST(request: Request) {
-  const { email, password } = await request.json();
-
-  if (!email || !password) {
-    return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const auth = await signInWithPassword(email, password);
-    await setSessionCookie(auth.access_token);
-    if (auth.user?.id && auth.user?.email) {
-      await upsertUserProfile({ id: auth.user.id, email: auth.user.email });
+    const { email, password } = await req.json();
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password required" },
+        { status: 400 }
+      );
     }
-    return NextResponse.json({ success: true });
-  } catch (error) {
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("Supabase auth error:", error);
+      return NextResponse.json(
+        { error: error.message || "Invalid credentials" },
+        { status: 401 }
+      );
+    }
+
+    if (!data.session) {
+      return NextResponse.json(
+        { error: "No session created" },
+        { status: 400 }
+      );
+    }
+
+    // Ensure profile exists for user
+    try {
+      await ensureUserProfile(data.user);
+    } catch (profileErr) {
+      console.error("Profile creation error:", profileErr);
+      // Don't fail login if profile creation fails
+    }
+
+    const response = NextResponse.json({ 
+      success: true, 
+      user: data.user,
+      sessionToken: data.session.access_token 
+    });
+
+    // Set session cookie for middleware
+    response.cookies.set("srp_session", data.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
+    return response;
+  } catch (err) {
+    console.error("Login error:", err);
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Invalid email or password",
-      },
-      { status: 401 },
+      { error: "Server error" },
+      { status: 500 }
     );
-    const auth = await supabasePasswordLogin(email, password);
-    await setSessionCookie(auth.access_token);
-    await upsertUserProfile({ id: auth.user.id, email: auth.user.email });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Invalid credentials";
-    return NextResponse.json({ error: message }, { status: 401 });
-  } catch {
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 }

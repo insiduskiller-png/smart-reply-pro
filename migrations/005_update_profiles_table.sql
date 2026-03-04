@@ -1,0 +1,3 @@
+-- This migration is now consolidated into 001_create_profiles_table.sql
+-- All profile table updates and configurations are handled there.
+-- This file is kept for reference but is no longer executed.

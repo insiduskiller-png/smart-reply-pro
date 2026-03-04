@@ -1,20 +1,26 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resetState, setResetState] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const router = useRouter();
+  const [error, setError] = useState("");
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError("");
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      setError("Please enter email and password");
+      return;
+    }
+
     setLoading(true);
+    setError("");
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -23,96 +29,108 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+      console.log("Login response:", data);
+
       if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        setError(payload?.error || "Login failed. Check your credentials.");
+        setError(data.error || "Login failed");
+        setLoading(false);
         return;
       }
 
-      const next = new URLSearchParams(window.location.search).get("next") || "/dashboard";
-      router.push(next);
-      router.refresh();
-    } catch {
-      setError("Login request failed. Please try again.");
-    } finally {
+      if (data.success) {
+        setLoading(false);
+        // Dispatch event so navbar can refetch user session
+        window.dispatchEvent(new Event("userLoggedIn"));
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 100);
+      }
+    } catch (e) {
+      console.error("Login error:", e);
+      setError("Network error. Please try again.");
       setLoading(false);
     }
   }
 
-  async function onForgotPassword() {
-    if (!email) {
-      setError("Enter your email first, then click Forgot password.");
-      return;
-    }
-
-    setResetState("sending");
-    setError("");
-
-    try {
-      const response = await fetch("/api/auth/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        setResetState("error");
-        const payload = await response.json().catch(() => null);
-        setError(payload?.error || "Unable to send reset link.");
-        return;
-      }
-
-      setResetState("sent");
-    } catch {
-      setResetState("error");
-      setError("Unable to send reset link. Please try again.");
-    }
-  }
-
   return (
-    <main className="mx-auto max-w-md px-6 py-16">
-      <form className="card space-y-4 p-6" onSubmit={onSubmit}>
-        <h1 className="text-2xl font-semibold">Login</h1>
-        <input
-          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-          placeholder="Email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-          placeholder="Password"
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {error ? <p className="text-sm text-rose-400">{error}</p> : null}
-        {resetState === "sent" ? (
-          <p className="text-sm text-emerald-400">Reset link sent. Check your email.</p>
-        ) : null}
-        <button
-          className="w-full rounded-md bg-sky-500 px-3 py-2 font-medium text-slate-950 disabled:opacity-60"
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Signing in..." : "Sign in"}
-        </button>
-        <button
-          className="w-full rounded-md border border-slate-700 px-3 py-2 text-sm disabled:opacity-60"
-          onClick={onForgotPassword}
-          type="button"
-          disabled={resetState === "sending"}
-        >
-          {resetState === "sending" ? "Sending reset link..." : "Forgot password"}
-        </button>
-        <input className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-        {error ? <p className="text-sm text-rose-400">{error}</p> : null}
-        <button className="w-full rounded-md bg-sky-500 px-3 py-2 font-medium text-slate-950" type="submit">Sign in</button>
-      </form>
+    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0f172a" }}>
+      <div style={{ maxWidth: 400, width: "100%", padding: "20px" }}>
+        <div style={{ backgroundColor: "#1e293b", padding: "30px", borderRadius: "8px", border: "1px solid #334155" }}>
+          <h1 style={{ marginTop: 0, marginBottom: "24px", color: "#fff", fontSize: "24px", fontWeight: "600" }}>Login</h1>
+          
+          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "1px solid #475569",
+                backgroundColor: "#0f172a",
+                color: "#fff",
+                fontSize: "14px",
+                fontFamily: "inherit",
+                opacity: loading ? 0.6 : 1,
+              }}
+              required
+            />
+            
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "1px solid #475569",
+                backgroundColor: "#0f172a",
+                color: "#fff",
+                fontSize: "14px",
+                fontFamily: "inherit",
+                opacity: loading ? 0.6 : 1,
+              }}
+              required
+            />
+            
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: "10px 16px",
+                borderRadius: "6px",
+                border: "none",
+                backgroundColor: "#0ea5e9",
+                color: "#0f172a",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.6 : 1,
+              }}
+            >
+              {loading ? "Signing in..." : "Sign in"}
+            </button>
+          </form>
+          
+          {error && (
+            <div style={{ marginTop: "16px", padding: "10px 12px", backgroundColor: "#7f1d1d", borderRadius: "6px", color: "#fca5a5", fontSize: "14px" }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ marginTop: "20px", textAlign: "center", fontSize: "14px", color: "#94a3b8" }}>
+            Don't have an account?{" "}
+            <Link href="/register" style={{ color: "#0ea5e9", textDecoration: "none" }}>
+              Register here
+            </Link>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

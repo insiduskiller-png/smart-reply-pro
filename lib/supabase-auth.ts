@@ -33,17 +33,27 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, redirectTo: string) {
-  const { supabaseUrl } = getSupabaseEnv();
+  const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
+  
+  // Use Supabase Auth API endpoint with proper parameters
   const response = await fetch(`${supabaseUrl}/auth/v1/recover`, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ email, redirect_to: redirectTo }),
+    headers: {
+      apikey: supabaseAnonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      redirect_to: redirectTo,
+    }),
     cache: "no-store",
   });
 
   if (!response.ok) {
     throw new Error(await parseError(response));
   }
+
+  return response.json();
 }
 
 export async function updateUserPassword(accessToken: string, password: string) {

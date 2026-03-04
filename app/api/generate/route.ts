@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { detectTone, generateReply } from "@/lib/openai";
+import { detectTone, generateReply, powerScoreAnalysis } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
 import {
   getUserProfile,
+  insertConversation,
   insertGeneration,
-  patchUserProfile,
-  upsertUserProfile,
+  supabaseService,
 } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
-import { getUserProfile, insertGeneration, patchUserProfile } from "@/lib/supabase";
 
-function sanitize(value: string) {
-  return value.replace(/[<>]/g, "").slice(0, 4000);
-}
+const proPremiumTones = ["Tactical Control", "Precision Authority", "Psychological Edge"];
 
 export async function POST(request: Request) {
   const user = await requireUser();
@@ -28,31 +25,53 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const input = sanitizeText(body.input, 4000);
     const context = sanitizeText(body.context, 4000);
-    const tone = sanitizeText(body.tone, 64) || "Professional";
+    const tone = sanitizeText(body.tone, 64) || "Neutral";
     const modifier = sanitizeText(body.modifier, 200);
 
     if (!input) return NextResponse.json({ error: "Input required" }, { status: 400 });
 
-    await upsertUserProfile({ id: user.id, email: user.email });
     const profile = await getUserProfile(user.id);
     const isPro = profile?.subscription_status === "pro";
 
-    const now = new Date();
-    const lastReset = profile?.last_usage_reset
-      ? new Date(profile.last_usage_reset)
-      : now;
-    let usageCount = profile?.daily_usage_count ?? 0;
-
-    if (lastReset.toDateString() !== now.toDateString()) {
-      usageCount = 0;
-      await patchUserProfile(user.id, {
-        daily_usage_count: 0,
-        last_usage_reset: now.toISOString(),
-      });
+    // Check if free user selected premium style
+    if (!isPro && proPremiumTones.includes(tone)) {
+      return NextResponse.json(
+        { error: "This style requires Pro plan." },
+        { status: 403 }
+      );
     }
 
-    if (!isPro && usageCount >= 5) {
-      return NextResponse.json({ error: "Daily limit reached" }, { status: 403 });
+    // Check generation limits for free users (max 6 per 24 hours)
+    if (!isPro) {
+      // Calculate 24 hours ago
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+      // Count generations in the last 24 hours
+      const { data: limitData, error: limitError } = await supabaseService
+        .from("usage_limits")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id)
+        .gte("created_at", twentyFourHoursAgo);
+
+      if (limitError) {
+        console.error("Generation limit check error:", limitError);
+      }
+
+      const generationCount = limitData?.length ?? 0;
+
+      if (generationCount >= 6) {
+        return NextResponse.json(
+          { error: "Daily limit reached. Upgrade to Pro." },
+          { status: 403 }
+        );
+      }
+
+      // Insert usage limit row BEFORE generation (after check passes)
+      await supabaseService
+        .from("usage_limits")
+        .insert({
+          user_id: user.id,
+        });
     }
 
     const detectedTone = await detectTone(input);
@@ -64,6 +83,22 @@ export async function POST(request: Request) {
         ])
       : [await generateReply({ input, context, tone, modifier })];
 
+    // Generate analysis for pro users
+    let analysis = null;
+    if (isPro) {
+      try {
+        const rawAnalysis = await powerScoreAnalysis(outputs[0], context);
+        const parsed = JSON.parse(rawAnalysis);
+        analysis = {
+          tone_detected: parsed.tone_detected ?? "Neutral",
+          pressure_level: parsed.pressure_level ?? 50,
+          manipulation_detected: parsed.manipulation_detected ?? false,
+        };
+      } catch {
+        // Silent fail - don't block response
+      }
+    }
+
     await insertGeneration({
       user_id: user.id,
       input_text: input,
@@ -71,105 +106,18 @@ export async function POST(request: Request) {
       generated_output: outputs[0],
     });
 
-    if (!isPro) {
-      await patchUserProfile(user.id, {
-        daily_usage_count: usageCount + 1,
-        last_usage_reset: now.toISOString(),
-      });
-    }
+    await insertConversation({
+      user_id: user.id,
+      input_text: input,
+      reply_text: outputs[0],
+      tone,
+    });
 
-    return NextResponse.json({ outputs, detectedTone });
+    return NextResponse.json({ outputs, detectedTone, analysis });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Generation failed" },
       { status: 500 },
     );
   }
-  if (!rate.allowed) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
-
-  const body = await request.json();
-  const input = sanitize(body.input || "");
-  const context = sanitize(body.context || "");
-  const tone = sanitize(body.tone || "Professional");
-
-  if (!input) return NextResponse.json({ error: "Input required" }, { status: 400 });
-
-  await upsertUserProfile({ id: user.id, email: user.email });
-  const profile = await getUserProfile(user.id);
-  const isPro = profile?.subscription_status === "pro";
-
-  const now = new Date();
-  const lastReset = profile?.last_usage_reset
-    ? new Date(profile.last_usage_reset)
-    : now;
-  const profile = await getUserProfile(user.id);
-  const isPro = profile?.subscription_status === "pro";
-
-  const lastReset = profile?.last_usage_reset ? new Date(profile.last_usage_reset) : new Date();
-  const now = new Date();
-  let usageCount = profile?.daily_usage_count ?? 0;
-
-  if (lastReset.toDateString() !== now.toDateString()) {
-    usageCount = 0;
-    await patchUserProfile(user.id, {
-      daily_usage_count: 0,
-      last_usage_reset: now.toISOString(),
-    });
-  }
-
-  if (!isPro && usageCount >= 5) {
-    return NextResponse.json({ error: "Daily limit reached" }, { status: 403 });
-    await patchUserProfile(user.id, { daily_usage_count: 0, last_usage_reset: now.toISOString() });
-  }
-
-  if (!isPro && usageCount >= 5) {
-    return NextResponse.json({ error: "Daily free limit reached" }, { status: 403 });
-  }
-
-  const detectedTone = await detectTone(input);
-  const outputs = isPro
-    ? await Promise.all([
-        generateReply({
-          input,
-          context,
-          tone,
-          modifier: body.modifier,
-          variant: "Balanced",
-        }),
-        generateReply({
-          input,
-          context,
-          tone,
-          modifier: body.modifier,
-          variant: "Stronger",
-        }),
-        generateReply({
-          input,
-          context,
-          tone,
-          modifier: body.modifier,
-          variant: "Softer",
-        }),
-        generateReply({ input, context, tone, modifier: body.modifier, variant: "Balanced" }),
-        generateReply({ input, context, tone, modifier: body.modifier, variant: "Stronger" }),
-        generateReply({ input, context, tone, modifier: body.modifier, variant: "Softer" }),
-      ])
-    : [await generateReply({ input, context, tone, modifier: body.modifier })];
-
-  await insertGeneration({
-    user_id: user.id,
-    input_text: input,
-    style: tone,
-    generated_output: outputs[0],
-  });
-
-  if (!isPro) {
-    await patchUserProfile(user.id, {
-      daily_usage_count: usageCount + 1,
-      last_usage_reset: now.toISOString(),
-    });
-  }
-  await patchUserProfile(user.id, { daily_usage_count: usageCount + 1 });
-
-  return NextResponse.json({ outputs, detectedTone });
 }

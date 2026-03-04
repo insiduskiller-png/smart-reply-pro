@@ -22,11 +22,23 @@ export async function POST(request: Request) {
     const raw = await powerScoreAnalysis(input, context);
 
     try {
-      return NextResponse.json(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      return NextResponse.json({
+        score: parsed.score ?? 50,
+        leverage: parsed.leverage ?? "Balanced",
+        assertiveness_score: parsed.assertiveness_score ?? 50,
+        tone_detected: parsed.tone_detected ?? "Neutral",
+        pressure_level: parsed.pressure_level ?? 50,
+        risks: parsed.risks ?? [],
+        manipulation_detected: parsed.manipulation_detected ?? false,
+      });
     } catch {
       return NextResponse.json({
         score: 50,
         leverage: "Balanced",
+        assertiveness_score: 50,
+        tone_detected: "Neutral",
+        pressure_level: 50,
         risks: ["Parsing fallback"],
         manipulation_detected: false,
       });
@@ -36,12 +48,5 @@ export async function POST(request: Request) {
       { error: error instanceof Error ? error.message : "Power score failed" },
       { status: 500 },
     );
-  const { input, context } = await request.json();
-  const raw = await powerScoreAnalysis(input, context);
-
-  try {
-    return NextResponse.json(JSON.parse(raw));
-  } catch {
-    return NextResponse.json({ score: 50, leverage: "Balanced", risks: ["Parsing fallback"], manipulation_detected: false });
   }
 }

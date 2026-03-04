@@ -1,19 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+type Profile = {
+  subscription_status?: string | null;
+};
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    async function checkAuthAndProfile() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (response.ok) {
+          setIsLoggedIn(true);
+          
+          // Fetch profile
+          try {
+            const profileResponse = await fetch("/api/user/profile", {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            });
+
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              setProfile(profileData.profile ?? null);
+            }
+          } catch {
+            setProfile(null);
+          }
+        } else {
+          setIsLoggedIn(false);
+          setProfile(null);
+        }
+      } catch {
+        setIsLoggedIn(false);
+        setProfile(null);
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+
+    checkAuthAndProfile();
+  }, []);
+
+  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
 
   async function startCheckout() {
+    if (!isLoggedIn) {
+      window.location.href = "/login?next=/pricing";
+      return;
+    }
+
+    if (isPro) {
+      return; // Do nothing if already Pro
+    }
+
     setLoading(true);
     setError("");
 
     try {
       const response = await fetch("/api/checkout", { method: "POST" });
-      const data = await response.json().catch(() => null);
       const data = await response.json();
 
       if (response.status === 401) {
@@ -26,25 +83,27 @@ export default function PricingPage() {
         return;
       }
 
-      window.location.assign(data.url);
-      if (!response.ok || !data.url) {
-        setError(data.error || "Upgrade is currently unavailable. Please try again.");
-        return;
-      }
-
       window.location.href = data.url;
     } catch {
       setError("Network error while creating checkout session.");
     } finally {
       setLoading(false);
     }
+  }
 
-  async function startCheckout() {
-    setLoading(true);
-    const response = await fetch("/api/checkout", { method: "POST" });
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
-    setLoading(false);
+  function getButtonText() {
+    if (checkingAuth) return "Loading...";
+    if (!isLoggedIn) return "Create Account to Upgrade";
+    if (isPro) return "Pro Active";
+    if (loading) return "Redirecting...";
+    return "Upgrade to Pro";
+  }
+
+  function getButtonClass() {
+    if (isPro || !isLoggedIn) {
+      return "mt-6 rounded-md bg-slate-700 px-4 py-2 font-medium text-slate-400 cursor-not-allowed";
+    }
+    return "mt-6 rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950 disabled:opacity-60 hover:bg-sky-400";
   }
 
   return (
@@ -57,36 +116,41 @@ export default function PricingPage() {
             <li>5 generations/day</li>
             <li>Single output</li>
             <li>No power score</li>
-            <li>5 generations/day</li><li>Single output</li><li>No power score</li>
           </ul>
         </section>
         <section className="card border-sky-500 p-6">
           <h2 className="text-xl font-semibold">Pro</h2>
-          <p className="mt-2 text-slate-300">€12/month</p>
+          <p className="mt-2 text-slate-300">€5.50/month</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             <li>Unlimited generations</li>
             <li>Power score engine</li>
             <li>3 response variants + escalation tools</li>
           </ul>
+          {isPro && isLoggedIn ? (
+            <p className="mt-6 rounded-md border border-emerald-700 bg-emerald-900/40 px-4 py-2 text-center text-sm font-semibold text-emerald-400">
+              You are already a Pro member
+            </p>
+          ) : null}
           <button
-            className="mt-6 rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950 disabled:opacity-60"
+            className={getButtonClass()}
             onClick={startCheckout}
-            disabled={loading}
+            disabled={loading || checkingAuth || isPro || !isLoggedIn}
           >
-            {loading ? "Redirecting..." : "Upgrade to Pro"}
+            {getButtonText()}
           </button>
           {error ? <p className="mt-3 text-sm text-rose-400">{error}</p> : null}
-          <p className="mt-3 text-xs text-slate-400">
-            Already have an account?{" "}
-            <Link className="text-sky-400" href="/login">
-              Log in
-            </Link>
-          </p>
-            Already have an account? <Link className="text-sky-400" href="/login">Log in</Link>
-          </p>
-            <li>Unlimited generations</li><li>Power score engine</li><li>3 response variants + escalation tools</li>
-          </ul>
-          <button className="mt-6 rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950 disabled:opacity-60" onClick={startCheckout} disabled={loading}>{loading ? "Redirecting..." : "Upgrade to Pro"}</button>
+          {!isLoggedIn && !checkingAuth ? (
+            <p className="mt-3 text-xs text-slate-400">
+              Don&apos;t have an account?{" "}
+              <Link className="text-sky-400" href="/register">
+                Sign up
+              </Link>
+              {" or "}
+              <Link className="text-sky-400" href="/login">
+                Log in
+              </Link>
+            </p>
+          ) : null}
         </section>
       </div>
     </main>
