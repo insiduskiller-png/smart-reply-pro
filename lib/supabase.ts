@@ -61,8 +61,12 @@ export async function getUserProfile(userId: string) {
   }
 }
 
-export async function ensureUserProfile(user: { id: string; email: string }) {
+export async function ensureUserProfile(user: { id: string; email?: string | null }) {
   try {
+    // Safely handle email
+    const email = user.email ?? "noemail@user.invalid";
+    const username = email.split("@")[0];
+
     // First attempt: try to query existing profile
     const { data: existingProfile, error: queryError } = await supabaseService
       .from("profiles")
@@ -76,13 +80,12 @@ export async function ensureUserProfile(user: { id: string; email: string }) {
     }
 
     // Profile doesn't exist, create it with upsert
-    const username = (user.email ?? "").split("@")[0];
     
     const { data: createdProfile, error: upsertError } = await supabaseService
       .from("profiles")
       .upsert({
         id: user.id,
-        email: user.email,
+        email: email,
         username: username,
         subscription_status: "free",
         created_at: new Date().toISOString(),
@@ -100,7 +103,7 @@ export async function ensureUserProfile(user: { id: string; email: string }) {
         .from("profiles")
         .upsert({
           id: user.id,
-          email: user.email,
+          email: email,
           username: username,
           subscription_status: "free",
           created_at: new Date().toISOString(),
@@ -115,7 +118,7 @@ export async function ensureUserProfile(user: { id: string; email: string }) {
         // Return a safe default profile object so page doesn't crash
         return {
           id: user.id,
-          email: user.email,
+          email: email,
           username: username,
           subscription_status: "free",
           created_at: new Date().toISOString(),
@@ -130,10 +133,11 @@ export async function ensureUserProfile(user: { id: string; email: string }) {
     console.error("ensureUserProfile failed:", error);
     
     // Never throw - always return a safe default profile
-    const username = (user.email ?? "").split("@")[0];
+    const email = user.email ?? "noemail@user.invalid";
+    const username = email.split("@")[0];
     return {
       id: user.id,
-      email: user.email,
+      email: email,
       username: username,
       subscription_status: "free",
       created_at: new Date().toISOString(),

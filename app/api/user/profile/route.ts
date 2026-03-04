@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseService, ensureUserProfile } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const user = await requireUser();
     if (!user) {
@@ -33,14 +33,14 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
     const user = await requireUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { username } = await req.json();
+    const { username } = await request.json();
 
     const { data, error } = await supabaseService
       .from("profiles")

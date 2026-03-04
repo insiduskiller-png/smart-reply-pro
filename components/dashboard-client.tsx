@@ -5,7 +5,6 @@ import html2canvas from "html2canvas";
 
 const freeTones = ["Neutral", "Direct", "Polite", "Friendly"];
 const preTones = ["Tactical Control", "Precision Authority", "Psychological Edge"];
-const allTones = [...freeTones, ...preTones];
 
 type Profile = {
   subscription_status: string;

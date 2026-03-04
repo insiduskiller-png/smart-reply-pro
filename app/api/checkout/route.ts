@@ -8,6 +8,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please log in to upgrade." }, { status: 401 });
   }
 
+  if (!user.email) {
+    return NextResponse.json({ error: "Email required to create subscription." }, { status: 400 });
+  }
+
   try {
     const origin = new URL(request.url).origin;
     const session = await createCheckoutSession({

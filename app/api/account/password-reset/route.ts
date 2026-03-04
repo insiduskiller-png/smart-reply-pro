@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/supabase-auth";
+import { getStripeEnv } from "@/lib/env";
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const user = await requireUser();
     if (!user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const redirectUrl = "http://localhost:3000/reset-password";
+    const { appUrl } = getStripeEnv();
+    const redirectUrl = `${appUrl}/reset-password`;
     
     try {
       await sendPasswordResetEmail(user.email, redirectUrl);

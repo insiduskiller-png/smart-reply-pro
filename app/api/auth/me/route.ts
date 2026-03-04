@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const user = await requireUser();
 
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({ user });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ user: null }, { status: 401 });
   }
 }

@@ -5,14 +5,6 @@ function readRequired(keys: string[]) {
   }
 }
 
-function readFromAliases(...keys: string[]) {
-  for (const key of keys) {
-    const value = process.env[key];
-    if (value) return value;
-  }
-  return "";
-}
-
 export function getSupabaseEnv() {
   const keys = [
     "NEXT_PUBLIC_SUPABASE_URL",
@@ -39,6 +31,7 @@ export function getStripeEnv() {
     "STRIPE_PRICE_ID",
     "STRIPE_WEBHOOK_SECRET",
     "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
   ];
   readRequired(keys);
 
@@ -47,6 +40,7 @@ export function getStripeEnv() {
     stripePriceId: process.env.STRIPE_PRICE_ID!,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
     appUrl: process.env.NEXT_PUBLIC_APP_URL!,
+    stripePublishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
   };
 }
 

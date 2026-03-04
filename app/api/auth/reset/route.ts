@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendPasswordResetEmail } from "@/lib/supabase-auth";
 import { isValidEmail, normalizeEmail } from "@/lib/security";
+import { getStripeEnv } from "@/lib/env";
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +12,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
     }
 
-    const redirectUrl = "http://localhost:3000/reset-password";
+    const { appUrl } = getStripeEnv();
+    const redirectUrl = `${appUrl}/reset-password`;
 
     try {
       await sendPasswordResetEmail(email, redirectUrl);

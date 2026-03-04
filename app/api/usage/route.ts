@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const user = await requireUser();
     if (!user) {
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
     const user = await requireUser();
     if (!user) {

@@ -124,7 +124,7 @@ export default function LoginPage() {
           )}
 
           <div style={{ marginTop: "20px", textAlign: "center", fontSize: "14px", color: "#94a3b8" }}>
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" style={{ color: "#0ea5e9", textDecoration: "none" }}>
               Register here
             </Link>

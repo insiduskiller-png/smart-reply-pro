@@ -52,7 +52,7 @@ export default function NavbarUser() {
         setUser(null);
         setProfile(null);
       }
-    } catch (error) {
+    } catch {
       setUser(null);
       setProfile(null);
     } finally {
