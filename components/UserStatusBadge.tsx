@@ -1,84 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-
-type AuthUser = {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    username?: string;
-  };
-};
-
-type Profile = {
-  username?: string | null;
-  subscription_status?: string | null;
-};
+import { useAuth } from "@/components/auth-provider";
 
 export default function UserStatusBadge() {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadUserData() {
-      try {
-        const meResponse = await fetch("/api/auth/me", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!meResponse.ok) {
-          if (!mounted) return;
-          setUser(null);
-          setProfile(null);
-          return;
-        }
-
-        const meData = await meResponse.json().catch(() => null);
-        const sessionUser = meData?.user as AuthUser | undefined;
-
-        if (!sessionUser) {
-          if (!mounted) return;
-          setUser(null);
-          setProfile(null);
-          return;
-        }
-
-        if (!mounted) return;
-        setUser(sessionUser);
-
-        const profileResponse = await fetch("/api/user/profile", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!mounted) return;
-
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json().catch(() => null);
-          setProfile(profileData?.profile ?? null);
-        } else {
-          setProfile(null);
-        }
-      } catch {
-        if (!mounted) return;
-        setUser(null);
-        setProfile(null);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    loadUserData();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { user, profile, loading } = useAuth();
 
   const displayName = useMemo(() => {
     if (!user) return "";

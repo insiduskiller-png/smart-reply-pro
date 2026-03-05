@@ -40,10 +40,13 @@ export async function POST(req: Request) {
       // Don't fail login if profile creation fails
     }
 
-    const response = NextResponse.json({ 
-      success: true, 
+    const response = NextResponse.json({
+      success: true,
       user: data.user,
-      sessionToken: data.session.access_token 
+      sessionToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      expiresAt: data.session.expires_at,
+      expiresIn: data.session.expires_in,
     });
 
     // Set session cookie for middleware

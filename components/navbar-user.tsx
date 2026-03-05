@@ -1,136 +1,67 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-
-interface User {
-  id: string;
-  email: string;
-  user_metadata?: {
-    username?: string;
-  };
-}
-
-interface Profile {
-  username?: string | null;
-  subscription_status?: string | null;
-}
+import { useAuth } from "@/components/auth-provider";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function NavbarUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  async function fetchUserSession() {
-    try {
-      const response = await fetch("/api/auth/me", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        try {
-          const profileResponse = await fetch("/api/user/profile", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          });
-
-          if (profileResponse.ok) {
-            const profileData = await profileResponse.json();
-            setProfile(profileData.profile ?? null);
-          } else {
-            setProfile(null);
-          }
-        } catch {
-          setProfile(null);
-        }
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-    } catch {
-      setUser(null);
-      setProfile(null);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchUserSession();
-  }, []);
-
-  useEffect(() => {
-    function handleUserLoggedIn() {
-      fetchUserSession();
-    }
-
-    window.addEventListener("userLoggedIn", handleUserLoggedIn);
-    return () => window.removeEventListener("userLoggedIn", handleUserLoggedIn);
-  }, []);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-
-    if (menuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
+  const { user, profile, loading } = useAuth();
 
   async function handleLogout() {
     try {
+      await supabaseBrowser.auth.signOut();
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
-      setUser(null);
-      setProfile(null);
-      setMenuOpen(false);
-      window.location.href = "/login";
+      window.location.href = "/";
     }
   }
 
   if (loading) {
-    return <div className="text-sm text-slate-300">Loading...</div>;
+    return <div className="h-9 w-28" />;
   }
 
   if (!user) {
-    return <Link href="/login" className="text-sm text-slate-300">Login</Link>;
+    return (
+      <div className="flex items-center gap-2">
+        <Link href="/login" className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950">
+          Sign In
+        </Link>
+        <Link href="/register" className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-200">
+          Create Account
+        </Link>
+      </div>
+    );
   }
 
-  const displayName = profile?.username || user.email;
-  const planLabel = (profile?.subscription_status ?? "free").toLowerCase() === "pro" ? "Pro" : "Free";
+  const displayName = useMemo(() => {
+    const profileName = profile?.username?.trim();
+    if (profileName) return profileName;
+    const metadataName = user.user_metadata?.username?.trim();
+    if (metadataName) return metadataName;
+    return (user.email ?? "Member").split("@")[0];
+  }, [profile?.username, user.email, user.user_metadata?.username]);
+
+  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        type="button"
-        className="text-sm text-slate-300"
-        onClick={() => setMenuOpen((prev) => !prev)}
-      >
-        {displayName}
+    <div className="flex items-center gap-3">
+      <div className="text-right">
+        <p className="text-sm text-slate-100">Welcome, {displayName}</p>
+        <span
+          className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            isPro
+              ? "border border-amber-500/40 bg-amber-500/10 text-amber-300"
+              : "border border-slate-600 bg-slate-800/60 text-slate-300"
+          }`}
+        >
+          {isPro ? "Pro Member" : "Free Member"}
+        </span>
+      </div>
+      <Link href="/account" className="text-xs text-slate-300 hover:text-sky-300">Account</Link>
+      <button type="button" className="text-xs text-slate-300 hover:text-sky-300" onClick={handleLogout}>
+        Logout
       </button>
-      {menuOpen ? (
-        <div className="card absolute right-0 mt-2 w-64 p-3 text-sm text-slate-300">
-          <div className="space-y-1">
-            <div>Username: {displayName}</div>
-            <div>Email: {user.email}</div>
-            <div>Plan: {planLabel}</div>
-          </div>
-          <div className="mt-3 flex flex-col gap-2">
-            <Link href="/account" className="text-slate-300">Account</Link>
-            <button type="button" className="text-left text-slate-300" onClick={handleLogout}>Logout</button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,12 +40,19 @@ export default function LoginPage() {
       }
 
       if (data.success) {
+        if (data.sessionToken && data.refreshToken) {
+          try {
+            await supabaseBrowser.auth.setSession({
+              access_token: data.sessionToken,
+              refresh_token: data.refreshToken,
+            });
+          } catch {
+            // Keep server-cookie auth flow working even if client session sync fails
+          }
+        }
+
         setLoading(false);
-        // Dispatch event so navbar can refetch user session
-        window.dispatchEvent(new Event("userLoggedIn"));
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 100);
+        router.replace("/dashboard");
       }
     } catch (e) {
       console.error("Login error:", e);
