@@ -200,6 +200,7 @@ export async function generateReply(params: {
   tone: string;
   modifier?: string;
   variant?: string;
+  conversationHistory?: string;
 }) {
   // Build tone-specific instructions
   let toneInstructions = "";
@@ -240,6 +241,8 @@ export async function generateReply(params: {
 6. What urgency pressure exists?
 
 Use this analysis to inform your response. Then generate the reply based on this internal understanding.
+
+${params.conversationHistory ? `Previous Conversation:\n${params.conversationHistory}\n\n` : ""}
 
 Incoming Message:\n${params.input}\n\nContext (if any):\n${params.context || "None"}\n\nCommunication Mode:\n${params.tone}\n\nMode Instructions:\n${toneInstructions}\n\n${params.variant ? `Variation: ${params.variant}\n` : ""}${params.modifier ? `Additional Modifier: ${params.modifier}\n` : ""}Return ONLY the final reply text. Do not include the analysis.`;
 

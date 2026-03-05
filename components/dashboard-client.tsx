@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
+import UsageProgressMeter from "@/components/usage-progress-meter";
+import ProFeaturePreview from "@/components/pro-feature-preview";
+import ResponseComparison from "@/components/response-comparison";
 
 const freeTones = ["Neutral", "Direct", "Polite", "Friendly"];
 const preTones = ["Tactical Control", "Precision Authority", "Psychological Edge"];
@@ -20,11 +23,17 @@ type Reply = {
   favorite?: boolean;
 };
 
-type Conversation = {
+type ConversationThread = {
   id: string;
-  input_text: string;
-  reply_text: string;
-  tone: string;
+  title: string | null;
+  created_at: string;
+};
+
+type ConversationMessage = {
+  id: string;
+  thread_id: string;
+  role: "user" | "assistant";
+  content: string;
   created_at: string;
 };
 
@@ -71,8 +80,11 @@ export default function DashboardClient({
   const [tab, setTab] = useState<"generate" | "history" | "favorites">("generate");
   const [history, setHistory] = useState<Reply[]>([]);
   const [favorites, setFavorites] = useState<Reply[]>([]);
-  const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
-  const [recentConversationsLoading, setRecentConversationsLoading] = useState(false);
+  const [threads, setThreads] = useState<ConversationThread[]>([]);
+  const [threadsLoading, setThreadsLoading] = useState(false);
+  const [activeThreadId, setActiveThreadId] = useState("");
+  const [activeMessages, setActiveMessages] = useState<ConversationMessage[]>([]);
+  const [activeMessagesLoading, setActiveMessagesLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [generationAnalysis, setGenerationAnalysis] = useState<{
@@ -88,23 +100,74 @@ export default function DashboardClient({
   const [quickRewriteLoading, setQuickRewriteLoading] = useState<{ index: number; mode: QuickRewriteMode } | null>(null);
   const [rewriteLoading, setRewriteLoading] = useState<{ index: number; mode: RewriteMode } | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [messagesUsed, setMessagesUsed] = useState<number | null>(null);
+  const [proOptimizedReply, setProOptimizedReply] = useState<string | null>(null);
+  const [proReplyLoading, setProReplyLoading] = useState(false);
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isPro = profile.subscription_status === "pro";
   const isPremiumStyle = preTones.includes(tone);
 
-  async function fetchRecentConversations() {
-    setRecentConversationsLoading(true);
+  async function fetchThreads() {
+    setThreadsLoading(true);
     try {
-      const response = await fetch("/api/conversations/recent");
+      const response = await fetch("/api/conversations/threads");
       const data = await response.json().catch(() => null);
-      if (response.ok && data?.conversations) {
-        setRecentConversations(data.conversations);
+      if (response.ok && data?.threads) {
+        setThreads(data.threads);
+        if (!activeThreadId && data.threads.length > 0) {
+          setActiveThreadId(data.threads[0].id);
+        }
       }
     } catch {
       // Silent fail
     } finally {
-      setRecentConversationsLoading(false);
+      setThreadsLoading(false);
+    }
+  }
+
+  async function fetchActiveMessages(threadId: string) {
+    if (!threadId) {
+      setActiveMessages([]);
+      return;
+    }
+
+    setActiveMessagesLoading(true);
+    try {
+      const response = await fetch(`/api/conversations/messages?threadId=${encodeURIComponent(threadId)}`);
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.messages) {
+        setActiveMessages(data.messages);
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setActiveMessagesLoading(false);
+    }
+  }
+
+  async function startNewConversation() {
+    try {
+      const response = await fetch("/api/conversations/threads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: input.slice(0, 60) || "New Conversation" }),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.thread?.id) {
+        const newThreadId = data.thread.id;
+        setActiveThreadId(newThreadId);
+        setActiveMessages([]);
+        setInput("");
+        setContext("");
+        setOutputs([]);
+        setOriginalOutputs([]);
+        setToneDetection("");
+        setProOptimizedReply(null);
+        await fetchThreads();
+      }
+    } catch {
+      // Silent fail
     }
   }
 
@@ -116,8 +179,37 @@ export default function DashboardClient({
   }, [initialTemplateInput]);
 
   useEffect(() => {
-    fetchRecentConversations();
+    async function initializeThreads() {
+      const response = await fetch("/api/conversations/threads").catch(() => null);
+      const data = await response?.json().catch(() => null);
+
+      if (response?.ok && data?.threads?.length > 0) {
+        setThreads(data.threads);
+        setActiveThreadId(data.threads[0].id);
+        return;
+      }
+
+      const createResponse = await fetch("/api/conversations/threads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "New Conversation" }),
+      }).catch(() => null);
+      const createData = await createResponse?.json().catch(() => null);
+      if (createResponse?.ok && createData?.thread?.id) {
+        setActiveThreadId(createData.thread.id);
+      }
+
+      fetchThreads();
+    }
+
+    initializeThreads();
   }, []);
+
+  useEffect(() => {
+    if (activeThreadId) {
+      fetchActiveMessages(activeThreadId);
+    }
+  }, [activeThreadId]);
 
   useEffect(() => {
     if (!isPro) {
@@ -133,6 +225,24 @@ export default function DashboardClient({
         }
       }
       fetchUsage();
+    }
+  }, [isPro]);
+
+  // Fetch messages usage for free users
+  useEffect(() => {
+    if (!isPro) {
+      async function fetchMessagesUsage() {
+        try {
+          const response = await fetch("/api/messages-usage");
+          const data = await response.json().catch(() => null);
+          if (response.ok && data?.messagesUsed !== undefined) {
+            setMessagesUsed(data.messagesUsed);
+          }
+        } catch {
+          // Silent fail, show nothing
+        }
+      }
+      fetchMessagesUsage();
     }
   }, [isPro]);
 
@@ -305,13 +415,25 @@ export default function DashboardClient({
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input, context, tone, modifier }),
+        body: JSON.stringify({
+          input,
+          context,
+          tone,
+          modifier,
+          threadId: activeThreadId || undefined,
+        }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
         setError(data?.error || "Generation failed.");
         return;
       }
+
+      const resolvedThreadId = data?.threadId || activeThreadId;
+      if (resolvedThreadId && resolvedThreadId !== activeThreadId) {
+        setActiveThreadId(resolvedThreadId);
+      }
+
       setOutputs(data?.outputs || []);
       setOriginalOutputs(data?.outputs || []);
       setToneDetection(data?.detectedTone || "");
@@ -376,7 +498,29 @@ export default function DashboardClient({
         }
       }
       
-      // Refresh remaining count for free users
+      // For free users, generate pro optimized reply for comparison
+      if (!isPro && data?.outputs?.[0]) {
+        setProReplyLoading(true);
+        try {
+          const proResponse = await fetch("/api/pro-optimized-reply", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input, context, tone }),
+          });
+          const proData = await proResponse.json().catch(() => null);
+          if (proResponse.ok && proData?.proOptimizedReply) {
+            setProOptimizedReply(proData.proOptimizedReply);
+          }
+        } catch {
+          // Silent fail - show comparison anyway with placeholder
+          setProOptimizedReply("Pro optimized response loading...");
+        } finally {
+          setProReplyLoading(false);
+        }
+      } else if (isPro) {
+        // For pro users, use the "Stronger" variant as the optimized version
+        setProOptimizedReply(data?.outputs?.[1] || data?.outputs?.[0] || null);
+      }
       if (!isPro) {
         try {
           const usageResponse = await fetch("/api/usage");
@@ -387,9 +531,22 @@ export default function DashboardClient({
         } catch {
           // Silent fail
         }
+        
+        try {
+          const messagesResponse = await fetch("/api/messages-usage");
+          const messagesData = await messagesResponse.json().catch(() => null);
+          if (messagesResponse.ok && messagesData?.messagesUsed !== undefined) {
+            setMessagesUsed(messagesData.messagesUsed);
+          }
+        } catch {
+          // Silent fail
+        }
       }
 
-      fetchRecentConversations();
+      await fetchThreads();
+      if (resolvedThreadId) {
+        await fetchActiveMessages(resolvedThreadId);
+      }
     } catch {
       setError("Network error while generating response.");
     } finally {
@@ -592,6 +749,14 @@ export default function DashboardClient({
         {toneDetection ? <p className="mb-3 text-xs text-sky-400">Detected tone: {toneDetection}</p> : null}
         {error ? <p className="mb-3 text-sm text-rose-400">{error}</p> : null}
         {styleWarning ? <p className="mb-3 text-sm text-amber-400">{styleWarning}</p> : null}
+        
+        {/* Usage Progress Meter for Free Users */}
+        {!isPro && messagesUsed !== null ? (
+          <div className="mb-6">
+            <UsageProgressMeter messagesUsed={messagesUsed} limit={6} />
+          </div>
+        ) : null}
+        
         <textarea className="min-h-28 w-full rounded-md border border-slate-700 bg-slate-950 p-3" placeholder="Paste incoming message" value={input} onChange={(e) => handleInputChange(e.target.value)} />
         <div className="mt-2 text-xs text-slate-400">
           {suggesting ? "✨ Suggesting best tone..." : input.length >= 10 ? "✓ Tone suggested" : ""}
@@ -677,6 +842,16 @@ export default function DashboardClient({
           </div>
         ) : null}
 
+        {/* Free vs Pro Response Comparison */}
+        {!isPro && outputs.length > 0 && proOptimizedReply && (
+          <ResponseComparison
+            freeReply={outputs[0]}
+            proReply={proOptimizedReply}
+            isPro={isPro}
+            onUpgradeClick={handleUpgrade}
+          />
+        )}
+
         {(reactionLoading || likelyReaction) ? (
           <section className="card p-4 bg-slate-900">
             <h2 className="text-sm font-semibold text-slate-100 mb-3">Likely Reaction</h2>
@@ -708,32 +883,57 @@ export default function DashboardClient({
         ) : null}
 
         <section className="rounded-md border border-slate-700 bg-slate-900/40 p-4">
-          <h2 className="text-sm font-semibold text-slate-100">Recent Conversations</h2>
-          {recentConversationsLoading ? (
-            <p className="mt-3 text-sm text-slate-400">Loading recent conversations...</p>
-          ) : recentConversations.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-400">No conversations yet.</p>
-          ) : (
-            <div className="mt-3 space-y-2">
-              {recentConversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  type="button"
-                  className="w-full rounded-md border border-slate-700 bg-slate-950/50 p-3 text-left hover:border-sky-500/60"
-                  onClick={() => {
-                    setInput(conversation.input_text);
-                    setOutputs([conversation.reply_text]);
-                    setOriginalOutputs([conversation.reply_text]);
-                    setTone(conversation.tone || freeTones[0]);
-                    setToneDetection("");
-                  }}
-                >
-                  <p className="text-xs text-slate-400">{conversation.tone} • {new Date(conversation.created_at).toLocaleDateString()} {new Date(conversation.created_at).toLocaleTimeString()}</p>
-                  <p className="mt-1 line-clamp-2 text-sm text-slate-200">{conversation.input_text}</p>
-                </button>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-100">Active Conversation</h2>
+            <button
+              type="button"
+              className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300"
+              onClick={startNewConversation}
+            >
+              New Conversation
+            </button>
+          </div>
+
+          <div className="mt-3">
+            <label className="mb-1 block text-xs text-slate-400">Conversation thread</label>
+            <select
+              className="w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm"
+              value={activeThreadId}
+              onChange={(e) => setActiveThreadId(e.target.value)}
+            >
+              {threads.map((thread) => (
+                <option key={thread.id} value={thread.id}>
+                  {(thread.title || "New Conversation").slice(0, 40)} • {new Date(thread.created_at).toLocaleDateString()}
+                </option>
               ))}
-            </div>
-          )}
+            </select>
+          </div>
+
+          <div className="mt-4 rounded-md border border-slate-800 bg-slate-950/60 p-3">
+            {threadsLoading || activeMessagesLoading ? (
+              <p className="text-sm text-slate-400">Loading conversation...</p>
+            ) : activeMessages.length === 0 ? (
+              <p className="text-sm text-slate-400">No messages yet. Send a message to start this conversation.</p>
+            ) : (
+              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                {activeMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`rounded-md px-3 py-2 text-sm ${
+                      message.role === "user"
+                        ? "ml-8 border border-sky-700/40 bg-sky-900/20 text-sky-100"
+                        : "mr-8 border border-slate-700 bg-slate-900 text-slate-200"
+                    }`}
+                  >
+                    <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-400">
+                      {message.role === "user" ? "User" : "Assistant"}
+                    </p>
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
 
         {generationAnalysis && isPro ? (
@@ -789,6 +989,9 @@ export default function DashboardClient({
             )}
           </section>
         ) : null}
+        
+        {/* Pro Feature Preview Section */}
+        <ProFeaturePreview isPro={isPro} onUpgradeClick={handleUpgrade} />
       </div>
       ) : null}
       {tab === "history" ? (

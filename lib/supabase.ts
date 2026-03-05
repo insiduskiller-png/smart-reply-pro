@@ -210,3 +210,101 @@ export async function insertConversation(values: Record<string, unknown>) {
     console.error("Error inserting conversation:", error);
   }
 }
+
+export async function createConversationThread(params: {
+  userId: string;
+  title?: string;
+}) {
+  const { data, error } = await supabaseService
+    .from("conversation_threads")
+    .insert({
+      user_id: params.userId,
+      title: params.title ?? "New Conversation",
+    })
+    .select("id, user_id, title, created_at")
+    .single();
+
+  if (error) {
+    console.error("Error creating conversation thread:", error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function getConversationThreadById(threadId: string, userId: string) {
+  const { data, error } = await supabaseService
+    .from("conversation_threads")
+    .select("id, user_id, title, created_at")
+    .eq("id", threadId)
+    .eq("user_id", userId)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data;
+}
+
+export async function getConversationThreadsByUser(userId: string) {
+  const { data, error } = await supabaseService
+    .from("conversation_threads")
+    .select("id, title, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    console.error("Error fetching conversation threads:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function insertConversationMessage(params: {
+  threadId: string;
+  userId: string;
+  role: "user" | "assistant";
+  content: string;
+}) {
+  const { data, error } = await supabaseService
+    .from("conversation_messages")
+    .insert({
+      thread_id: params.threadId,
+      user_id: params.userId,
+      role: params.role,
+      content: params.content,
+    })
+    .select("id, thread_id, user_id, role, content, created_at")
+    .single();
+
+  if (error) {
+    console.error("Error inserting conversation message:", error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function getConversationMessagesByThread(params: {
+  threadId: string;
+  userId: string;
+  limit?: number;
+}) {
+  const { data, error } = await supabaseService
+    .from("conversation_messages")
+    .select("id, thread_id, role, content, created_at")
+    .eq("thread_id", params.threadId)
+    .eq("user_id", params.userId)
+    .order("created_at", { ascending: false })
+    .limit(params.limit ?? 50);
+
+  if (error) {
+    console.error("Error fetching conversation messages:", error);
+    return [];
+  }
+
+  return data ?? [];
+}

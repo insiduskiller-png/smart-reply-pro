@@ -3,8 +3,12 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 import { detectTone, generateReply, powerScoreAnalysis } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
 import {
+  createConversationThread,
+  getConversationMessagesByThread,
   getUserProfile,
+  getConversationThreadById,
   insertConversation,
+  insertConversationMessage,
   insertGeneration,
   supabaseService,
 } from "@/lib/supabase";
@@ -27,11 +31,30 @@ export async function POST(request: Request) {
     const context = sanitizeText(body.context, 4000);
     const tone = sanitizeText(body.tone, 64) || "Neutral";
     const modifier = sanitizeText(body.modifier, 200);
+    const requestedThreadId = sanitizeText(body.threadId, 80);
 
     if (!input) return NextResponse.json({ error: "Input required" }, { status: 400 });
 
     const profile = await getUserProfile(user.id);
     const isPro = profile?.subscription_status === "pro";
+
+    let activeThread = requestedThreadId
+      ? await getConversationThreadById(requestedThreadId, user.id)
+      : null;
+
+    if (!activeThread) {
+      activeThread = await createConversationThread({
+        userId: user.id,
+        title: input.slice(0, 60) || "New Conversation",
+      });
+    }
+
+    if (!activeThread) {
+      return NextResponse.json(
+        { error: "Failed to initialize conversation thread." },
+        { status: 500 },
+      );
+    }
 
     // Check if free user selected premium style
     if (!isPro && proPremiumTones.includes(tone)) {
@@ -74,14 +97,26 @@ export async function POST(request: Request) {
         });
     }
 
+    const previousMessages = await getConversationMessagesByThread({
+      threadId: activeThread.id,
+      userId: user.id,
+      limit: 10,
+    });
+
+    const conversationHistory = previousMessages
+      .slice()
+      .reverse()
+      .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`)
+      .join("\n");
+
     const detectedTone = await detectTone(input);
     const outputs = isPro
       ? await Promise.all([
-          generateReply({ input, context, tone, modifier, variant: "Balanced" }),
-          generateReply({ input, context, tone, modifier, variant: "Stronger" }),
-          generateReply({ input, context, tone, modifier, variant: "Softer" }),
+          generateReply({ input, context, tone, modifier, variant: "Balanced", conversationHistory }),
+          generateReply({ input, context, tone, modifier, variant: "Stronger", conversationHistory }),
+          generateReply({ input, context, tone, modifier, variant: "Softer", conversationHistory }),
         ])
-      : [await generateReply({ input, context, tone, modifier })];
+      : [await generateReply({ input, context, tone, modifier, conversationHistory })];
 
     // Generate analysis for pro users
     let analysis = null;
@@ -113,7 +148,26 @@ export async function POST(request: Request) {
       tone,
     });
 
-    return NextResponse.json({ outputs, detectedTone, analysis });
+    await insertConversationMessage({
+      threadId: activeThread.id,
+      userId: user.id,
+      role: "user",
+      content: input,
+    });
+
+    await insertConversationMessage({
+      threadId: activeThread.id,
+      userId: user.id,
+      role: "assistant",
+      content: outputs[0],
+    });
+
+    return NextResponse.json({
+      outputs,
+      detectedTone,
+      analysis,
+      threadId: activeThread.id,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Generation failed" },
