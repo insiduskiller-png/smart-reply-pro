@@ -100,7 +100,7 @@ export default function ReplyGame() {
         </span>
       </div>
 
-      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Interactive Scenario</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reply Scenario</p>
       <h2 className="mt-2 text-lg font-medium text-slate-100 md:text-xl">{currentScenario.intro_line}</h2>
       <p className="mt-3 rounded-lg border border-slate-800 bg-slate-900/80 p-4 text-base text-slate-200 md:text-lg">
         “{currentScenario.incoming_message}”
