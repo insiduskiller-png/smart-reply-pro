@@ -16,22 +16,18 @@ function randomScenario(excludeIds: string[]): ReplyGameScenario | null {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function getScoreLabel(score: number): "Reactive" | "Balanced" | "Strategic" {
-  if (score >= 20) return "Strategic";
-  if (score >= 10) return "Balanced";
-  return "Reactive";
-}
-
 export default function ReplyGame() {
   const [currentScenario, setCurrentScenario] = useState<ReplyGameScenario | null>(null);
   const [usedScenarioIds, setUsedScenarioIds] = useState<string[]>([]);
   const [selectedChoice, setSelectedChoice] = useState<Choice | null>(null);
-  const [score, setScore] = useState(0);
   const [completedRounds, setCompletedRounds] = useState(0);
+
+  const interactionComplete = completedRounds >= 2;
 
   useEffect(() => {
     const first = randomScenario([]);
     if (!first) return;
+
     setCurrentScenario(first);
     setUsedScenarioIds([first.id]);
   }, []);
@@ -51,15 +47,14 @@ export default function ReplyGame() {
   }, [currentScenario, selectedChoice]);
 
   const handleChoice = (choice: Choice) => {
-    if (!currentScenario || selectedChoice) return;
+    if (!currentScenario || selectedChoice || interactionComplete) return;
 
     setSelectedChoice(choice);
     setCompletedRounds((prev) => prev + 1);
-    setScore((prev) => prev + (choice === currentScenario.best_choice ? 10 : 4));
   };
 
   const handleNextScenario = () => {
-    if (!currentScenario) return;
+    if (!currentScenario || interactionComplete) return;
 
     const next = randomScenario(usedScenarioIds);
 
@@ -78,9 +73,6 @@ export default function ReplyGame() {
     }
   };
 
-  const interactionComplete = completedRounds >= 2;
-  const scoreLabel = getScoreLabel(score);
-
   if (!currentScenario) {
     return (
       <section className="card mx-auto w-full max-w-3xl p-6 md:p-8">
@@ -96,7 +88,7 @@ export default function ReplyGame() {
           {currentScenario.category}
         </span>
         <span className="rounded-full border border-slate-600 bg-slate-800/40 px-2 py-0.5 text-xs text-slate-400">
-          Round {completedRounds + 1}/2
+          Round {Math.min(completedRounds + 1, 2)}/2
         </span>
       </div>
 
@@ -110,12 +102,12 @@ export default function ReplyGame() {
         <button
           type="button"
           onClick={() => handleChoice("a")}
-          disabled={Boolean(selectedChoice)}
+          disabled={Boolean(selectedChoice) || interactionComplete}
           className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 md:text-base ${
             selectedChoice === "a"
               ? "border-sky-400 bg-sky-500/15 text-sky-100"
               : "border-slate-700 bg-slate-900/60 text-slate-200 hover:border-slate-500 hover:bg-slate-800/80"
-          } ${selectedChoice ? "cursor-not-allowed" : "cursor-pointer"}`}
+          } ${selectedChoice || interactionComplete ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
           <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Option A</span>
           {currentScenario.option_a}
@@ -124,12 +116,12 @@ export default function ReplyGame() {
         <button
           type="button"
           onClick={() => handleChoice("b")}
-          disabled={Boolean(selectedChoice)}
+          disabled={Boolean(selectedChoice) || interactionComplete}
           className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 md:text-base ${
             selectedChoice === "b"
               ? "border-sky-400 bg-sky-500/15 text-sky-100"
               : "border-slate-700 bg-slate-900/60 text-slate-200 hover:border-slate-500 hover:bg-slate-800/80"
-          } ${selectedChoice ? "cursor-not-allowed" : "cursor-pointer"}`}
+          } ${selectedChoice || interactionComplete ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
           <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Option B</span>
           {currentScenario.option_b}
@@ -148,27 +140,12 @@ export default function ReplyGame() {
             <p className="mt-2 text-sm text-sky-100 md:text-base">{currentScenario.smartreply_suggestion}</p>
           </div>
 
-          {showCta ? (
-           interactionComplete ? (
+          {interactionComplete ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/80 p-5">
               <h3 className="text-lg font-semibold text-white md:text-xl">Now try it on your real messages.</h3>
               <p className="mt-2 text-sm text-slate-300">
                 Smart Reply Pro helps you reply with more clarity, leverage, and control.
               </p>
-              <ul className="mt-4 space-y-2">
-                <li className="flex items-start gap-2 text-sm text-slate-300">
-                  <span className="text-sky-400">•</span>
-                  <span>Test your own conversations</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm text-slate-300">
-                  <span className="text-sky-400">•</span>
-                  <span>See better reply options</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm text-slate-300">
-                  <span className="text-sky-400">•</span>
-                  <span>Build stronger communication instincts</span>
-                </li>
-              </ul>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/register"
@@ -195,6 +172,7 @@ export default function ReplyGame() {
               </button>
             </div>
           )}
+        </div>
       ) : null}
     </section>
   );
