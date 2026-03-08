@@ -9,9 +9,9 @@ export default function Home() {
           <p className="text-xs uppercase tracking-[0.2em] text-sky-400">Smart Reply Pro</p>
           <UserStatusBadge />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight md:text-5xl">Play the Reply Game.</h1>
+        <h1 className="text-3xl font-bold tracking-tight md:text-5xl">See what your reply really does.</h1>
         <p className="mt-4 max-w-2xl text-base text-slate-300 md:text-lg">
-          Pick your response. See the impact instantly. Train your conversation instincts in under a minute.
+          Choose a reply. See the outcome. Learn what Smart Reply Pro would do better.
         </p>
       </section>
 

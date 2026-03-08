@@ -78,8 +78,7 @@ export default function ReplyGame() {
     }
   };
 
-  const showCta = completedRounds >= 3;
-  const strongerCta = completedRounds >= 5;
+  const interactionComplete = completedRounds >= 2;
   const scoreLabel = getScoreLabel(score);
 
   if (!currentScenario) {
@@ -92,17 +91,16 @@ export default function ReplyGame() {
 
   return (
     <section className="card mx-auto w-full max-w-3xl p-5 md:p-8">
-      <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="mb-5 flex items-center gap-2">
         <span className="rounded-full border border-slate-700 bg-slate-800/70 px-3 py-1 text-xs font-medium text-slate-200">
           {currentScenario.category}
         </span>
-        <div className="text-right">
-          <p className="text-sm font-medium text-sky-300">Conversation Score: {score}</p>
-          <p className="text-xs text-slate-400">{scoreLabel}</p>
-        </div>
+        <span className="rounded-full border border-slate-600 bg-slate-800/40 px-2 py-0.5 text-xs text-slate-400">
+          Round {completedRounds + 1}/2
+        </span>
       </div>
 
-      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Reply Game</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Interactive Scenario</p>
       <h2 className="mt-2 text-lg font-medium text-slate-100 md:text-xl">{currentScenario.intro_line}</h2>
       <p className="mt-3 rounded-lg border border-slate-800 bg-slate-900/80 p-4 text-base text-slate-200 md:text-lg">
         “{currentScenario.incoming_message}”
@@ -151,13 +149,27 @@ export default function ReplyGame() {
           </div>
 
           {showCta ? (
-            <div className="rounded-lg border border-slate-700 bg-slate-900/80 p-4">
-              <h3 className="text-base font-semibold text-white md:text-lg">
-                {strongerCta
-                  ? "Smart Reply Pro does this for your real messages in seconds."
-                  : "Want better replies for your real conversations?"}
-              </h3>
-              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+           interactionComplete ? (
+            <div className="rounded-lg border border-slate-700 bg-slate-900/80 p-5">
+              <h3 className="text-lg font-semibold text-white md:text-xl">Now try it on your real messages.</h3>
+              <p className="mt-2 text-sm text-slate-300">
+                Smart Reply Pro helps you reply with more clarity, leverage, and control.
+              </p>
+              <ul className="mt-4 space-y-2">
+                <li className="flex items-start gap-2 text-sm text-slate-300">
+                  <span className="text-sky-400">•</span>
+                  <span>Test your own conversations</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-slate-300">
+                  <span className="text-sky-400">•</span>
+                  <span>See better reply options</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-slate-300">
+                  <span className="text-sky-400">•</span>
+                  <span>Build stronger communication instincts</span>
+                </li>
+              </ul>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/register"
                   className="inline-flex items-center justify-center rounded-md bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
@@ -172,18 +184,17 @@ export default function ReplyGame() {
                 </Link>
               </div>
             </div>
-          ) : null}
-
-          <div className="sticky bottom-3 z-10">
-            <button
-              type="button"
-              onClick={handleNextScenario}
-              className="w-full rounded-lg bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-200 md:text-base"
-            >
-              Next Scenario
-            </button>
-          </div>
-        </div>
+          ) : (
+            <div className="sticky bottom-3 z-10">
+              <button
+                type="button"
+                onClick={handleNextScenario}
+                className="w-full rounded-lg bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-200 md:text-base"
+              >
+                Next Scenario
+              </button>
+            </div>
+          )}
       ) : null}
     </section>
   );
