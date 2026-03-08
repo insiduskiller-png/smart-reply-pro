@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     const tone = sanitizeText(body.tone, 64) || "Neutral";
     const modifier = sanitizeText(body.modifier, 200);
     const requestedThreadId = sanitizeText(body.threadId, 80);
+    const template = sanitizeText(body.template, 64);
 
     if (!input) return NextResponse.json({ error: "Input required" }, { status: 400 });
 
@@ -112,11 +113,11 @@ export async function POST(request: Request) {
     const detectedTone = await detectTone(input);
     const outputs = isPro
       ? await Promise.all([
-          generateReply({ input, context, tone, modifier, variant: "Balanced", conversationHistory }),
-          generateReply({ input, context, tone, modifier, variant: "Stronger", conversationHistory }),
-          generateReply({ input, context, tone, modifier, variant: "Softer", conversationHistory }),
+          generateReply({ input, context, tone, modifier, variant: "Balanced", conversationHistory, template }),
+          generateReply({ input, context, tone, modifier, variant: "Stronger", conversationHistory, template }),
+          generateReply({ input, context, tone, modifier, variant: "Softer", conversationHistory, template }),
         ])
-      : [await generateReply({ input, context, tone, modifier, conversationHistory })];
+      : [await generateReply({ input, context, tone, modifier, conversationHistory, template })];
 
     // Generate analysis for pro users
     let analysis = null;

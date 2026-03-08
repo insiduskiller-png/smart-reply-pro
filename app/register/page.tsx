@@ -55,28 +55,19 @@ export default function RegisterPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0f172a" }}>
-      <div style={{ maxWidth: 400, width: "100%", padding: "20px" }}>
-        <div style={{ backgroundColor: "#1e293b", padding: "30px", borderRadius: "8px", border: "1px solid #334155" }}>
-          <h1 style={{ marginTop: 0, marginBottom: "24px", color: "#fff", fontSize: "24px", fontWeight: "600" }}>Register</h1>
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8">
+      <div className="w-full max-w-md">
+        <div className="card p-6 md:p-8">
+          <h1 className="mb-6 text-2xl font-semibold text-white">Register</h1>
 
-          <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <form onSubmit={handleRegister} className="space-y-4">
             <input
               type="text"
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                border: "1px solid #475569",
-                backgroundColor: "#0f172a",
-                color: "#fff",
-                fontSize: "14px",
-                fontFamily: "inherit",
-                opacity: loading ? 0.6 : 1,
-              }}
+              className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base text-white placeholder:text-slate-500 disabled:opacity-60 md:h-10 md:px-3 md:text-sm"
               required
               minLength={3}
             />
@@ -87,16 +78,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                border: "1px solid #475569",
-                backgroundColor: "#0f172a",
-                color: "#fff",
-                fontSize: "14px",
-                fontFamily: "inherit",
-                opacity: loading ? 0.6 : 1,
-              }}
+              className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base text-white placeholder:text-slate-500 disabled:opacity-60 md:h-10 md:px-3 md:text-sm"
               required
             />
 
@@ -106,16 +88,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                border: "1px solid #475569",
-                backgroundColor: "#0f172a",
-                color: "#fff",
-                fontSize: "14px",
-                fontFamily: "inherit",
-                opacity: loading ? 0.6 : 1,
-              }}
+              className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base text-white placeholder:text-slate-500 disabled:opacity-60 md:h-10 md:px-3 md:text-sm"
               required
               minLength={6}
             />
@@ -123,37 +96,27 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              style={{
-                padding: "10px 16px",
-                borderRadius: "6px",
-                border: "none",
-                backgroundColor: "#0ea5e9",
-                color: "#0f172a",
-                fontSize: "14px",
-                fontWeight: "600",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-              }}
+              className="h-12 w-full rounded-md border-none bg-sky-500 px-4 text-base font-semibold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 md:h-10 md:text-sm"
             >
               {loading ? "Creating account..." : "Register"}
             </button>
           </form>
 
           {error && (
-            <div style={{ marginTop: "16px", padding: "10px 12px", backgroundColor: "#7f1d1d", borderRadius: "6px", color: "#fca5a5", fontSize: "14px" }}>
+            <div className="mt-4 rounded-md bg-rose-950 p-3 text-sm text-rose-300">
               {error}
             </div>
           )}
 
           {success && (
-            <div style={{ marginTop: "16px", padding: "10px 12px", backgroundColor: "#15803d", borderRadius: "6px", color: "#bbf7d0", fontSize: "14px" }}>
+            <div className="mt-4 rounded-md bg-emerald-950 p-3 text-sm text-emerald-300">
               {success}
             </div>
           )}
 
-          <div style={{ marginTop: "20px", textAlign: "center", fontSize: "14px", color: "#94a3b8" }}>
+          <div className="mt-5 text-center text-sm text-slate-400">
             Already have an account?{" "}
-            <Link href="/login" style={{ color: "#0ea5e9", textDecoration: "none" }}>
+            <Link href="/login" className="text-sky-400 hover:text-sky-300">
               Login here
             </Link>
           </div>

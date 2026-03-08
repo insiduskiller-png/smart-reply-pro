@@ -201,6 +201,7 @@ export async function generateReply(params: {
   modifier?: string;
   variant?: string;
   conversationHistory?: string;
+  template?: string;
 }) {
   // Build tone-specific instructions
   let toneInstructions = "";
@@ -230,6 +231,32 @@ export async function generateReply(params: {
     default:
       toneInstructions = "Use clear, professional communication.";
   }
+  
+  // Build template-specific instructions
+  let templateInstructions = "";
+  
+  if (params.template) {
+    switch (params.template) {
+      case "work":
+        templateInstructions = "\n\nTEMPLATE MODE: Work\nWrite the response in a professional, concise and respectful business tone. Focus on clarity, efficiency, and maintaining professional boundaries. Avoid casual language.";
+        break;
+      case "dating":
+        templateInstructions = "\n\nTEMPLATE MODE: Dating\nWrite the response with playful confidence and natural conversational flow. Be engaging and authentic. Show interest without neediness. Keep it light and fun while maintaining self-respect.";
+        break;
+      case "negotiation":
+        templateInstructions = "\n\nTEMPLATE MODE: Negotiation\nWrite the response strategically to maintain leverage and avoid unnecessary concessions. Be firm but professional. Don't reveal your bottom line. Keep options open. Frame requests positively while protecting your position.";
+        break;
+      case "conflict":
+        templateInstructions = "\n\nTEMPLATE MODE: Conflict Resolution\nWrite the response calm, controlled and de-escalating while maintaining self-respect. Acknowledge concerns without accepting blame. Use neutral language. Focus on solutions rather than assigning fault. Stay composed.";
+        break;
+      case "decline":
+        templateInstructions = "\n\nTEMPLATE MODE: Polite Decline\nWrite the response politely declining the request without sounding apologetic or weak. Be clear and direct about the 'no'. Offer a brief reason if appropriate, but don't over-explain. Maintain friendly professionalism.";
+        break;
+      case "customer_service":
+        templateInstructions = "\n\nTEMPLATE MODE: Customer Service\nWrite the response helpful, solution-oriented and reassuring. Show empathy while maintaining professionalism. Focus on what can be done. Provide clear next steps. Build confidence that the issue will be resolved.";
+        break;
+    }
+  }
 
   const analysisPrompt = `Before generating the reply, perform an INTERNAL analysis (do not show this to the user):
 
@@ -240,11 +267,9 @@ export async function generateReply(params: {
 5. What manipulation signals are present?
 6. What urgency pressure exists?
 
-Use this analysis to inform your response. Then generate the reply based on this internal understanding.
+Use this analysis to inform your response. Then generate the reply based on this internal understanding.${templateInstructions}
 
-${params.conversationHistory ? `Previous Conversation:\n${params.conversationHistory}\n\n` : ""}
-
-Incoming Message:\n${params.input}\n\nContext (if any):\n${params.context || "None"}\n\nCommunication Mode:\n${params.tone}\n\nMode Instructions:\n${toneInstructions}\n\n${params.variant ? `Variation: ${params.variant}\n` : ""}${params.modifier ? `Additional Modifier: ${params.modifier}\n` : ""}Return ONLY the final reply text. Do not include the analysis.`;
+${params.conversationHistory ? `Previous Conversation:\n${params.conversationHistory}\n\n` : ""}Incoming Message:\n${params.input}\n\nContext (if any):\n${params.context || "None"}\n\nCommunication Mode:\n${params.tone}\n\nMode Instructions:\n${toneInstructions}\n\n${params.variant ? `Variation: ${params.variant}\n` : ""}${params.modifier ? `Additional Modifier: ${params.modifier}\n` : ""}Return ONLY the final reply text. Do not include the analysis.`;
 
   return callOpenAI([
     { role: "system", content: SYSTEM_PROMPT },

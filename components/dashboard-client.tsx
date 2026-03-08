@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import UsageProgressMeter from "@/components/usage-progress-meter";
 import ProFeaturePreview from "@/components/pro-feature-preview";
 import ResponseComparison from "@/components/response-comparison";
+import TemplateSelector, { type TemplateType } from "@/components/template-selector";
 
 const freeTones = ["Neutral", "Direct", "Polite", "Friendly"];
 const preTones = ["Tactical Control", "Precision Authority", "Psychological Edge"];
@@ -103,6 +104,7 @@ export default function DashboardClient({
   const [messagesUsed, setMessagesUsed] = useState<number | null>(null);
   const [proOptimizedReply, setProOptimizedReply] = useState<string | null>(null);
   const [proReplyLoading, setProReplyLoading] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>(null);
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isPro = profile.subscription_status === "pro";
@@ -421,6 +423,7 @@ export default function DashboardClient({
           tone,
           modifier,
           threadId: activeThreadId || undefined,
+          template: selectedTemplate || undefined,
         }),
       });
       const data = await response.json().catch(() => null);
@@ -697,50 +700,50 @@ export default function DashboardClient({
     <div className="space-y-6">
       {!isPro ? (
         <div className="rounded-lg bg-gradient-to-r from-sky-900 to-sky-800 p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-sky-100">Upgrade to Pro for unlimited replies and advanced modes.</p>
-            <button onClick={handleUpgrade} className="ml-4 whitespace-nowrap rounded-md bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-60">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-0">
+            <p className="text-sm font-medium text-sky-100 md:text-sm">Upgrade to Pro for unlimited replies and advanced modes.</p>
+            <button onClick={handleUpgrade} className="h-11 whitespace-nowrap rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-60 md:ml-4 md:h-auto md:text-xs">
               Upgrade to Pro
             </button>
           </div>
         </div>
       ) : null}
-      <div className="flex gap-2 border-b border-slate-700">
+      <div className="flex gap-1 border-b border-slate-700 md:gap-2">
         <button
           onClick={() => setTab("generate")}
-          className={`px-4 py-2 font-medium ${tab === "generate" ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
+          className={`h-11 px-4 py-2 text-sm font-medium md:h-auto md:text-base ${tab === "generate" ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
         >
           Generate
         </button>
         <button
           onClick={() => setTab("history")}
-          className={`px-4 py-2 font-medium ${tab === "history" ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
+          className={`h-11 px-4 py-2 text-sm font-medium md:h-auto md:text-base ${tab === "history" ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
         >
           History
         </button>
         <button
           onClick={() => setTab("favorites")}
-          className={`px-4 py-2 font-medium ${tab === "favorites" ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
+          className={`h-11 px-4 py-2 text-sm font-medium md:h-auto md:text-base ${tab === "favorites" ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-300"}`}
         >
           Favorites
         </button>
       </div>
       {tab === "generate" ? (
-      <div className="card p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <div className="flex items-center gap-3">
+      <div className="card p-4 md:p-6">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-xl font-semibold md:text-2xl">Dashboard</h1>
+          <div className="flex items-center gap-2 md:gap-3">
             {!isPro && remaining !== null ? (
-              <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">
+              <span className="rounded-full border border-slate-700 px-2.5 py-1 text-[10px] text-slate-300 md:px-3 md:text-xs">
                 {remaining} of 5 remaining
               </span>
             ) : null}
             {isPro ? (
-              <span className="rounded-full border border-emerald-700 bg-emerald-900/40 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+              <span className="rounded-full border border-emerald-700 bg-emerald-900/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-400 md:px-3 md:text-xs">
                 PRO MEMBER
               </span>
             ) : (
-              <span className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase tracking-wider text-slate-400">
+              <span className="rounded-full border border-slate-700 px-2.5 py-1 text-[10px] uppercase tracking-wider text-slate-400 md:px-3 md:text-xs">
                 FREE PLAN
               </span>
             )}
@@ -757,12 +760,20 @@ export default function DashboardClient({
           </div>
         ) : null}
         
-        <textarea className="min-h-28 w-full rounded-md border border-slate-700 bg-slate-950 p-3" placeholder="Paste incoming message" value={input} onChange={(e) => handleInputChange(e.target.value)} />
+        {/* Template Selector */}
+        <TemplateSelector
+          selectedTemplate={selectedTemplate}
+          onSelectTemplate={setSelectedTemplate}
+          isPro={isPro}
+          onUpgradeClick={handleUpgrade}
+        />
+        
+        <textarea className="min-h-[120px] w-full rounded-md border border-slate-700 bg-slate-950 p-4 text-base md:min-h-28 md:p-3 md:text-sm" placeholder="Paste incoming message" value={input} onChange={(e) => handleInputChange(e.target.value)} />
         <div className="mt-2 text-xs text-slate-400">
           {suggesting ? "✨ Suggesting best tone..." : input.length >= 10 ? "✓ Tone suggested" : ""}
         </div>
-        <textarea className="mt-3 min-h-20 w-full rounded-md border border-slate-700 bg-slate-950 p-3" placeholder="Optional context" value={context} onChange={(e) => setContext(e.target.value)} />
-        <select className="mt-3 w-full rounded-md border border-slate-700 bg-slate-950 p-3" value={tone} onChange={(e) => setTone(e.target.value)}>
+        <textarea className="mt-3 min-h-[100px] w-full rounded-md border border-slate-700 bg-slate-950 p-4 text-base md:min-h-20 md:p-3 md:text-sm" placeholder="Optional context" value={context} onChange={(e) => setContext(e.target.value)} />
+        <select className="mt-3 h-12 w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-base md:h-auto md:text-sm" value={tone} onChange={(e) => setTone(e.target.value)}>
           <optgroup label="Free">
             {freeTones.map((item) => (<option key={item} value={item}>{item}</option>))}
           </optgroup>
@@ -772,31 +783,52 @@ export default function DashboardClient({
             </optgroup>
           )}
         </select>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button className="rounded-md bg-sky-500 px-4 py-2 font-medium text-slate-950 disabled:opacity-60" onClick={() => generate()} disabled={loading || powerLoading}>{loading ? "Generating..." : "Generate"}</button>
-          {isPro ? <button className="rounded-md border border-slate-700 px-4 py-2 disabled:opacity-60" onClick={loadPowerScore} disabled={loading || powerLoading}>{powerLoading ? "Analyzing..." : "Power score"}</button> : null}
+        {/* Mobile: Sticky Generate Button */}
+        <div className="sticky bottom-0 left-0 right-0 z-20 -mx-4 mt-4 border-t border-slate-800 bg-slate-950/95 p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.4)] backdrop-blur md:relative md:mx-0 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none">
+          <button className="h-12 w-full rounded-md bg-sky-500 px-4 py-2 text-base font-medium text-slate-950 disabled:opacity-60 md:h-auto md:w-auto md:text-sm" onClick={() => generate()} disabled={loading || powerLoading}>{loading ? "Generating..." : "Generate Reply"}</button>
+        </div>
+        
+        {/* Desktop: Additional Buttons */}
+        <div className="mt-3 hidden gap-2 md:flex">
+          {isPro ? <button className="h-11 rounded-md border border-slate-700 px-4 py-2 disabled:opacity-60" onClick={loadPowerScore} disabled={loading || powerLoading}>{powerLoading ? "Analyzing..." : "Power score"}</button> : null}
           {!isPro ? (
-            <button className="rounded-md border border-slate-700 px-4 py-2" onClick={handleUpgrade}>
+            <button className="h-11 rounded-md border border-slate-700 px-4 py-2" onClick={handleUpgrade}>
               Upgrade to Pro
             </button>
           ) : null}
         </div>
 
         {outputs.length ? (
-          <div className="grid gap-3">
+          <div className="mt-6 grid gap-4 md:gap-3">
             {outputs.map((output, index) => (
               <article key={index} className="card p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <h2 className="font-semibold">{isPro ? ["Balanced", "Stronger", "Softer"][index] : "Reply"}</h2>
-                  <div className="flex gap-2">
-                    <button className="text-xs text-sky-400 hover:text-sky-300" onClick={() => navigator.clipboard.writeText(output)}>Copy</button>
-                    <button className="text-xs text-sky-400 hover:text-sky-300" onClick={() => shareReply(output)}>Share</button>
-                    <button className="text-xs text-sky-400 hover:text-sky-300" onClick={() => exportAsImage(output, tone)}>Export</button>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-base font-semibold md:text-sm">{isPro ? ["Balanced", "Stronger", "Softer"][index] : "Reply"}</h2>
+                  <div className="flex gap-3 md:gap-2">
+                    <button className="h-11 text-xs text-sky-400 hover:text-sky-300 md:h-auto" onClick={() => navigator.clipboard.writeText(output)}>Copy</button>
+                    <button className="h-11 text-xs text-sky-400 hover:text-sky-300 md:h-auto" onClick={() => shareReply(output)}>Share</button>
+                    <button className="hidden h-11 text-xs text-sky-400 hover:text-sky-300 md:inline-block md:h-auto" onClick={() => exportAsImage(output, tone)}>Export</button>
                   </div>
                 </div>
-                <p className="whitespace-pre-wrap text-slate-200">{output}</p>
+                
+                {/* Template Badge */}
+                {selectedTemplate && index === 0 && (
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-xs">
+                    <span className="text-sky-400">Template:</span>
+                    <span className="font-medium text-sky-300">
+                      {selectedTemplate === "work" && "Work"}
+                      {selectedTemplate === "dating" && "Dating"}
+                      {selectedTemplate === "negotiation" && "Negotiation"}
+                      {selectedTemplate === "conflict" && "Conflict"}
+                      {selectedTemplate === "decline" && "Polite Decline"}
+                      {selectedTemplate === "customer_service" && "Customer Service"}
+                    </span>
+                  </div>
+                )}
+                
+                <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-200 md:text-sm md:leading-normal">{output}</p>
 
-                <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-3">
+                <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-3 md:p-3">
                   <h3 className="text-sm font-semibold text-slate-100">Quick Rewrite</h3>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {quickRewriteModes.map((mode) => {
@@ -806,7 +838,7 @@ export default function DashboardClient({
                         <button
                           key={mode}
                           type="button"
-                          className="inline-flex items-center gap-2 rounded-md border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:opacity-60"
+                          className="inline-flex h-11 items-center gap-2 rounded-md border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:opacity-60 md:h-auto md:px-3 md:text-xs"
                           onClick={() => quickRewriteOutput(index, mode)}
                           disabled={isBusy}
                         >
@@ -818,7 +850,7 @@ export default function DashboardClient({
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-3">
+                <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-3 md:p-3">
                   <h3 className="text-sm font-semibold text-slate-100">Advanced Rewrite Modes (Pro)</h3>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {rewriteModes.map((mode) => {
@@ -827,11 +859,11 @@ export default function DashboardClient({
                         <button
                           key={mode}
                           type="button"
-                          className={`rounded-md border px-3 py-2 text-xs ${isPro ? "border-slate-600 text-slate-200 hover:border-sky-500 hover:text-sky-300" : "border-slate-700 text-slate-400"}`}
+                          className={`h-11 rounded-md border px-4 py-2 text-sm md:h-auto md:px-3 md:text-xs ${isPro ? "border-slate-600 text-slate-200 hover:border-sky-500 hover:text-sky-300" : "border-slate-700 text-slate-400"}`}
                           onClick={() => rewriteOutput(index, mode)}
                           disabled={isLoadingMode}
                         >
-                          {isLoadingMode ? "Rewriting..." : isPro ? mode : `${mode} • 🔒 Pro Feature`}
+                          {isLoadingMode ? "Rewriting..." : isPro ? mode : `${mode} • 🔒`}
                         </button>
                       );
                     })}

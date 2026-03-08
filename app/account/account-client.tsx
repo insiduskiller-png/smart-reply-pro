@@ -159,42 +159,54 @@ export default function AccountClient() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <div className="card p-6 text-sm text-slate-300">Loading account...</div>
+      <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
+        <div className="card p-4 text-sm text-slate-300 md:p-6">Loading account...</div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <div className="card space-y-6 p-6">
+    <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
+      <div className="card space-y-6 p-4 md:p-6">
         <div>
-          <h1 className="text-2xl font-semibold">Account</h1>
-          <p className="text-sm text-slate-300">Manage your profile details.</p>
+          <h1 className="text-xl font-semibold md:text-2xl">Account</h1>
+          <p className="mt-1 text-sm text-slate-300">Manage your profile details.</p>
         </div>
 
-        <div className="space-y-2 text-sm text-slate-300">
-          <div>Username: {profile?.username || user?.email || "-"}</div>
-          <div>Email: {user?.email || "-"}</div>
-          <div>Subscription status: {(profile?.subscription_status ?? "free").toLowerCase() === "pro" ? "Pro" : "Free"}</div>
-          <div>Member since: {formatDate(profile?.created_at ?? user?.created_at ?? null)}</div>
+        <div className="space-y-3 text-sm text-slate-300 md:space-y-2">
+          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
+            <span className="text-xs text-slate-400">Username:</span>{" "}
+            <span className="font-medium">{profile?.username || user?.email || "-"}</span>
+          </div>
+          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
+            <span className="text-xs text-slate-400">Email:</span>{" "}
+            <span className="font-medium">{user?.email || "-"}</span>
+          </div>
+          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
+            <span className="text-xs text-slate-400">Subscription status:</span>{" "}
+            <span className="font-medium">{(profile?.subscription_status ?? "free").toLowerCase() === "pro" ? "Pro" : "Free"}</span>
+          </div>
+          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
+            <span className="text-xs text-slate-400">Member since:</span>{" "}
+            <span className="font-medium">{formatDate(profile?.created_at ?? user?.created_at ?? null)}</span>
+          </div>
         </div>
 
         {error ? <p className="text-sm text-rose-400">{error}</p> : null}
         {success ? <p className="text-sm text-emerald-400">{success}</p> : null}
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm text-slate-300">Username</label>
+        <div className="space-y-5 md:space-y-4">
+          <div className="space-y-3 md:space-y-2">
+            <label className="text-sm font-medium text-slate-300">Username</label>
             <input
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+              className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base md:h-10 md:px-3 md:text-sm"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               placeholder="Username"
             />
             <button
               type="button"
-              className="rounded-md border border-slate-700 px-4 py-2 text-sm"
+              className="h-11 w-full rounded-md border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-60 md:h-auto md:w-auto"
               onClick={handleUsernameChange}
               disabled={savingUsername}
             >
@@ -202,17 +214,17 @@ export default function AccountClient() {
             </button>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm text-slate-300">Email</label>
+          <div className="space-y-3 md:space-y-2">
+            <label className="text-sm font-medium text-slate-300">Email</label>
             <input
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+              className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base md:h-10 md:px-3 md:text-sm"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="Email"
             />
             <button
               type="button"
-              className="rounded-md border border-slate-700 px-4 py-2 text-sm"
+              className="h-11 w-full rounded-md border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-60 md:h-auto md:w-auto"
               onClick={handleEmailChange}
               disabled={savingEmail}
             >
@@ -220,11 +232,11 @@ export default function AccountClient() {
             </button>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-sm text-slate-300">Password</p>
+          <div className="space-y-3 md:space-y-2">
+            <p className="text-sm font-medium text-slate-300">Password</p>
             <button
               type="button"
-              className="rounded-md border border-slate-700 px-4 py-2 text-sm"
+              className="h-11 w-full rounded-md border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-60 md:h-auto md:w-auto"
               onClick={handlePasswordReset}
               disabled={sendingReset}
             >
