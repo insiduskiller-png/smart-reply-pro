@@ -32,13 +32,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Ensure profile exists for user
-    try {
-      await ensureUserProfile(data.user);
-    } catch (profileErr) {
+    // Ensure profile exists for user (non-blocking, do not delay login redirect)
+    void ensureUserProfile(data.user).catch((profileErr) => {
       console.error("Profile creation error:", profileErr);
-      // Don't fail login if profile creation fails
-    }
+    });
 
     const response = NextResponse.json({
       success: true,

@@ -61,55 +61,55 @@ export async function trackEvent(
 /**
  * Track homepage visit
  */
-export function trackHomepageVisit(): void {
-  trackEvent("homepage_visit");
+export function trackHomepageVisit(): Promise<void> {
+  return trackEvent("homepage_visit");
 }
 
 /**
  * Track Reply Game interaction
  */
-export function trackReplyGameInteraction(round: number): void {
-  trackEvent("reply_game_interaction", { round });
+export function trackReplyGameInteraction(round: number): Promise<void> {
+  return trackEvent("reply_game_interaction", { round });
 }
 
 /**
  * Track signup CTA click
  */
-export function trackSignupClick(source: string): void {
-  trackEvent("signup_click", { source });
+export function trackSignupClick(source: string): Promise<void> {
+  return trackEvent("signup_click", { source });
 }
 
 /**
  * Track account creation
  */
-export function trackAccountCreated(email: string): void {
-  trackEvent("account_created", { email });
+export function trackAccountCreated(email: string): Promise<void> {
+  return trackEvent("account_created", { email });
 }
 
 /**
  * Track reply generation
  */
-export function trackReplyGenerated(tone: string, isPro: boolean): void {
-  trackEvent("reply_generated", { tone, isPro });
+export function trackReplyGenerated(tone: string, isPro: boolean): Promise<void> {
+  return trackEvent("reply_generated", { tone, isPro });
 }
 
 /**
  * Track login click
  */
-export function trackLoginClick(source: string): void {
-  trackEvent("login_clicked", { source });
+export function trackLoginClick(source: string): Promise<void> {
+  return trackEvent("login_clicked", { source });
 }
 
 /**
  * Track pricing page view
  */
-export function trackPricingView(): void {
-  trackEvent("pricing_view");
+export function trackPricingView(): Promise<void> {
+  return trackEvent("pricing_view");
 }
 
 /**
  * Track upgrade click
  */
-export function trackUpgradeClick(currentPlan: string): void {
-  trackEvent("upgrade_clicked", { currentPlan });
+export function trackUpgradeClick(currentPlan: string): Promise<void> {
+  return trackEvent("upgrade_clicked", { currentPlan });
 }

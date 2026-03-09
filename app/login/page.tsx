@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase-browser";
@@ -11,6 +11,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const didRedirectRef = useRef(false);
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+      if (session && !didRedirectRef.current) {
+        didRedirectRef.current = true;
+        setLoading(false);
+        router.replace("/dashboard");
+        router.refresh();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -35,29 +53,36 @@ export default function LoginPage() {
 
       if (!response.ok) {
         setError(data.error || "Login failed");
-        setLoading(false);
         return;
       }
 
       if (data.success) {
         if (data.sessionToken && data.refreshToken) {
-          try {
-            await supabaseBrowser.auth.setSession({
+          // Trigger auth listener ASAP without blocking redirect on slower devices
+          void supabaseBrowser.auth
+            .setSession({
               access_token: data.sessionToken,
               refresh_token: data.refreshToken,
+            })
+            .catch(() => {
+              // Keep server-cookie auth flow working even if client session sync fails
             });
-          } catch {
-            // Keep server-cookie auth flow working even if client session sync fails
-          }
         }
 
-        setLoading(false);
+        didRedirectRef.current = true;
         router.replace("/dashboard");
+        router.refresh();
+        return;
       }
+
+      setError("Login failed. Please try again.");
     } catch (e) {
       console.error("Login error:", e);
       setError("Network error. Please try again.");
-      setLoading(false);
+    } finally {
+      if (!didRedirectRef.current) {
+        setLoading(false);
+      }
     }
   }
 

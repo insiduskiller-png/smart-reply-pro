@@ -64,15 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setSession(currentSession ?? null);
       setUser(currentSession?.user ?? null);
+      setLoading(false);
 
       if (currentSession?.user?.id) {
-        await fetchProfile(currentSession.user.id);
+        void fetchProfile(currentSession.user.id);
       } else {
         setProfile(null);
-      }
-
-      if (mounted) {
-        setLoading(false);
       }
     }
 
@@ -83,14 +80,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabaseBrowser.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
+      setLoading(false);
 
       if (nextSession?.user?.id) {
-        await fetchProfile(nextSession.user.id);
+        void fetchProfile(nextSession.user.id);
       } else {
         setProfile(null);
       }
-
-      setLoading(false);
     });
 
     return () => {

@@ -46,8 +46,6 @@ export async function POST(request: Request) {
   }
 
   try {
-
-  try {
     const body = await request.json().catch(() => ({}));
     const reply = sanitizeText(body.reply, 4000);
 

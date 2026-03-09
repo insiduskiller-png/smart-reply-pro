@@ -7,12 +7,13 @@ import { templates } from "@/lib/templates";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: { template?: string | string[] };
+  searchParams?: Promise<{ template?: string | string[] }>;
 }) {
   const user = await requireUser();
   if (!user) redirect("/login");
 
-  const templateId = typeof searchParams?.template === "string" ? searchParams.template : "";
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const templateId = typeof resolvedSearchParams.template === "string" ? resolvedSearchParams.template : "";
   const selectedTemplate = templates.find((template) => template.id === templateId);
 
   // Extract username from email (part before @)
