@@ -28,7 +28,7 @@ export default function Footer() {
               Terms of Use
             </Link>
             <a
-              href="mailto:support@smartreplypo.com"
+              href="mailto:owner@smartreplypro.com"
               className="transition hover:text-sky-400"
             >
               Contact

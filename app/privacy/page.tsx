@@ -82,7 +82,7 @@ export default function PrivacyPolicy() {
               If you have questions about this Privacy Policy, please contact us at:
             </p>
             <p className="mt-3 text-slate-300">
-              Email: <a href="mailto:support@smartreplypo.com" className="text-sky-400 hover:text-sky-300">support@smartreplypo.com</a>
+              Email: <a href="mailto:owner@smartreplypro.com" className="text-sky-400 hover:text-sky-300">owner@smartreplypro.com</a>
             </p>
           </div>
         </section>
