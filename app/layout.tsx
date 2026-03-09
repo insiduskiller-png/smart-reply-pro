@@ -22,7 +22,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/" className="text-lg font-semibold tracking-tight">Smart Reply Pro</Link>
               <div className="flex gap-4 text-sm text-slate-300">
                 <Link href="/pricing" className="hover:text-sky-400">Pricing</Link>
-                <Link href="/dashboard" className="hover:text-sky-400">Dashboard</Link>
                 <NavbarUser />
               </div>
             </nav>

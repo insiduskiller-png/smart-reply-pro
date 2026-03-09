@@ -116,7 +116,7 @@ export default function PricingPage() {
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>5 generations/day</span>
+              <span>5 generations per day</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>

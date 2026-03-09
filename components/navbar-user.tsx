@@ -23,11 +23,11 @@ export default function NavbarUser() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-2">
-        <Link href="/login" className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950">
+      <div className="flex items-center gap-3">
+        <Link href="/login" className="hover:text-sky-400">
           Sign In
         </Link>
-        <Link href="/register" className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-200">
+        <Link href="/register" className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-sky-400">
           Create Account
         </Link>
       </div>
@@ -46,6 +46,7 @@ export default function NavbarUser() {
 
   return (
     <div className="flex items-center gap-3">
+      <Link href="/dashboard" className="hover:text-sky-400">Dashboard</Link>
       <div className="text-right">
         <p className="text-sm text-slate-100">Welcome, {displayName}</p>
         <span

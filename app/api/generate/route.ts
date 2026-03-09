@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check generation limits for free users (max 6 per 24 hours)
+    // Check generation limits for free users (max 5 per 24 hours)
     if (!isPro) {
       // Calculate 24 hours ago
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
       const generationCount = limitData?.length ?? 0;
 
-      if (generationCount >= 6) {
+      if (generationCount >= 5) {
         return NextResponse.json(
           { error: "Daily limit reached. Upgrade to Pro." },
           { status: 403 }

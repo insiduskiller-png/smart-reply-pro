@@ -17,20 +17,15 @@ function randomScenario(excludeIds: string[]): ReplyGameScenario | null {
 }
 
 export default function ReplyGame() {
-  const [currentScenario, setCurrentScenario] = useState<ReplyGameScenario | null>(null);
-  const [usedScenarioIds, setUsedScenarioIds] = useState<string[]>([]);
+  // Initialize with first scenario immediately for instant render
+  const firstScenario = useMemo(() => randomScenario([]), []);
+  
+  const [currentScenario, setCurrentScenario] = useState<ReplyGameScenario | null>(firstScenario);
+  const [usedScenarioIds, setUsedScenarioIds] = useState<string[]>(firstScenario ? [firstScenario.id] : []);
   const [selectedChoice, setSelectedChoice] = useState<Choice | null>(null);
   const [completedRounds, setCompletedRounds] = useState(0);
 
   const interactionComplete = completedRounds >= 2;
-
-  useEffect(() => {
-    const first = randomScenario([]);
-    if (!first) return;
-
-    setCurrentScenario(first);
-    setUsedScenarioIds([first.id]);
-  }, []);
 
   const result = useMemo(() => {
     if (!currentScenario || !selectedChoice) return null;
@@ -73,12 +68,9 @@ export default function ReplyGame() {
     }
   };
 
+  // Scenarios are now initialized immediately via useMemo, no loading state needed
   if (!currentScenario) {
-    return (
-      <section className="card mx-auto w-full max-w-3xl p-6 md:p-8">
-        <p className="text-slate-300">Loading your first scenario...</p>
-      </section>
-    );
+    return null;
   }
 
   return (
