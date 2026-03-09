@@ -4,6 +4,7 @@ import "./globals.css";
 import RecoveryHashRedirect from "@/components/auth/recovery-hash-redirect";
 import NavbarUser from "@/components/navbar-user";
 import MobileNav from "@/components/mobile-nav";
+import Footer from "@/components/footer";
 import { AuthProvider } from "@/components/auth-provider";
 
 export const metadata: Metadata = {
@@ -31,7 +32,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <MobileNav />
           
           <RecoveryHashRedirect />
-          {children}
+          
+          {/* Main Content */}
+          <div className="flex min-h-screen flex-col">
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </AuthProvider>
       </body>
     </html>

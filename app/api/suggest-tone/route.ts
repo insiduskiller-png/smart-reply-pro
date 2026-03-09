@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { suggestTone } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
 import { getUserProfile } from "@/lib/supabase";
@@ -12,6 +13,31 @@ export async function POST(req: NextRequest) {
 
     const profile = await getUserProfile(user.id);
     const isPro = profile?.subscription_status === "pro";
+
+    // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
+    const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);
+    const rate = enforceRateLimit(user.id, rateLimit, windowMs);
+
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          retryAfter: rate.retryAfter,
+          limit: rate.limit,
+          remaining: 0,
+          resetAt: rate.reset,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rate.retryAfter || 60),
+            "RateLimit-Limit": String(rate.limit),
+            "RateLimit-Remaining": "0",
+            "RateLimit-Reset": String(rate.reset),
+          },
+        }
+      );
+    }
 
     const { input } = await req.json();
 

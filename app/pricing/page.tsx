@@ -148,19 +148,9 @@ export default function PricingPage() {
               <span>3 response variants + escalation tools</span>
             </li>
           </ul>
-          {isPro && isLoggedIn ? (
-            <p className="mt-6 rounded-md border border-emerald-700 bg-emerald-900/40 px-4 py-3 text-center text-sm font-semibold text-emerald-400">
-              You are already a Pro member
-            </p>
-          ) : null}
-          <button
-            className={getButtonClass()}
-            onClick={startCheckout}
-            disabled={loading || checkingAuth || isPro || !isLoggedIn}
-          >
-            {getButtonText()}
-          </button>
-          {error ? <p className="mt-3 text-sm text-rose-400">{error}</p> : null}
+          <p className="mt-6 rounded-md border border-slate-700 bg-slate-900/50 px-4 py-3 text-center text-sm font-semibold text-slate-400">
+            Pro version coming soon.
+          </p>
           {!isLoggedIn && !checkingAuth ? (
             <p className="mt-3 text-center text-xs text-slate-400 md:text-left">
               Don&apos;t have an account?{" "}

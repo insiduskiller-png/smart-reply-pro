@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
 import { getUserProfile } from "@/lib/supabase";
 import { powerScoreAnalysis } from "@/lib/openai";
@@ -11,6 +12,31 @@ export async function POST(request: Request) {
   const profile = await getUserProfile(user.id);
   if (profile?.subscription_status !== "pro") {
     return NextResponse.json({ error: "Pro required" }, { status: 403 });
+  }
+
+  // APPLY RATE LIMITING (Pro: 30/min)
+  const { limit: rateLimit, windowMs } = getTierRateLimit(true);
+  const rate = enforceRateLimit(user.id, rateLimit, windowMs);
+
+  if (!rate.allowed) {
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded",
+        retryAfter: rate.retryAfter,
+        limit: rate.limit,
+        remaining: 0,
+        resetAt: rate.reset,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rate.retryAfter || 60),
+          "RateLimit-Limit": String(rate.limit),
+          "RateLimit-Remaining": "0",
+          "RateLimit-Reset": String(rate.reset),
+        },
+      }
+    );
   }
 
   try {

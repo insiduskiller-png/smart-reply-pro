@@ -25,7 +25,7 @@ export async function GET() {
     }
 
     const messagesUsed = count ?? 0;
-    const limit = 6;
+    const limit = 5;
 
     return NextResponse.json({
       messagesUsed,

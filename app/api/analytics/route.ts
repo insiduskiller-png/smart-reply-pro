@@ -1,0 +1,36 @@
+import { NextResponse } from "next/server";
+import { supabaseService } from "@/lib/supabase";
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const { event, userId, metadata, timestamp } = body;
+
+    if (!event) {
+      return NextResponse.json({ error: "Event is required" }, { status: 400 });
+    }
+
+    // Store event in Supabase
+    const { error } = await supabaseService
+      .from("analytics_events")
+      .insert({
+        event,
+        user_id: userId || null,
+        metadata: metadata || {},
+        timestamp: timestamp || new Date().toISOString(),
+        ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+        user_agent: request.headers.get("user-agent") || null,
+      });
+
+    if (error) {
+      console.error("Analytics insert error:", error);
+      // Don't return error to client - just log it
+    }
+
+    return NextResponse.json({ success: true }, { status: 202 });
+  } catch (err) {
+    console.error("Analytics endpoint error:", err);
+    // Return 202 regardless - we don't want to fail the client request
+    return NextResponse.json({ success: true }, { status: 202 });
+  }
+}

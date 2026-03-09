@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
+import { getUserProfile } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
 import { generateStrategicInsight } from "@/lib/openai";
 
@@ -14,6 +16,36 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const profile = await getUserProfile(user.id);
+  const isPro = profile?.subscription_status === "pro";
+
+  // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
+  const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);
+  const rate = enforceRateLimit(user.id, rateLimit, windowMs);
+
+  if (!rate.allowed) {
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded",
+        retryAfter: rate.retryAfter,
+        limit: rate.limit,
+        remaining: 0,
+        resetAt: rate.reset,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rate.retryAfter || 60),
+          "RateLimit-Limit": String(rate.limit),
+          "RateLimit-Remaining": "0",
+          "RateLimit-Reset": String(rate.reset),
+        },
+      }
+    );
+  }
+
+  try {
 
   try {
     const body = await request.json().catch(() => ({}));

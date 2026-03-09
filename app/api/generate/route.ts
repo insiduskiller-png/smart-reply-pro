@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { enforceRateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { detectTone, generateReply, powerScoreAnalysis } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
 import {
@@ -13,6 +13,7 @@ import {
   supabaseService,
 } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
+import { trackEvent } from "@/lib/analytics";
 
 const proPremiumTones = ["Tactical Control", "Precision Authority", "Psychological Edge"];
 
@@ -20,12 +21,84 @@ export async function POST(request: Request) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const rate = enforceRateLimit(user.id);
-  if (!rate.allowed) {
-    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
-  }
-
   try {
+    // EARLY AUTH: Fetch user profile immediately to enforce generation limits BEFORE any API calls
+    const profile = await getUserProfile(user.id);
+    if (!profile) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 400 });
+    }
+
+    const isPro = profile.subscription_status === "pro";
+
+    // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
+    const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);
+    const rate = enforceRateLimit(user.id, rateLimit, windowMs);
+
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          retryAfter: rate.retryAfter,
+          limit: rate.limit,
+          remaining: 0,
+          resetAt: rate.reset,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rate.retryAfter || 60),
+            "RateLimit-Limit": String(rate.limit),
+            "RateLimit-Remaining": "0",
+            "RateLimit-Reset": String(rate.reset),
+          },
+        }
+      );
+    }
+
+    // ENFORCE GENERATION LIMITS (free tier only, before any OpenAI calls)
+    if (!isPro) {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: limitData, error: limitError, count } = await supabaseService
+        .from("usage_limits")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id)
+        .gte("created_at", twentyFourHoursAgo);
+
+      if (limitError) {
+        console.error("Generation limit check error:", limitError);
+      }
+
+      const generationCount = count ?? 0;
+
+      // Enforce 5 generations per day for free tier
+      if (generationCount >= 5) {
+        return NextResponse.json(
+          { 
+            error: "Free limit reached. Upgrade to Pro for unlimited generations.",
+            remaining: 0,
+            limit: 5,
+            used: generationCount
+          },
+          { status: 403 }
+        );
+      }
+
+      // Pre-register this generation in usage_limits (BEFORE OpenAI call)
+      const { error: insertError } = await supabaseService
+        .from("usage_limits")
+        .insert({ user_id: user.id });
+
+      if (insertError) {
+        console.error("Failed to record generation usage:", insertError);
+        return NextResponse.json(
+          { error: "Unable to process request. Please try again." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // NOW PROCESS REQUEST (limits already enforced)
     const body = await request.json().catch(() => ({}));
     const input = sanitizeText(body.input, 4000);
     const context = sanitizeText(body.context, 4000);
@@ -35,9 +108,6 @@ export async function POST(request: Request) {
     const template = sanitizeText(body.template, 64);
 
     if (!input) return NextResponse.json({ error: "Input required" }, { status: 400 });
-
-    const profile = await getUserProfile(user.id);
-    const isPro = profile?.subscription_status === "pro";
 
     let activeThread = requestedThreadId
       ? await getConversationThreadById(requestedThreadId, user.id)
@@ -63,39 +133,6 @@ export async function POST(request: Request) {
         { error: "This style requires Pro plan." },
         { status: 403 }
       );
-    }
-
-    // Check generation limits for free users (max 5 per 24 hours)
-    if (!isPro) {
-      // Calculate 24 hours ago
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-      // Count generations in the last 24 hours
-      const { data: limitData, error: limitError } = await supabaseService
-        .from("usage_limits")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id)
-        .gte("created_at", twentyFourHoursAgo);
-
-      if (limitError) {
-        console.error("Generation limit check error:", limitError);
-      }
-
-      const generationCount = limitData?.length ?? 0;
-
-      if (generationCount >= 5) {
-        return NextResponse.json(
-          { error: "Daily limit reached. Upgrade to Pro." },
-          { status: 403 }
-        );
-      }
-
-      // Insert usage limit row BEFORE generation (after check passes)
-      await supabaseService
-        .from("usage_limits")
-        .insert({
-          user_id: user.id,
-        });
     }
 
     const previousMessages = await getConversationMessagesByThread({
@@ -162,6 +199,17 @@ export async function POST(request: Request) {
       role: "assistant",
       content: outputs[0],
     });
+
+    // Track reply generation
+    try {
+      await trackEvent(
+        "reply_generated",
+        { tone, variant: isPro ? "Balanced" : undefined, isPro },
+        user.id
+      );
+    } catch (analyticsErr) {
+      console.debug("Failed to track reply generation:", analyticsErr);
+    }
 
     return NextResponse.json({
       outputs,

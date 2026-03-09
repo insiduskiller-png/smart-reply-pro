@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { replyGameScenarios, type ReplyGameScenario } from "@/lib/reply-game-scenarios";
+import { trackReplyGameInteraction } from "@/lib/analytics";
 
 type Choice = "a" | "b";
 
@@ -46,6 +47,11 @@ export default function ReplyGame() {
 
     setSelectedChoice(choice);
     setCompletedRounds((prev) => prev + 1);
+    
+    // Track the interaction
+    trackReplyGameInteraction(completedRounds + 1).catch(err => 
+      console.debug("Failed to track reply game interaction:", err)
+    );
   };
 
   const handleNextScenario = () => {
@@ -141,6 +147,11 @@ export default function ReplyGame() {
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/register"
+                  onClick={() => {
+                    trackReplyGameInteraction(0).catch(err => 
+                      console.debug("Failed to track signup click:", err)
+                    );
+                  }}
                   className="inline-flex items-center justify-center rounded-md bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
                 >
                   Create Free Account

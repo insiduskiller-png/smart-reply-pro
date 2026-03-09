@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase, ensureUserProfile } from "@/lib/supabase";
+import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: Request) {
   try {
@@ -58,6 +59,14 @@ export async function POST(req: Request) {
     } catch (profileErr) {
       console.error("Profile creation error:", profileErr);
       // Don't fail signup if profile creation fails
+    }
+
+    // Track account creation
+    try {
+      await trackEvent("account_created", { email }, data.user.id);
+    } catch (analyticsErr) {
+      console.debug("Failed to track account creation:", analyticsErr);
+      // Don't fail signup if analytics fails
     }
 
     return NextResponse.json({

@@ -1,6 +1,14 @@
+"use client";
+
+import { useEffect } from "react";
 import ReplyGame from "@/components/home/reply-game";
+import { trackHomepageVisit } from "@/lib/analytics";
 
 export default function Home() {
+  useEffect(() => {
+    trackHomepageVisit().catch(err => console.debug("Failed to track homepage visit:", err));
+  }, []);
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-14">
       <section className="mb-6 p-2 md:p-0">

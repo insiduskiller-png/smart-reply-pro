@@ -699,12 +699,9 @@ export default function DashboardClient({
   return (
     <div className="space-y-6">
       {!isPro ? (
-        <div className="rounded-lg bg-gradient-to-r from-sky-900 to-sky-800 p-4">
+        <div className="rounded-lg bg-gradient-to-r from-slate-900 to-slate-800 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-0">
-            <p className="text-sm font-medium text-sky-100 md:text-sm">Upgrade to Pro for unlimited replies and advanced modes.</p>
-            <button onClick={handleUpgrade} className="h-11 whitespace-nowrap rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-60 md:ml-4 md:h-auto md:text-xs">
-              Upgrade to Pro
-            </button>
+            <p className="text-sm font-medium text-slate-300 md:text-sm">Pro version coming soon. More features arriving soon.</p>
           </div>
         </div>
       ) : null}
@@ -791,11 +788,6 @@ export default function DashboardClient({
         {/* Desktop: Additional Buttons */}
         <div className="mt-3 hidden gap-2 md:flex">
           {isPro ? <button className="h-11 rounded-md border border-slate-700 px-4 py-2 disabled:opacity-60" onClick={loadPowerScore} disabled={loading || powerLoading}>{powerLoading ? "Analyzing..." : "Power score"}</button> : null}
-          {!isPro ? (
-            <button className="h-11 rounded-md border border-slate-700 px-4 py-2" onClick={handleUpgrade}>
-              Upgrade to Pro
-            </button>
-          ) : null}
         </div>
 
         {outputs.length ? (
@@ -1144,24 +1136,17 @@ export default function DashboardClient({
       {showUpgradeModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
           <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5">
-            <h2 className="text-lg font-semibold text-slate-100">🔒 Pro Feature</h2>
+            <h2 className="text-lg font-semibold text-slate-100">Pro Coming Soon</h2>
             <p className="mt-2 text-sm text-slate-300">
-              Advanced Rewrite Modes are available on Pro. Upgrade to unlock Lawyer, Negotiator, and Manager rewrites.
+              Advanced rewrite modes will be available in the Pro version. Stay tuned!
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200"
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
                 onClick={() => setShowUpgradeModal(false)}
               >
-                Not now
-              </button>
-              <button
-                type="button"
-                className="rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950"
-                onClick={handleUpgrade}
-              >
-                Upgrade to Pro
+                Got it
               </button>
             </div>
           </div>
