@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
 
   async function handleLogout() {
@@ -19,7 +19,13 @@ export default function MobileNav() {
     }
   }
 
-  const displayName = user?.email?.split("@")[0] || profile?.username || "Member";
+  const displayName = useMemo(() => {
+    const profileName = profile?.username?.trim();
+    if (profileName) return profileName;
+    const metadataName = user?.user_metadata?.username?.trim();
+    if (metadataName) return metadataName;
+    return (user?.email ?? "Member").split("@")[0];
+  }, [profile?.username, user?.email, user?.user_metadata?.username]);
 
   return (
     <>
@@ -31,7 +37,7 @@ export default function MobileNav() {
           </Link>
           
           <div className="flex items-center gap-3">
-            {user && (
+            {!loading && user && (
               <div className="flex items-center gap-2">
                 <span
                   className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
@@ -91,18 +97,33 @@ export default function MobileNav() {
                 </button>
               </div>
 
-              {/* User Info */}
-              {user && (
+              {/* User welcome block */}
+              {!loading && user && (
                 <div className="border-b border-slate-800 px-4 py-4">
-                  <p className="text-sm font-medium text-slate-100">{displayName}</p>
-                  <p className="mt-1 text-xs text-slate-400">{user.email}</p>
+                  <p className="text-sm font-semibold text-slate-100">{displayName}</p>
+                  <span
+                    className={`mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      isPro
+                        ? "border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                        : "border border-slate-600 bg-slate-800/60 text-slate-300"
+                    }`}
+                  >
+                    {isPro ? "Pro Member" : "Free Member"}
+                  </span>
                 </div>
               )}
 
               {/* Navigation Links */}
               <nav className="flex-1 overflow-y-auto px-2 py-4">
                 <div className="space-y-1">
-                  {user ? (
+                  {loading ? (
+                    /* Skeleton while auth state loads */
+                    <>
+                      <div className="h-11 rounded-md bg-slate-800/50 animate-pulse" />
+                      <div className="h-11 rounded-md bg-slate-800/50 animate-pulse" />
+                      <div className="h-11 rounded-md bg-slate-800/50 animate-pulse" />
+                    </>
+                  ) : user ? (
                     <>
                       <Link
                         href="/dashboard"

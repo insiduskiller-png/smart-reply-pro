@@ -206,9 +206,7 @@ export async function generateReply(params: {
 
 Then write one final message that feels human, concise, and situationally precise.${templateInstructions}
 
-${params.conversationHistory ? `Previous Conversation:\n${params.conversationHistory}\n\n` : ""}Incoming Message:\n${params.input}\n\nContext (if any):\n${params.context || "None"}\n\nCommunication Mode:\n${params.tone}\n\nMode Instructions:\n${toneInstructions}\n\n${params.variant ? `Variation: ${params.variant}\n` : ""}${params.modifier ? `Additional Modifier: ${params.modifier}\n` : ""}Return ONLY the final reply text. Do not include the analysis.`;
-
-Constraints:
+${params.conversationHistory ? `Previous Conversation:\n${params.conversationHistory}\n\n` : ""}Incoming Message:\n${params.input}\n\nContext (if any):\n${params.context || "None"}\n\nCommunication Mode:\n${params.tone}\n\nMode Instructions:\n${toneInstructions}\n\n${params.variant ? `Variation: ${params.variant}\n` : ""}${params.modifier ? `Additional Modifier: ${params.modifier}\n` : ""}Constraints:
 - default 2-5 sentences
 - avoid generic AI phrasing and customer-support tone
 - maintain clarity, self-respect, and calm authority
