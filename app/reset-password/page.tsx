@@ -2,12 +2,25 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 function extractAccessToken() {
   if (typeof window === "undefined") return "";
-  const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("access_token");
-  const fromQuery = new URLSearchParams(window.location.search).get("access_token");
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const queryParams = new URLSearchParams(window.location.search);
+  const authType = hashParams.get("type") || queryParams.get("type") || "";
+  if (authType !== "recovery") return "";
+
+  const fromHash = hashParams.get("access_token");
+  const fromQuery = queryParams.get("access_token");
   return fromHash || fromQuery || "";
+}
+
+function isRecoveryFlow() {
+  if (typeof window === "undefined") return false;
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const queryParams = new URLSearchParams(window.location.search);
+  return (hashParams.get("type") || queryParams.get("type") || "") === "recovery";
 }
 
 export default function ResetPasswordPage() {
@@ -20,12 +33,31 @@ export default function ResetPasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = extractAccessToken();
-    if (!token) {
+    async function resolveResetToken() {
+      if (!isRecoveryFlow()) {
+        setError("Reset session not found. Please use the latest reset link from your email.");
+        return;
+      }
+
+      const tokenFromUrl = extractAccessToken();
+      if (tokenFromUrl) {
+        setAccessToken(tokenFromUrl);
+        return;
+      }
+
+      const {
+        data: { session },
+      } = await supabaseBrowser.auth.getSession();
+
+      if (session?.access_token) {
+        setAccessToken(session.access_token);
+        return;
+      }
+
       setError("Reset session not found. Please use the latest reset link from your email.");
-      return;
     }
-    setAccessToken(token);
+
+    void resolveResetToken();
   }, []);
 
   async function onSubmit(event: FormEvent) {

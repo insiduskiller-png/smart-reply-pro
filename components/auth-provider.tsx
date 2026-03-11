@@ -52,6 +52,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetchProfile(user.id);
   }, [fetchProfile, user?.id]);
 
+  const syncServerSession = useCallback(async (accessToken?: string) => {
+    if (!accessToken) {
+      await fetch("/api/auth/session", { method: "DELETE" });
+      return;
+    }
+
+    await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessToken }),
+    });
+  }, []);
+
   useEffect(() => {
     let mounted = true;
 
@@ -67,8 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
 
       if (currentSession?.user?.id) {
+        void syncServerSession(currentSession.access_token);
         void fetchProfile(currentSession.user.id);
       } else {
+        void syncServerSession();
         setProfile(null);
       }
     }
@@ -83,8 +98,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
 
       if (nextSession?.user?.id) {
+        void syncServerSession(nextSession.access_token);
         void fetchProfile(nextSession.user.id);
       } else {
+        void syncServerSession();
         setProfile(null);
       }
     });
@@ -93,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, syncServerSession]);
 
   const value = useMemo(
     () => ({ session, user, profile, loading, refreshProfile }),

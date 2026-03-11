@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,12 +39,12 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Registration successful! Redirecting to login...");
+      setSuccess("Account created. Please confirm your email from the link we sent.");
       setLoading(false);
-      
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
+
+      setUsername("");
+      setEmail("");
+      setPassword("");
     } catch (e) {
       console.error("Register error:", e);
       setError("Network error. Please try again.");

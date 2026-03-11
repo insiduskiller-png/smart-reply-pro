@@ -5,6 +5,7 @@ import { trackEvent } from "@/lib/analytics";
 export async function POST(req: Request) {
   try {
     const { email, password, username } = await req.json();
+    const origin = new URL(req.url).origin;
 
     if (!email || !password || !username) {
       return NextResponse.json(
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
       email,
       password,
       options: {
+        emailRedirectTo: `${origin}/`,
         data: {
           username: username,
         },
