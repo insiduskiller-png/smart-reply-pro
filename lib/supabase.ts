@@ -244,7 +244,7 @@ export async function createReplyProfile(params: {
     profile_name: params.profileName,
     contact_name: params.profileName,
     profile_category: params.profileCategory ?? null,
-    relationship_type: params.profileCategory ?? null,
+    relationship_type: params.profileCategory ?? "Other",
     context_notes: params.contextNotes ?? null,
     style_summary: params.styleSummary ?? null,
     tone_pattern: params.tonePattern ?? null,
@@ -257,10 +257,7 @@ export async function createReplyProfile(params: {
     updated_at: now,
   };
 
-  console.info("[createReplyProfile] Attempting primary insert", {
-    user_id: params.userId,
-    profile_name: params.profileName,
-  });
+  console.info("[createReplyProfile] Attempting primary insert", primaryPayload);
 
   const primary = await supabaseService
     .from("reply_profiles")
@@ -268,9 +265,17 @@ export async function createReplyProfile(params: {
     .select("*")
     .single();
 
+  console.info("[createReplyProfile] Primary response", {
+    data: primary.data,
+    error: primary.error,
+  });
+
   if (!primary.error && primary.data) {
     console.info("[createReplyProfile] Primary insert success", { id: primary.data.id });
-    return primary.data;
+    return {
+      profile: primary.data,
+      error: null,
+    };
   }
 
   console.error("[createReplyProfile] Primary insert failed", primary.error);
@@ -279,13 +284,13 @@ export async function createReplyProfile(params: {
   const fallbackPayload = {
     user_id: params.userId,
     contact_name: params.profileName,
-    relationship_type: params.profileCategory ?? null,
+    relationship_type: params.profileCategory ?? "Other",
     context_notes: params.contextNotes ?? null,
     style_summary: params.styleSummary ?? null,
     created_at: now,
   };
 
-  console.info("[createReplyProfile] Attempting fallback insert");
+  console.info("[createReplyProfile] Attempting fallback insert", fallbackPayload);
 
   const fallback = await supabaseService
     .from("reply_profiles")
@@ -293,44 +298,85 @@ export async function createReplyProfile(params: {
     .select("*")
     .single();
 
+  console.info("[createReplyProfile] Fallback response", {
+    data: fallback.data,
+    error: fallback.error,
+  });
+
   if (fallback.error) {
     console.error("[createReplyProfile] Fallback insert failed", fallback.error);
-    return null;
+    return {
+      profile: null,
+      error: {
+        code: fallback.error.code,
+        message: fallback.error.message,
+        details: fallback.error.details,
+        hint: fallback.error.hint,
+      },
+    };
   }
 
   console.info("[createReplyProfile] Fallback insert success", { id: fallback.data?.id });
-  return fallback.data;
+  return {
+    profile: fallback.data,
+    error: null,
+  };
 }
 
 export async function getReplyProfilesByUser(userId: string) {
-  const { data, error } = await supabaseService
+  const primary = await supabaseService
     .from("reply_profiles")
     .select("id, profile_name, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
     .eq("user_id", userId)
     .order("last_activity_at", { ascending: false })
     .limit(20);
 
-  if (error) {
-    console.error("Error fetching reply profiles:", error);
+  if (!primary.error) {
+    return primary.data ?? [];
+  }
+
+  console.error("Error fetching reply profiles (primary):", primary.error);
+
+  const fallback = await supabaseService
+    .from("reply_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (fallback.error) {
+    console.error("Error fetching reply profiles (fallback):", fallback.error);
     return [];
   }
 
-  return data ?? [];
+  return fallback.data ?? [];
 }
 
 export async function getReplyProfileById(profileId: string, userId: string) {
-  const { data, error } = await supabaseService
+  const primary = await supabaseService
     .from("reply_profiles")
     .select("id, user_id, profile_name, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
     .eq("id", profileId)
     .eq("user_id", userId)
     .single();
 
-  if (error) {
+  if (!primary.error) {
+    return primary.data;
+  }
+
+  const fallback = await supabaseService
+    .from("reply_profiles")
+    .select("*")
+    .eq("id", profileId)
+    .eq("user_id", userId)
+    .single();
+
+  if (fallback.error) {
+    console.error("Error fetching reply profile by id:", fallback.error);
     return null;
   }
 
-  return data;
+  return fallback.data;
 }
 
 export async function updateReplyProfileDetails(params: {

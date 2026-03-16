@@ -22,6 +22,23 @@ const relationshipTypes = new Set([
   "Other",
 ]);
 
+function mapCreateProfileError(error: {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+} | null | undefined) {
+  if (!error) return "Could not create profile. Please try again.";
+
+  if (error.code === "42501") return "Database permission error while creating profile.";
+  if (error.code === "42P01") return "Reply profile table is missing. Please run migrations.";
+  if (error.code === "42703") return "Profile schema mismatch detected. Please run latest migrations.";
+  if (error.code === "23502") return "Missing required profile field. Please complete required fields.";
+  if (error.code === "23503") return "Invalid user reference for profile creation.";
+
+  return error.message || "Could not create profile. Please try again.";
+}
+
 export async function GET() {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -43,12 +60,14 @@ export async function POST(request: Request) {
     console.info("[reply-profiles][POST] create requested", { userId: user.id });
 
     const profile = await getUserProfile(user.id);
-    const isPro = profile?.subscription_status === "pro";
+    const subscriptionStatus = String(profile?.subscription_status ?? "free").toLowerCase();
+    const isPro = subscriptionStatus === "pro";
     const maxProfiles = isPro ? 3 : 1;
 
     const profileCount = await getReplyProfileCountByUser(user.id);
     console.info("[reply-profiles][POST] profile limit check", {
       userId: user.id,
+      subscriptionStatus,
       isPro,
       maxProfiles,
       profileCount,
@@ -103,7 +122,7 @@ export async function POST(request: Request) {
       console.error("Style summary generation failed:", styleError);
     }
 
-    const createdProfile = await createReplyProfile({
+    const createResult = await createReplyProfile({
       userId: user.id,
       profileName,
       profileCategory: profileCategory || undefined,
@@ -120,10 +139,18 @@ export async function POST(request: Request) {
       conflictStyle: typeof parsedStyle?.conflict_style === "string" ? parsedStyle.conflict_style : undefined,
     });
 
+    const createdProfile = createResult.profile;
+
     if (!createdProfile) {
-      console.error("[reply-profiles][POST] create failed", { userId: user.id, profileName });
+      console.error("[reply-profiles][POST] create failed", {
+        userId: user.id,
+        profileName,
+        error: createResult.error,
+      });
+
+      const reason = mapCreateProfileError(createResult.error);
       return NextResponse.json(
-        { error: "Could not create profile. Please try again." },
+        { error: reason },
         { status: 500 },
       );
     }

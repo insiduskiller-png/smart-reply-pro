@@ -125,19 +125,36 @@ export default function DashboardClient({
   const isPro = profile.subscription_status === "pro";
   const isPremiumStyle = preTones.includes(tone);
 
-  async function fetchProfiles() {
+  async function fetchProfiles(preferredProfileId?: string) {
     setProfilesLoading(true);
     try {
       const response = await fetch("/api/reply-profiles");
       const data = await response.json().catch(() => null);
       if (response.ok && data?.profiles) {
+        console.info("[UI][fetchProfiles] loaded", {
+          count: data.profiles.length,
+          preferredProfileId: preferredProfileId || null,
+        });
         setReplyProfiles(data.profiles);
-        if (!activeProfileId && data.profiles.length > 0) {
-          setActiveProfileId(data.profiles[0].id);
-        }
+        setActiveProfileId((current) => {
+          if (preferredProfileId && data.profiles.some((p: { id: string }) => p.id === preferredProfileId)) {
+            console.info("[UI][fetchProfiles] selecting preferred profile", { preferredProfileId });
+            return preferredProfileId;
+          }
+
+          if (current && data.profiles.some((p: { id: string }) => p.id === current)) {
+            return current;
+          }
+
+          const fallbackId = data.profiles[0]?.id || "";
+          if (fallbackId) {
+            console.info("[UI][fetchProfiles] selecting fallback profile", { fallbackId });
+          }
+          return fallbackId;
+        });
       }
-    } catch {
-      // Silent fail
+    } catch (err) {
+      console.error("[UI][fetchProfiles] failed", err);
     } finally {
       setProfilesLoading(false);
     }
@@ -209,9 +226,17 @@ export default function DashboardClient({
       }
 
       if (data?.profile?.id) {
-        const newProfileId = data.profile.id;
+        const createdProfile = data.profile as ReplyProfile;
+        const newProfileId = createdProfile.id;
         console.info("[UI][createNewProfile] success", { newProfileId });
+
+        setReplyProfiles((prev) => {
+          const exists = prev.some((profileItem) => profileItem.id === newProfileId);
+          return exists ? prev : [createdProfile, ...prev];
+        });
+
         setActiveProfileId(newProfileId);
+        console.info("[UI][createNewProfile] selected profile set", { newProfileId });
         setActiveMessages([]);
         setInput("");
         setContext("");
@@ -225,7 +250,7 @@ export default function DashboardClient({
         setNewProfileCategory("");
         setNewProfileContext("");
         setNewProfileChatHistory("");
-        await fetchProfiles();
+        await fetchProfiles(newProfileId);
       } else {
         console.error("[UI][createNewProfile] missing profile id", data);
         setError("Could not create profile. Please try again.");
