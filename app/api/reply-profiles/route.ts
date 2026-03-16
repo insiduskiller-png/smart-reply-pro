@@ -40,11 +40,20 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    console.info("[reply-profiles][POST] create requested", { userId: user.id });
+
     const profile = await getUserProfile(user.id);
     const isPro = profile?.subscription_status === "pro";
     const maxProfiles = isPro ? 3 : 1;
 
     const profileCount = await getReplyProfileCountByUser(user.id);
+    console.info("[reply-profiles][POST] profile limit check", {
+      userId: user.id,
+      isPro,
+      maxProfiles,
+      profileCount,
+    });
+
     if (profileCount >= maxProfiles) {
       return NextResponse.json(
         {
@@ -67,6 +76,14 @@ export async function POST(request: Request) {
       : "";
     const contextNotes = sanitizeText(body.contextNotes, 1000);
     const chatHistory = sanitizeText(body.chatHistory, 10000);
+
+    console.info("[reply-profiles][POST] sanitized payload", {
+      userId: user.id,
+      profileName,
+      profileCategory: profileCategory || null,
+      contextNotesLength: contextNotes.length,
+      chatHistoryLength: chatHistory.length,
+    });
 
     if (!profileName) {
       return NextResponse.json({ error: "Profile name is required." }, { status: 400 });
@@ -104,8 +121,17 @@ export async function POST(request: Request) {
     });
 
     if (!createdProfile) {
-      return NextResponse.json({ error: "Could not create reply profile." }, { status: 500 });
+      console.error("[reply-profiles][POST] create failed", { userId: user.id, profileName });
+      return NextResponse.json(
+        { error: "Could not create profile. Please try again." },
+        { status: 500 },
+      );
     }
+
+    console.info("[reply-profiles][POST] create success", {
+      userId: user.id,
+      profileId: createdProfile.id,
+    });
 
     if (chatHistory) {
       await insertProfileMessage({
@@ -124,7 +150,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Create reply profile error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Could not create profile. Please try again." }, { status: 500 });
   }
 }
 

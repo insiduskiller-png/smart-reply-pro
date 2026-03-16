@@ -171,6 +171,13 @@ export default function DashboardClient({
 
     setCreatingProfile(true);
     setError("");
+    console.info("[UI][createNewProfile] submit", {
+      profileName: newProfileName,
+      profileCategory: newProfileCategory || null,
+      contextLength: newProfileContext.length,
+      historyLength: newProfileChatHistory.length,
+    });
+
     try {
       const response = await fetch("/api/reply-profiles", {
         method: "POST",
@@ -182,18 +189,28 @@ export default function DashboardClient({
           chatHistory: newProfileChatHistory,
         }),
       });
+
       const data = await response.json().catch(() => null);
+      console.info("[UI][createNewProfile] response", {
+        status: response.status,
+        ok: response.ok,
+        hasProfile: Boolean(data?.profile?.id),
+        error: data?.error,
+      });
+
       if (!response.ok) {
         if (data?.upgrade_required) {
           setUpgradeReason("profiles");
           setShowUpgradeModal(true);
         }
+        console.error("[UI][createNewProfile] failed", data);
         setError(data?.error || "Could not create profile.");
         return;
       }
 
       if (data?.profile?.id) {
         const newProfileId = data.profile.id;
+        console.info("[UI][createNewProfile] success", { newProfileId });
         setActiveProfileId(newProfileId);
         setActiveMessages([]);
         setInput("");
@@ -209,8 +226,12 @@ export default function DashboardClient({
         setNewProfileContext("");
         setNewProfileChatHistory("");
         await fetchProfiles();
+      } else {
+        console.error("[UI][createNewProfile] missing profile id", data);
+        setError("Could not create profile. Please try again.");
       }
-    } catch {
+    } catch (err) {
+      console.error("[UI][createNewProfile] network/error", err);
       setError("Network error while creating profile.");
     } finally {
       setCreatingProfile(false);
@@ -1156,6 +1177,7 @@ export default function DashboardClient({
           <div className="w-full max-w-xl rounded-lg border border-slate-700 bg-slate-900 p-5">
             <h2 className="text-lg font-semibold text-slate-100">New Reply Profile</h2>
             <p className="mt-1 text-sm text-slate-400">Create your own named workspace for one real person.</p>
+            {error ? <p className="mt-2 text-sm text-rose-400">{error}</p> : null}
 
             <div className="mt-4 space-y-3">
               <input

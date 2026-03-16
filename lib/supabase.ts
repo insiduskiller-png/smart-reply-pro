@@ -238,36 +238,68 @@ export async function createReplyProfile(params: {
   formalityLevel?: string;
   conflictStyle?: string;
 }) {
-  const { data, error } = await supabaseService
+  const now = new Date().toISOString();
+  const primaryPayload = {
+    user_id: params.userId,
+    profile_name: params.profileName,
+    contact_name: params.profileName,
+    profile_category: params.profileCategory ?? null,
+    relationship_type: params.profileCategory ?? null,
+    context_notes: params.contextNotes ?? null,
+    style_summary: params.styleSummary ?? null,
+    tone_pattern: params.tonePattern ?? null,
+    sentence_length: params.sentenceLength ?? null,
+    directness_level: params.directnessLevel ?? null,
+    emoji_usage: params.emojiUsage ?? null,
+    formality_level: params.formalityLevel ?? null,
+    conflict_style: params.conflictStyle ?? null,
+    last_activity_at: now,
+    updated_at: now,
+  };
+
+  console.info("[createReplyProfile] Attempting primary insert", {
+    user_id: params.userId,
+    profile_name: params.profileName,
+  });
+
+  const primary = await supabaseService
     .from("reply_profiles")
-    .insert({
-      user_id: params.userId,
-      profile_name: params.profileName,
-      contact_name: params.profileName,
-      profile_category: params.profileCategory ?? null,
-      relationship_type: params.profileCategory ?? null,
-      context_notes: params.contextNotes ?? null,
-      style_summary: params.styleSummary ?? null,
-      tone_pattern: params.tonePattern ?? null,
-      sentence_length: params.sentenceLength ?? null,
-      directness_level: params.directnessLevel ?? null,
-      emoji_usage: params.emojiUsage ?? null,
-      formality_level: params.formalityLevel ?? null,
-      conflict_style: params.conflictStyle ?? null,
-      last_activity_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .select(
-      "id, user_id, profile_name, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at",
-    )
+    .insert(primaryPayload)
+    .select("*")
     .single();
 
-  if (error) {
-    console.error("Error creating reply profile:", error);
+  if (!primary.error && primary.data) {
+    console.info("[createReplyProfile] Primary insert success", { id: primary.data.id });
+    return primary.data;
+  }
+
+  console.error("[createReplyProfile] Primary insert failed", primary.error);
+
+  // Fallback for partially-migrated schemas (legacy columns only)
+  const fallbackPayload = {
+    user_id: params.userId,
+    contact_name: params.profileName,
+    relationship_type: params.profileCategory ?? null,
+    context_notes: params.contextNotes ?? null,
+    style_summary: params.styleSummary ?? null,
+    created_at: now,
+  };
+
+  console.info("[createReplyProfile] Attempting fallback insert");
+
+  const fallback = await supabaseService
+    .from("reply_profiles")
+    .insert(fallbackPayload)
+    .select("*")
+    .single();
+
+  if (fallback.error) {
+    console.error("[createReplyProfile] Fallback insert failed", fallback.error);
     return null;
   }
 
-  return data;
+  console.info("[createReplyProfile] Fallback insert success", { id: fallback.data?.id });
+  return fallback.data;
 }
 
 export async function getReplyProfilesByUser(userId: string) {
