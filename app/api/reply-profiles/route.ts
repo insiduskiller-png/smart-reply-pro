@@ -12,7 +12,7 @@ import {
   updateReplyProfileDetails,
 } from "@/lib/supabase";
 
-const relationshipTypes = new Set([
+const categoryOptions = new Set([
   "Dating",
   "Work",
   "Client",
@@ -40,7 +40,7 @@ function mapCreateProfileError(error: {
   if (error.code === "42P01") return "Reply profile table is missing. Please run migrations.";
   if (error.code === "42703") return "Profile schema mismatch detected. Please run latest migrations.";
   if (error.code === "23502") {
-    if (columnFromError === "contact_name") return "Profile name is required.";
+    if (columnFromError === "profile_name") return "Profile name is required.";
     if (columnFromError === "user_id") return "You must be logged in to create a profile.";
     if (columnFromError) return `Missing required field: ${columnFromError}.`;
     return "Missing required profile field. Please complete required fields.";
@@ -100,34 +100,33 @@ export async function POST(request: Request) {
 
     const body = await request.json().catch(() => ({}));
     console.info("[reply-profiles][POST] submitted form payload", {
-      contactName: body?.contactName ?? null,
-      relationshipType: body?.relationshipType ?? null,
-      contextNotes: body?.contextNotes ?? null,
-      chatHistory: body?.chatHistory ?? null,
+      profile_name: body?.profile_name ?? null,
+      category: body?.category ?? null,
+      context_notes: body?.context_notes ?? null,
+      style_memory: body?.style_memory ?? null,
     });
 
-    const contactName = sanitizeText(body.contactName, 80);
-    const relationshipTypeInput = sanitizeText(body.relationshipType, 30);
-    const relationshipType = relationshipTypes.has(relationshipTypeInput)
-      ? relationshipTypeInput
+    const profileName = sanitizeText(body.profile_name, 80);
+    const categoryInput = sanitizeText(body.category, 30);
+    const category = categoryOptions.has(categoryInput)
+      ? categoryInput
       : "";
-    const contextNotes = sanitizeText(body.contextNotes, 1000);
-    const chatHistory = sanitizeText(body.chatHistory, 10000);
+    const contextNotes = sanitizeText(body.context_notes, 1000);
+    const styleMemoryInput = sanitizeText(body.style_memory, 10000);
 
     const validatedPayload = {
       user_id: user.id,
-      contact_name: contactName,
-      relationship_type: relationshipType || null,
+      profile_name: profileName,
+      category: category || null,
       context_notes: contextNotes || null,
-      style_summary: null as string | null,
-      message_history: chatHistory || null,
+      style_memory: null as string | null,
     };
 
     console.info("[reply-profiles][POST] validated payload (pre-style)", validatedPayload);
 
     const missingRequired: string[] = [];
     if (!validatedPayload.user_id) missingRequired.push("user_id");
-    if (!validatedPayload.contact_name) missingRequired.push("contact_name");
+    if (!validatedPayload.profile_name) missingRequired.push("profile_name");
 
     if (missingRequired.length > 0) {
       console.error("[reply-profiles][POST] validation failed", {
@@ -135,7 +134,7 @@ export async function POST(request: Request) {
         validatedPayload,
       });
 
-      if (missingRequired.includes("contact_name")) {
+      if (missingRequired.includes("profile_name")) {
         return NextResponse.json({ error: "Profile name is required." }, { status: 400 });
       }
 
@@ -150,30 +149,29 @@ export async function POST(request: Request) {
     let parsedStyle: Record<string, unknown> | null = null;
     try {
       styleSummary = await generateStyleSummary({
-        contactName,
-        relationshipType: relationshipType || "Unspecified",
+        contactName: profileName,
+        relationshipType: category || "Unspecified",
         contextNotes,
-        chatHistory,
+        chatHistory: styleMemoryInput,
       });
       parsedStyle = JSON.parse(styleSummary);
     } catch (styleError) {
       console.error("Style summary generation failed:", styleError);
     }
 
-    validatedPayload.style_summary =
+    validatedPayload.style_memory =
       typeof parsedStyle?.summary === "string"
         ? parsedStyle.summary
-        : styleSummary || null;
+        : styleMemoryInput || styleSummary || null;
 
     console.info("[reply-profiles][POST] validated payload (final pre-insert)", validatedPayload);
 
     const createResult = await createReplyProfile({
       userId: user.id,
-      contactName,
-      relationshipType: relationshipType || undefined,
+      profileName,
+      category: category || undefined,
       contextNotes,
-      styleSummary: validatedPayload.style_summary || undefined,
-      messageHistory: chatHistory || undefined,
+      styleMemory: validatedPayload.style_memory || undefined,
     });
 
     const createdProfile = createResult.profile;
@@ -181,7 +179,7 @@ export async function POST(request: Request) {
     if (!createdProfile) {
       console.error("[reply-profiles][POST] create failed", {
         userId: user.id,
-        contactName,
+        profileName,
         error: createResult.error,
       });
 
@@ -197,12 +195,12 @@ export async function POST(request: Request) {
       profileId: createdProfile.id,
     });
 
-    if (chatHistory) {
+    if (styleMemoryInput) {
       await insertProfileMessage({
         profileId: createdProfile.id,
         userId: user.id,
         role: "history_import",
-        content: chatHistory,
+        content: styleMemoryInput,
       });
     }
 
@@ -225,18 +223,18 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const profileId = sanitizeText(body.profileId, 80);
-    const contactName = sanitizeText(body.contactName, 80);
-    const relationshipTypeInput = sanitizeText(body.relationshipType, 30);
-    const relationshipType = relationshipTypes.has(relationshipTypeInput)
-      ? relationshipTypeInput
+    const profileName = sanitizeText(body.profile_name, 80);
+    const categoryInput = sanitizeText(body.category, 30);
+    const category = categoryOptions.has(categoryInput)
+      ? categoryInput
       : "";
-    const contextNotes = sanitizeText(body.contextNotes, 1000);
+    const contextNotes = sanitizeText(body.context_notes, 1000);
 
     if (!profileId) {
       return NextResponse.json({ error: "profileId is required." }, { status: 400 });
     }
 
-    if (!contactName) {
+    if (!profileName) {
       return NextResponse.json({ error: "Profile name is required." }, { status: 400 });
     }
 
@@ -248,8 +246,8 @@ export async function PATCH(request: Request) {
     const updated = await updateReplyProfileDetails({
       profileId,
       userId: user.id,
-      contactName,
-      relationshipType: relationshipType || null,
+      profileName,
+      category: category || null,
       contextNotes: contextNotes || null,
     });
 

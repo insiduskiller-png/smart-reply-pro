@@ -25,13 +25,11 @@ type Reply = {
 type ReplyProfile = {
   id: string;
   user_id?: string;
-  contact_name: string;
-  relationship_type?: string | null;
+  profile_name: string;
+  category?: string | null;
   context_notes?: string | null;
-  style_summary?: string | null;
-  message_history?: string | null;
+  style_memory?: string | null;
   created_at: string;
-  updated_at?: string;
 };
 
 type ProfileMessageRole = "incoming" | "user_reply" | "assistant_suggestion" | "history_import";
@@ -183,18 +181,18 @@ export default function DashboardClient({
     setCreatingProfile(true);
     setError("");
     console.info("[UI][createNewProfile] submit", {
-      contactName: newProfileName,
-      relationshipType: newProfileRelationshipType || null,
+      profile_name: newProfileName,
+      category: newProfileRelationshipType || null,
       contextLength: newProfileContext.length,
       historyLength: newProfileChatHistory.length,
     });
 
     try {
       const formPayload = {
-        contactName: newProfileName,
-        relationshipType: newProfileRelationshipType || undefined,
-        contextNotes: newProfileContext,
-        chatHistory: newProfileChatHistory,
+        profile_name: newProfileName,
+        category: newProfileRelationshipType || undefined,
+        context_notes: newProfileContext,
+        style_memory: newProfileChatHistory,
       };
 
       console.info("[UI][createNewProfile] payload before submit", formPayload);
@@ -262,11 +260,11 @@ export default function DashboardClient({
   }
 
   function getProfileDisplayName(profileItem: ReplyProfile) {
-    return profileItem.contact_name || "Unnamed Profile";
+    return profileItem.profile_name || "Unnamed Profile";
   }
 
   function getProfileRelationshipType(profileItem: ReplyProfile) {
-    return profileItem.relationship_type || "";
+    return profileItem.category || "";
   }
 
   function openEditProfileModal() {
@@ -294,9 +292,9 @@ export default function DashboardClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           profileId: activeProfileId,
-          contactName: editProfileName,
-          relationshipType: editProfileRelationshipType || undefined,
-          contextNotes: editProfileContext,
+          profile_name: editProfileName,
+          category: editProfileRelationshipType || undefined,
+          context_notes: editProfileContext,
         }),
       });
 
@@ -1001,7 +999,7 @@ export default function DashboardClient({
                 <option key={profileItem.id} value={profileItem.id}>
                   {getProfileDisplayName(profileItem)}
                   {getProfileRelationshipType(profileItem) ? ` • ${getProfileRelationshipType(profileItem)}` : ""}
-                  {` • ${new Date(profileItem.updated_at || profileItem.created_at).toLocaleDateString()}`}
+                  {` • ${new Date(profileItem.created_at).toLocaleDateString()}`}
                 </option>
               ))}
             </select>
@@ -1015,7 +1013,7 @@ export default function DashboardClient({
 
                 return (
                   <div className="space-y-1 text-xs text-slate-300">
-                    {activeProfile.style_summary ? (
+                    {activeProfile.style_memory ? (
                       <span className="inline-flex rounded-full border border-emerald-700/50 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
                         Communication Style Learned
                       </span>
@@ -1035,7 +1033,7 @@ export default function DashboardClient({
                     ) : null}
                     <p>
                       <span className="text-slate-500">Last activity:</span>{" "}
-                      {new Date(activeProfile.updated_at || activeProfile.created_at).toLocaleString()}
+                      {new Date(activeProfile.created_at).toLocaleString()}
                     </p>
                   </div>
                 );

@@ -103,10 +103,10 @@ export async function POST(request: Request) {
 
     const detectedTone = await detectTone(input);
     const styleContext = {
-      contactName: activeProfile.contact_name,
-      relationshipType: activeProfile.relationship_type || "Unspecified",
+      contactName: activeProfile.profile_name,
+      relationshipType: activeProfile.category || "Unspecified",
       contextNotes: activeProfile.context_notes ?? undefined,
-      styleSummary: activeProfile.style_summary ?? undefined,
+      styleSummary: activeProfile.style_memory ?? undefined,
     };
 
     const variants = ["Calm", "Assertive", "Strategic"] as const;
@@ -223,8 +223,8 @@ export async function POST(request: Request) {
 
         if (userStyleCorpus) {
           const styleRaw = await generateStyleSummary({
-            contactName: activeProfile.contact_name,
-            relationshipType: activeProfile.relationship_type || "Unspecified",
+            contactName: activeProfile.profile_name,
+            relationshipType: activeProfile.category || "Unspecified",
             contextNotes: activeProfile.context_notes ?? undefined,
             chatHistory: userStyleCorpus,
           });
@@ -233,7 +233,7 @@ export async function POST(request: Request) {
           await updateReplyProfileStyleMemory({
             profileId: activeProfile.id,
             userId: user.id,
-            styleSummary: parsedStyle?.summary,
+            styleMemory: parsedStyle?.summary,
           });
         }
       }

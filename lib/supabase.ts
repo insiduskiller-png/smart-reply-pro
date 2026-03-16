@@ -227,40 +227,35 @@ export async function getReplyProfileCountByUser(userId: string) {
 
 export async function createReplyProfile(params: {
   userId: string;
-  contactName: string;
-  relationshipType?: string;
+  profileName: string;
+  category?: string;
   contextNotes?: string;
-  styleSummary?: string;
-  messageHistory?: string;
+  styleMemory?: string;
 }) {
   const now = new Date().toISOString();
   const primaryPayload = {
     user_id: params.userId,
-    contact_name: params.contactName,
-    relationship_type: params.relationshipType ?? "Other",
+    profile_name: params.profileName,
+    category: params.category ?? null,
     context_notes: params.contextNotes ?? null,
-    style_summary: params.styleSummary ?? null,
-    message_history: params.messageHistory ?? null,
+    style_memory: params.styleMemory ?? null,
     created_at: now,
-    updated_at: now,
   };
 
   console.info("[createReplyProfile] Canonical payload before insert", {
     user_id: primaryPayload.user_id,
-    contact_name: primaryPayload.contact_name,
-    relationship_type: primaryPayload.relationship_type,
+    profile_name: primaryPayload.profile_name,
+    category: primaryPayload.category,
     context_notes: primaryPayload.context_notes,
-    style_summary: primaryPayload.style_summary,
-    message_history: primaryPayload.message_history,
+    style_memory: primaryPayload.style_memory,
     created_at: primaryPayload.created_at,
-    updated_at: primaryPayload.updated_at,
   });
 
-  if (!primaryPayload.user_id || !primaryPayload.contact_name) {
+  if (!primaryPayload.user_id || !primaryPayload.profile_name) {
     console.error("[createReplyProfile] Missing required canonical field", {
       missing: [
         !primaryPayload.user_id ? "user_id" : null,
-        !primaryPayload.contact_name ? "contact_name" : null,
+        !primaryPayload.profile_name ? "profile_name" : null,
       ].filter(Boolean),
       payload: primaryPayload,
     });
@@ -290,13 +285,11 @@ export async function createReplyProfile(params: {
   // Fallback for partially-migrated schemas (legacy columns only)
   const fallbackPayload = {
     user_id: params.userId,
-    contact_name: params.contactName,
-    relationship_type: params.relationshipType ?? "Other",
+    profile_name: params.profileName,
+    category: params.category ?? null,
     context_notes: params.contextNotes ?? null,
-    style_summary: params.styleSummary ?? null,
-    message_history: params.messageHistory ?? null,
+    style_memory: params.styleMemory ?? null,
     created_at: now,
-    updated_at: now,
   };
 
   console.info("[createReplyProfile] Attempting fallback insert", fallbackPayload);
@@ -335,9 +328,9 @@ export async function createReplyProfile(params: {
 export async function getReplyProfilesByUser(userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, user_id, contact_name, relationship_type, context_notes, style_summary, message_history, created_at, updated_at")
+    .select("id, user_id, profile_name, category, context_notes, style_memory, created_at")
     .eq("user_id", userId)
-    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(20);
 
   if (!primary.error) {
@@ -364,7 +357,7 @@ export async function getReplyProfilesByUser(userId: string) {
 export async function getReplyProfileById(profileId: string, userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, user_id, contact_name, relationship_type, context_notes, style_summary, message_history, created_at, updated_at")
+    .select("id, user_id, profile_name, category, context_notes, style_memory, created_at")
     .eq("id", profileId)
     .eq("user_id", userId)
     .single();
@@ -391,23 +384,20 @@ export async function getReplyProfileById(profileId: string, userId: string) {
 export async function updateReplyProfileDetails(params: {
   profileId: string;
   userId: string;
-  contactName: string;
-  relationshipType?: string | null;
+  profileName: string;
+  category?: string | null;
   contextNotes?: string | null;
 }) {
-  const now = new Date().toISOString();
-
   const { data, error } = await supabaseService
     .from("reply_profiles")
     .update({
-      contact_name: params.contactName,
-      relationship_type: params.relationshipType ?? null,
+      profile_name: params.profileName,
+      category: params.category ?? null,
       context_notes: params.contextNotes ?? null,
-      updated_at: now,
     })
     .eq("id", params.profileId)
     .eq("user_id", params.userId)
-    .select("id, user_id, contact_name, relationship_type, context_notes, style_summary, message_history, created_at, updated_at")
+    .select("id, user_id, profile_name, category, context_notes, style_memory, created_at")
     .single();
 
   if (error) {
@@ -421,13 +411,12 @@ export async function updateReplyProfileDetails(params: {
 export async function updateReplyProfileStyleSummary(params: {
   profileId: string;
   userId: string;
-  styleSummary: string;
+  styleMemory: string;
 }) {
   const { error } = await supabaseService
     .from("reply_profiles")
     .update({
-      style_summary: params.styleSummary,
-      updated_at: new Date().toISOString(),
+      style_memory: params.styleMemory,
     })
     .eq("id", params.profileId)
     .eq("user_id", params.userId);
@@ -440,17 +429,16 @@ export async function updateReplyProfileStyleSummary(params: {
 export async function updateReplyProfileStyleMemory(params: {
   profileId: string;
   userId: string;
-  styleSummary?: string;
+  styleMemory?: string;
 }) {
   const { data, error } = await supabaseService
     .from("reply_profiles")
     .update({
-      style_summary: params.styleSummary ?? null,
-      updated_at: new Date().toISOString(),
+      style_memory: params.styleMemory ?? null,
     })
     .eq("id", params.profileId)
     .eq("user_id", params.userId)
-    .select("id, style_summary, updated_at")
+    .select("id, style_memory")
     .single();
 
   if (error) {
@@ -462,18 +450,9 @@ export async function updateReplyProfileStyleMemory(params: {
 }
 
 export async function touchReplyProfileActivity(profileId: string, userId: string) {
-  const now = new Date().toISOString();
-  const { error } = await supabaseService
-    .from("reply_profiles")
-    .update({
-      updated_at: now,
-    })
-    .eq("id", profileId)
-    .eq("user_id", userId);
-
-  if (error) {
-    console.error("Error touching reply profile activity:", error);
-  }
+  // No-op for schemas that do not include an activity/update timestamp column.
+  void profileId;
+  void userId;
 }
 
 export async function insertProfileMessage(params: {
