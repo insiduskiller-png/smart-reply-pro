@@ -103,16 +103,10 @@ export async function POST(request: Request) {
 
     const detectedTone = await detectTone(input);
     const styleContext = {
-      contactName: activeProfile.profile_name || activeProfile.contact_name,
-      relationshipType: activeProfile.profile_category || activeProfile.relationship_type || "Unspecified",
+      contactName: activeProfile.contact_name,
+      relationshipType: activeProfile.relationship_type || "Unspecified",
       contextNotes: activeProfile.context_notes ?? undefined,
       styleSummary: activeProfile.style_summary ?? undefined,
-      tonePattern: activeProfile.tone_pattern ?? undefined,
-      sentenceLength: activeProfile.sentence_length ?? undefined,
-      directnessLevel: activeProfile.directness_level ?? undefined,
-      emojiUsage: activeProfile.emoji_usage ?? undefined,
-      formalityLevel: activeProfile.formality_level ?? undefined,
-      conflictStyle: activeProfile.conflict_style ?? undefined,
     };
 
     const variants = ["Calm", "Assertive", "Strategic"] as const;
@@ -229,8 +223,8 @@ export async function POST(request: Request) {
 
         if (userStyleCorpus) {
           const styleRaw = await generateStyleSummary({
-            contactName: activeProfile.profile_name || activeProfile.contact_name,
-            relationshipType: activeProfile.profile_category || activeProfile.relationship_type || "Unspecified",
+            contactName: activeProfile.contact_name,
+            relationshipType: activeProfile.relationship_type || "Unspecified",
             contextNotes: activeProfile.context_notes ?? undefined,
             chatHistory: userStyleCorpus,
           });
@@ -240,12 +234,6 @@ export async function POST(request: Request) {
             profileId: activeProfile.id,
             userId: user.id,
             styleSummary: parsedStyle?.summary,
-            tonePattern: parsedStyle?.tone_pattern,
-            sentenceLength: parsedStyle?.sentence_length,
-            directnessLevel: parsedStyle?.directness_level,
-            emojiUsage: parsedStyle?.emoji_usage,
-            formalityLevel: parsedStyle?.formality_level,
-            conflictStyle: parsedStyle?.conflict_style,
           });
         }
       }

@@ -227,32 +227,20 @@ export async function getReplyProfileCountByUser(userId: string) {
 
 export async function createReplyProfile(params: {
   userId: string;
-  profileName: string;
-  profileCategory?: string;
+  contactName: string;
+  relationshipType?: string;
   contextNotes?: string;
   styleSummary?: string;
-  tonePattern?: string;
-  sentenceLength?: string;
-  directnessLevel?: string;
-  emojiUsage?: string;
-  formalityLevel?: string;
-  conflictStyle?: string;
+  messageHistory?: string;
 }) {
   const now = new Date().toISOString();
   const primaryPayload = {
     user_id: params.userId,
-    contact_name: params.profileName,
-    profile_category: params.profileCategory ?? null,
-    relationship_type: params.profileCategory ?? "Other",
+    contact_name: params.contactName,
+    relationship_type: params.relationshipType ?? "Other",
     context_notes: params.contextNotes ?? null,
     style_summary: params.styleSummary ?? null,
-    tone_pattern: params.tonePattern ?? null,
-    sentence_length: params.sentenceLength ?? null,
-    directness_level: params.directnessLevel ?? null,
-    emoji_usage: params.emojiUsage ?? null,
-    formality_level: params.formalityLevel ?? null,
-    conflict_style: params.conflictStyle ?? null,
-    last_activity_at: now,
+    message_history: params.messageHistory ?? null,
     updated_at: now,
   };
 
@@ -282,10 +270,11 @@ export async function createReplyProfile(params: {
   // Fallback for partially-migrated schemas (legacy columns only)
   const fallbackPayload = {
     user_id: params.userId,
-    contact_name: params.profileName,
-    relationship_type: params.profileCategory ?? "Other",
+    contact_name: params.contactName,
+    relationship_type: params.relationshipType ?? "Other",
     context_notes: params.contextNotes ?? null,
     style_summary: params.styleSummary ?? null,
+    message_history: params.messageHistory ?? null,
     created_at: now,
   };
 
@@ -325,9 +314,9 @@ export async function createReplyProfile(params: {
 export async function getReplyProfilesByUser(userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
+    .select("id, user_id, contact_name, relationship_type, context_notes, style_summary, message_history, created_at, updated_at")
     .eq("user_id", userId)
-    .order("last_activity_at", { ascending: false })
+    .order("updated_at", { ascending: false })
     .limit(20);
 
   if (!primary.error) {
@@ -354,7 +343,7 @@ export async function getReplyProfilesByUser(userId: string) {
 export async function getReplyProfileById(profileId: string, userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, user_id, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
+    .select("id, user_id, contact_name, relationship_type, context_notes, style_summary, message_history, created_at, updated_at")
     .eq("id", profileId)
     .eq("user_id", userId)
     .single();
@@ -381,8 +370,8 @@ export async function getReplyProfileById(profileId: string, userId: string) {
 export async function updateReplyProfileDetails(params: {
   profileId: string;
   userId: string;
-  profileName: string;
-  profileCategory?: string | null;
+  contactName: string;
+  relationshipType?: string | null;
   contextNotes?: string | null;
 }) {
   const now = new Date().toISOString();
@@ -390,15 +379,14 @@ export async function updateReplyProfileDetails(params: {
   const { data, error } = await supabaseService
     .from("reply_profiles")
     .update({
-      contact_name: params.profileName,
-      profile_category: params.profileCategory ?? null,
-      relationship_type: params.profileCategory ?? null,
+      contact_name: params.contactName,
+      relationship_type: params.relationshipType ?? null,
       context_notes: params.contextNotes ?? null,
       updated_at: now,
     })
     .eq("id", params.profileId)
     .eq("user_id", params.userId)
-    .select("id, user_id, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
+    .select("id, user_id, contact_name, relationship_type, context_notes, style_summary, message_history, created_at, updated_at")
     .single();
 
   if (error) {
@@ -432,27 +420,16 @@ export async function updateReplyProfileStyleMemory(params: {
   profileId: string;
   userId: string;
   styleSummary?: string;
-  tonePattern?: string;
-  sentenceLength?: string;
-  directnessLevel?: string;
-  emojiUsage?: string;
-  formalityLevel?: string;
-  conflictStyle?: string;
 }) {
   const { data, error } = await supabaseService
     .from("reply_profiles")
     .update({
       style_summary: params.styleSummary ?? null,
-      tone_pattern: params.tonePattern ?? null,
-      sentence_length: params.sentenceLength ?? null,
-      directness_level: params.directnessLevel ?? null,
-      emoji_usage: params.emojiUsage ?? null,
-      formality_level: params.formalityLevel ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", params.profileId)
     .eq("user_id", params.userId)
-    .select("id, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style")
+    .select("id, style_summary, updated_at")
     .single();
 
   if (error) {
@@ -468,7 +445,6 @@ export async function touchReplyProfileActivity(profileId: string, userId: strin
   const { error } = await supabaseService
     .from("reply_profiles")
     .update({
-      last_activity_at: now,
       updated_at: now,
     })
     .eq("id", profileId)

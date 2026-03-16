@@ -127,12 +127,6 @@ export async function generateReply(params: {
     relationshipType: string;
     contextNotes?: string;
     styleSummary?: string;
-    tonePattern?: string;
-    sentenceLength?: string;
-    directnessLevel?: string;
-    emojiUsage?: string;
-    formalityLevel?: string;
-    conflictStyle?: string;
   };
 }) {
   // Build tone-specific instructions
@@ -223,13 +217,7 @@ Reply Profile Context:
 ${params.profileContext ? `- Contact name: ${params.profileContext.contactName}
 - Relationship type: ${params.profileContext.relationshipType}
 - Context notes: ${params.profileContext.contextNotes || "None"}
-- Communication profile: ${params.profileContext.styleSummary || "Not available yet"}
-- Tone pattern: ${params.profileContext.tonePattern || "Unknown"}
-- Sentence length: ${params.profileContext.sentenceLength || "Unknown"}
-- Directness level: ${params.profileContext.directnessLevel || "Unknown"}
-- Emoji usage: ${params.profileContext.emojiUsage || "Unknown"}
-- Formality level: ${params.profileContext.formalityLevel || "Unknown"}
-- Conflict style: ${params.profileContext.conflictStyle || "Unknown"}` : "No reply profile provided"}
+- Style summary: ${params.profileContext.styleSummary || "Not available yet"}` : "No reply profile provided"}
 
 ${params.conversationHistory ? `Previous Conversation:\n${params.conversationHistory}\n\n` : ""}Incoming Message:\n${params.input}\n\nContext (if any):\n${params.context || "None"}\n\nCommunication Mode:\n${params.tone}\n\nMode Instructions:\n${toneInstructions}\n\n${params.variant ? `Variation: ${params.variant}\n` : ""}${params.modifier ? `Additional Modifier: ${params.modifier}\n` : ""}Constraints:
 - default 2-5 sentences

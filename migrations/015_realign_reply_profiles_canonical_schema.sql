@@ -1,9 +1,8 @@
--- Migration: Canonical reply_profiles schema alignment
--- Final canonical fields:
--- id, user_id, contact_name, relationship_type, context_notes,
--- style_summary, message_history, created_at, updated_at
+-- Migration: realign reply_profiles to canonical schema after prior mixed migrations
+-- Canonical: id, user_id, contact_name, relationship_type, context_notes,
+--            style_summary, message_history, created_at, updated_at
 
--- 1) Ensure canonical columns exist
+-- Ensure canonical columns exist
 ALTER TABLE public.reply_profiles
   ADD COLUMN IF NOT EXISTS contact_name TEXT,
   ADD COLUMN IF NOT EXISTS relationship_type TEXT,
@@ -13,7 +12,7 @@ ALTER TABLE public.reply_profiles
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now();
 
--- 2) If a previous migration renamed style_summary -> style_memory, restore canonical style_summary
+-- Recover style_summary if an older migration introduced style_memory
 DO $$
 BEGIN
   IF EXISTS (
@@ -32,7 +31,7 @@ BEGIN
   END IF;
 END $$;
 
--- 3) Backfill canonical values from legacy columns when present
+-- Backfill canonical values from legacy columns, when present
 DO $$
 BEGIN
   IF EXISTS (
@@ -72,7 +71,7 @@ BEGIN
   END IF;
 END $$;
 
--- 4) Drop legacy/duplicate columns
+-- Drop legacy/duplicate columns
 ALTER TABLE public.reply_profiles
   DROP COLUMN IF EXISTS profile_name,
   DROP COLUMN IF EXISTS category,
@@ -85,7 +84,7 @@ ALTER TABLE public.reply_profiles
   DROP COLUMN IF EXISTS conflict_style,
   DROP COLUMN IF EXISTS last_activity_at;
 
--- 5) Enforce canonical constraints/defaults
+-- Final defaults and constraints
 UPDATE public.reply_profiles
 SET relationship_type = 'Other'
 WHERE relationship_type IS NULL;

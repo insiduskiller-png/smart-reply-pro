@@ -24,19 +24,14 @@ type Reply = {
 
 type ReplyProfile = {
   id: string;
-  profile_category?: string | null;
+  user_id?: string;
   contact_name: string;
   relationship_type?: string | null;
   context_notes?: string | null;
   style_summary?: string | null;
-  tone_pattern?: string | null;
-  sentence_length?: string | null;
-  directness_level?: string | null;
-  emoji_usage?: string | null;
-  formality_level?: string | null;
-  conflict_style?: string | null;
-  last_activity_at?: string | null;
+  message_history?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 type ProfileMessageRole = "incoming" | "user_reply" | "assistant_suggestion" | "history_import";
@@ -64,7 +59,7 @@ type StyleKey = "calm" | "assertive" | "strategic";
 
 const rewriteModes: RewriteMode[] = ["Lawyer Mode", "Negotiator Mode", "Manager Mode"];
 const quickRewriteModes: QuickRewriteMode[] = ["Shorter", "More Direct", "More Polite", "More Assertive"];
-const categoryOptions = ["Dating", "Work", "Client", "Family", "Friend", "Conflict", "Other"] as const;
+const relationshipTypeOptions = ["Dating", "Work", "Client", "Family", "Friend", "Conflict", "Other"] as const;
 const maxStyleRegenerations = 2;
 
 export default function DashboardClient({
@@ -94,13 +89,13 @@ export default function DashboardClient({
   const [activeMessagesLoading, setActiveMessagesLoading] = useState(false);
   const [showNewProfileModal, setShowNewProfileModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
-  const [newProfileCategory, setNewProfileCategory] = useState<(typeof categoryOptions)[number] | "">("");
+  const [newProfileRelationshipType, setNewProfileRelationshipType] = useState<(typeof relationshipTypeOptions)[number] | "">("");
   const [newProfileContext, setNewProfileContext] = useState("");
   const [newProfileChatHistory, setNewProfileChatHistory] = useState("");
   const [creatingProfile, setCreatingProfile] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [editProfileName, setEditProfileName] = useState("");
-  const [editProfileCategory, setEditProfileCategory] = useState<(typeof categoryOptions)[number] | "">("");
+  const [editProfileRelationshipType, setEditProfileRelationshipType] = useState<(typeof relationshipTypeOptions)[number] | "">("");
   const [editProfileContext, setEditProfileContext] = useState("");
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -188,8 +183,8 @@ export default function DashboardClient({
     setCreatingProfile(true);
     setError("");
     console.info("[UI][createNewProfile] submit", {
-      profileName: newProfileName,
-      profileCategory: newProfileCategory || null,
+      contactName: newProfileName,
+      relationshipType: newProfileRelationshipType || null,
       contextLength: newProfileContext.length,
       historyLength: newProfileChatHistory.length,
     });
@@ -199,8 +194,8 @@ export default function DashboardClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          profileName: newProfileName,
-          profileCategory: newProfileCategory || undefined,
+          contactName: newProfileName,
+          relationshipType: newProfileRelationshipType || undefined,
           contextNotes: newProfileContext,
           chatHistory: newProfileChatHistory,
         }),
@@ -246,7 +241,7 @@ export default function DashboardClient({
         setRecommendedIndex(null);
         setShowNewProfileModal(false);
         setNewProfileName("");
-        setNewProfileCategory("");
+        setNewProfileRelationshipType("");
         setNewProfileContext("");
         setNewProfileChatHistory("");
         await fetchProfiles(newProfileId);
@@ -266,8 +261,8 @@ export default function DashboardClient({
     return profileItem.contact_name || "Unnamed Profile";
   }
 
-  function getProfileCategory(profileItem: ReplyProfile) {
-    return profileItem.profile_category || profileItem.relationship_type || "";
+  function getProfileRelationshipType(profileItem: ReplyProfile) {
+    return profileItem.relationship_type || "";
   }
 
   function openEditProfileModal() {
@@ -275,7 +270,7 @@ export default function DashboardClient({
     if (!activeProfile) return;
 
     setEditProfileName(getProfileDisplayName(activeProfile));
-    setEditProfileCategory(getProfileCategory(activeProfile) as (typeof categoryOptions)[number] | "");
+    setEditProfileRelationshipType(getProfileRelationshipType(activeProfile) as (typeof relationshipTypeOptions)[number] | "");
     setEditProfileContext(activeProfile.context_notes || "");
     setShowEditProfileModal(true);
   }
@@ -295,8 +290,8 @@ export default function DashboardClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           profileId: activeProfileId,
-          profileName: editProfileName,
-          profileCategory: editProfileCategory || undefined,
+          contactName: editProfileName,
+          relationshipType: editProfileRelationshipType || undefined,
           contextNotes: editProfileContext,
         }),
       });
@@ -1001,8 +996,8 @@ export default function DashboardClient({
               {replyProfiles.map((profileItem) => (
                 <option key={profileItem.id} value={profileItem.id}>
                   {getProfileDisplayName(profileItem)}
-                  {getProfileCategory(profileItem) ? ` • ${getProfileCategory(profileItem)}` : ""}
-                  {` • ${new Date(profileItem.last_activity_at || profileItem.created_at).toLocaleDateString()}`}
+                  {getProfileRelationshipType(profileItem) ? ` • ${getProfileRelationshipType(profileItem)}` : ""}
+                  {` • ${new Date(profileItem.updated_at || profileItem.created_at).toLocaleDateString()}`}
                 </option>
               ))}
             </select>
@@ -1016,7 +1011,7 @@ export default function DashboardClient({
 
                 return (
                   <div className="space-y-1 text-xs text-slate-300">
-                    {(activeProfile.style_summary || activeProfile.tone_pattern) ? (
+                    {activeProfile.style_summary ? (
                       <span className="inline-flex rounded-full border border-emerald-700/50 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
                         Communication Style Learned
                       </span>
@@ -1024,9 +1019,9 @@ export default function DashboardClient({
                     <p>
                       <span className="text-slate-500">Profile:</span> {getProfileDisplayName(activeProfile)}
                     </p>
-                    {getProfileCategory(activeProfile) ? (
+                    {getProfileRelationshipType(activeProfile) ? (
                       <p>
-                        <span className="text-slate-500">Category:</span> {getProfileCategory(activeProfile)}
+                        <span className="text-slate-500">Relationship:</span> {getProfileRelationshipType(activeProfile)}
                       </p>
                     ) : null}
                     {activeProfile.context_notes ? (
@@ -1036,7 +1031,7 @@ export default function DashboardClient({
                     ) : null}
                     <p>
                       <span className="text-slate-500">Last activity:</span>{" "}
-                      {new Date(activeProfile.last_activity_at || activeProfile.created_at).toLocaleString()}
+                      {new Date(activeProfile.updated_at || activeProfile.created_at).toLocaleString()}
                     </p>
                   </div>
                 );
@@ -1213,13 +1208,13 @@ export default function DashboardClient({
 
               <select
                 className="w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
-                value={newProfileCategory}
-                onChange={(e) => setNewProfileCategory(e.target.value as (typeof categoryOptions)[number] | "")}
+                value={newProfileRelationshipType}
+                onChange={(e) => setNewProfileRelationshipType(e.target.value as (typeof relationshipTypeOptions)[number] | "")}
               >
-                <option value="">No category (optional)</option>
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                <option value="">No relationship type (optional)</option>
+                {relationshipTypeOptions.map((relationshipType) => (
+                  <option key={relationshipType} value={relationshipType}>
+                    {relationshipType}
                   </option>
                 ))}
               </select>
@@ -1246,7 +1241,7 @@ export default function DashboardClient({
                 onClick={() => {
                   setShowNewProfileModal(false);
                   setNewProfileName("");
-                  setNewProfileCategory("");
+                  setNewProfileRelationshipType("");
                   setNewProfileContext("");
                   setNewProfileChatHistory("");
                 }}
@@ -1283,13 +1278,13 @@ export default function DashboardClient({
 
               <select
                 className="w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
-                value={editProfileCategory}
-                onChange={(e) => setEditProfileCategory(e.target.value as (typeof categoryOptions)[number] | "")}
+                value={editProfileRelationshipType}
+                onChange={(e) => setEditProfileRelationshipType(e.target.value as (typeof relationshipTypeOptions)[number] | "")}
               >
-                <option value="">No category (optional)</option>
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                <option value="">No relationship type (optional)</option>
+                {relationshipTypeOptions.map((relationshipType) => (
+                  <option key={relationshipType} value={relationshipType}>
+                    {relationshipType}
                   </option>
                 ))}
               </select>
