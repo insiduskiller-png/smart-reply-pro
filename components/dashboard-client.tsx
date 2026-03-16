@@ -24,7 +24,6 @@ type Reply = {
 
 type ReplyProfile = {
   id: string;
-  profile_name?: string;
   profile_category?: string | null;
   contact_name: string;
   relationship_type?: string | null;
@@ -264,7 +263,7 @@ export default function DashboardClient({
   }
 
   function getProfileDisplayName(profileItem: ReplyProfile) {
-    return profileItem.profile_name || profileItem.contact_name || "Unnamed Profile";
+    return profileItem.contact_name || "Unnamed Profile";
   }
 
   function getProfileCategory(profileItem: ReplyProfile) {

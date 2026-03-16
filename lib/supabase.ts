@@ -241,7 +241,6 @@ export async function createReplyProfile(params: {
   const now = new Date().toISOString();
   const primaryPayload = {
     user_id: params.userId,
-    profile_name: params.profileName,
     contact_name: params.profileName,
     profile_category: params.profileCategory ?? null,
     relationship_type: params.profileCategory ?? "Other",
@@ -326,7 +325,7 @@ export async function createReplyProfile(params: {
 export async function getReplyProfilesByUser(userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, profile_name, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
+    .select("id, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
     .eq("user_id", userId)
     .order("last_activity_at", { ascending: false })
     .limit(20);
@@ -355,7 +354,7 @@ export async function getReplyProfilesByUser(userId: string) {
 export async function getReplyProfileById(profileId: string, userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, user_id, profile_name, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
+    .select("id, user_id, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
     .eq("id", profileId)
     .eq("user_id", userId)
     .single();
@@ -391,7 +390,6 @@ export async function updateReplyProfileDetails(params: {
   const { data, error } = await supabaseService
     .from("reply_profiles")
     .update({
-      profile_name: params.profileName,
       contact_name: params.profileName,
       profile_category: params.profileCategory ?? null,
       relationship_type: params.profileCategory ?? null,
@@ -400,7 +398,7 @@ export async function updateReplyProfileDetails(params: {
     })
     .eq("id", params.profileId)
     .eq("user_id", params.userId)
-    .select("id, user_id, profile_name, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
+    .select("id, user_id, profile_category, contact_name, relationship_type, context_notes, style_summary, tone_pattern, sentence_length, directness_level, emoji_usage, formality_level, conflict_style, created_at, updated_at, last_activity_at")
     .single();
 
   if (error) {

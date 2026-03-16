@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const profileName = sanitizeText(body.profileName ?? body.contactName, 80);
+    const profileName = sanitizeText(body.contactName ?? body.profileName, 80);
     const relationshipTypeInput = sanitizeText(body.profileCategory ?? body.relationshipType, 30);
     const profileCategory = relationshipTypes.has(relationshipTypeInput)
       ? relationshipTypeInput
@@ -188,7 +188,7 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const profileId = sanitizeText(body.profileId, 80);
-    const profileName = sanitizeText(body.profileName, 80);
+    const profileName = sanitizeText(body.contactName, 80);
     const relationshipTypeInput = sanitizeText(body.profileCategory ?? body.relationshipType, 30);
     const profileCategory = relationshipTypes.has(relationshipTypeInput)
       ? relationshipTypeInput
