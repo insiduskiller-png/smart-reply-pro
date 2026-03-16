@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
-import UsageProgressMeter from "@/components/usage-progress-meter";
 import ProFeaturePreview from "@/components/pro-feature-preview";
-import ResponseComparison from "@/components/response-comparison";
 import TemplateSelector, { type TemplateType } from "@/components/template-selector";
 
 const freeTones = ["Neutral", "Direct", "Polite", "Friendly"];
@@ -24,32 +22,51 @@ type Reply = {
   favorite?: boolean;
 };
 
-type ConversationThread = {
+type ReplyProfile = {
   id: string;
-  title: string | null;
+  profile_name?: string;
+  profile_category?: string | null;
+  contact_name: string;
+  relationship_type?: string | null;
+  context_notes?: string | null;
+  style_summary?: string | null;
+  tone_pattern?: string | null;
+  sentence_length?: string | null;
+  directness_level?: string | null;
+  emoji_usage?: string | null;
+  formality_level?: string | null;
+  conflict_style?: string | null;
+  last_activity_at?: string | null;
   created_at: string;
 };
 
-type ConversationMessage = {
+type ProfileMessageRole = "incoming" | "user_reply" | "assistant_suggestion" | "history_import";
+
+type ProfileMessage = {
   id: string;
-  thread_id: string;
-  role: "user" | "assistant";
+  profile_id: string;
+  role: ProfileMessageRole;
   content: string;
   created_at: string;
 };
 
-type LikelyReaction = {
-  positive: number;
-  neutral: number;
-  negative: number;
-  why: string;
+type ReplyAnalysis = {
+  reply_score: number;
+  clarity: "Low" | "Medium" | "High";
+  influence: "Low" | "Medium" | "High";
+  tone_detected: string;
+  pressure_level: number;
+  manipulation_risk: "None" | "Low" | "Medium" | "High";
 };
 
 type RewriteMode = "Lawyer Mode" | "Negotiator Mode" | "Manager Mode";
-type QuickRewriteMode = "Shorter" | "More Direct" | "More Polite" | "Stronger";
+type QuickRewriteMode = "Shorter" | "More Direct" | "More Polite" | "More Assertive";
+type StyleKey = "calm" | "assertive" | "strategic";
 
 const rewriteModes: RewriteMode[] = ["Lawyer Mode", "Negotiator Mode", "Manager Mode"];
-const quickRewriteModes: QuickRewriteMode[] = ["Shorter", "More Direct", "More Polite", "Stronger"];
+const quickRewriteModes: QuickRewriteMode[] = ["Shorter", "More Direct", "More Polite", "More Assertive"];
+const categoryOptions = ["Dating", "Work", "Client", "Family", "Friend", "Conflict", "Other"] as const;
+const maxStyleRegenerations = 2;
 
 export default function DashboardClient({
   profile,
@@ -64,79 +81,77 @@ export default function DashboardClient({
   const [toneDetection, setToneDetection] = useState("");
   const [outputs, setOutputs] = useState<string[]>([]);
   const [originalOutputs, setOriginalOutputs] = useState<string[]>([]);
-  const [score, setScore] = useState<{
-    score: number;
-    leverage: string;
-    assertiveness_score: number;
-    tone_detected: string;
-    pressure_level: number;
-    risks: string[];
-    manipulation_detected: boolean;
-  } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [powerLoading, setPowerLoading] = useState(false);
+  const [styleRegenerating, setStyleRegenerating] = useState<StyleKey | null>(null);
   const [error, setError] = useState("");
   const [styleWarning, setStyleWarning] = useState("");
-  const [remaining, setRemaining] = useState<number | null>(null);
   const [tab, setTab] = useState<"generate" | "history" | "favorites">("generate");
   const [history, setHistory] = useState<Reply[]>([]);
   const [favorites, setFavorites] = useState<Reply[]>([]);
-  const [threads, setThreads] = useState<ConversationThread[]>([]);
-  const [threadsLoading, setThreadsLoading] = useState(false);
-  const [activeThreadId, setActiveThreadId] = useState("");
-  const [activeMessages, setActiveMessages] = useState<ConversationMessage[]>([]);
+  const [replyProfiles, setReplyProfiles] = useState<ReplyProfile[]>([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
+  const [activeProfileId, setActiveProfileId] = useState("");
+  const [activeMessages, setActiveMessages] = useState<ProfileMessage[]>([]);
   const [activeMessagesLoading, setActiveMessagesLoading] = useState(false);
+  const [showNewProfileModal, setShowNewProfileModal] = useState(false);
+  const [newProfileName, setNewProfileName] = useState("");
+  const [newProfileCategory, setNewProfileCategory] = useState<(typeof categoryOptions)[number] | "">("");
+  const [newProfileContext, setNewProfileContext] = useState("");
+  const [newProfileChatHistory, setNewProfileChatHistory] = useState("");
+  const [creatingProfile, setCreatingProfile] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editProfileName, setEditProfileName] = useState("");
+  const [editProfileCategory, setEditProfileCategory] = useState<(typeof categoryOptions)[number] | "">("");
+  const [editProfileContext, setEditProfileContext] = useState("");
+  const [updatingProfile, setUpdatingProfile] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
-  const [generationAnalysis, setGenerationAnalysis] = useState<{
-    tone_detected: string;
-    pressure_level: number;
-    manipulation_detected: boolean;
-  } | null>(null);
-  const [likelyReaction, setLikelyReaction] = useState<LikelyReaction | null>(null);
-  const [reactionLoading, setReactionLoading] = useState(false);
-  const [strategicInsight, setStrategicInsight] = useState("");
-  const [strategicInsightLoading, setStrategicInsightLoading] = useState(false);
+  const [generationAnalyses, setGenerationAnalyses] = useState<ReplyAnalysis[]>([]);
+  const [recommendedIndex, setRecommendedIndex] = useState<number | null>(null);
   const [suggesting, setSuggesting] = useState(false);
   const [quickRewriteLoading, setQuickRewriteLoading] = useState<{ index: number; mode: QuickRewriteMode } | null>(null);
   const [rewriteLoading, setRewriteLoading] = useState<{ index: number; mode: RewriteMode } | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [messagesUsed, setMessagesUsed] = useState<number | null>(null);
-  const [proOptimizedReply, setProOptimizedReply] = useState<string | null>(null);
-  const [proReplyLoading, setProReplyLoading] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<"rewrite" | "profiles">("rewrite");
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>(null);
+  const [rewriteCounts, setRewriteCounts] = useState<{ calm: number; assertive: number; strategic: number }>({
+    calm: 0,
+    assertive: 0,
+    strategic: 0,
+  });
+  const [lastSubmittedInput, setLastSubmittedInput] = useState("");
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isPro = profile.subscription_status === "pro";
   const isPremiumStyle = preTones.includes(tone);
 
-  async function fetchThreads() {
-    setThreadsLoading(true);
+  async function fetchProfiles() {
+    setProfilesLoading(true);
     try {
-      const response = await fetch("/api/conversations/threads");
+      const response = await fetch("/api/reply-profiles");
       const data = await response.json().catch(() => null);
-      if (response.ok && data?.threads) {
-        setThreads(data.threads);
-        if (!activeThreadId && data.threads.length > 0) {
-          setActiveThreadId(data.threads[0].id);
+      if (response.ok && data?.profiles) {
+        setReplyProfiles(data.profiles);
+        if (!activeProfileId && data.profiles.length > 0) {
+          setActiveProfileId(data.profiles[0].id);
         }
       }
     } catch {
       // Silent fail
     } finally {
-      setThreadsLoading(false);
+      setProfilesLoading(false);
     }
   }
 
-  async function fetchActiveMessages(threadId: string) {
-    if (!threadId) {
+  async function fetchActiveMessages(profileId: string) {
+    if (!profileId) {
       setActiveMessages([]);
       return;
     }
 
     setActiveMessagesLoading(true);
     try {
-      const response = await fetch(`/api/conversations/messages?threadId=${encodeURIComponent(threadId)}`);
+      const response = await fetch(`/api/reply-profiles/messages?profileId=${encodeURIComponent(profileId)}`);
       const data = await response.json().catch(() => null);
       if (response.ok && data?.messages) {
         setActiveMessages(data.messages);
@@ -148,28 +163,111 @@ export default function DashboardClient({
     }
   }
 
-  async function startNewConversation() {
+  async function createNewProfile() {
+    if (!newProfileName.trim()) {
+      setError("Profile name is required.");
+      return;
+    }
+
+    setCreatingProfile(true);
+    setError("");
     try {
-      const response = await fetch("/api/conversations/threads", {
+      const response = await fetch("/api/reply-profiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: input.slice(0, 60) || "New Conversation" }),
+        body: JSON.stringify({
+          profileName: newProfileName,
+          profileCategory: newProfileCategory || undefined,
+          contextNotes: newProfileContext,
+          chatHistory: newProfileChatHistory,
+        }),
       });
       const data = await response.json().catch(() => null);
-      if (response.ok && data?.thread?.id) {
-        const newThreadId = data.thread.id;
-        setActiveThreadId(newThreadId);
+      if (!response.ok) {
+        if (data?.upgrade_required) {
+          setUpgradeReason("profiles");
+          setShowUpgradeModal(true);
+        }
+        setError(data?.error || "Could not create profile.");
+        return;
+      }
+
+      if (data?.profile?.id) {
+        const newProfileId = data.profile.id;
+        setActiveProfileId(newProfileId);
         setActiveMessages([]);
         setInput("");
         setContext("");
         setOutputs([]);
         setOriginalOutputs([]);
         setToneDetection("");
-        setProOptimizedReply(null);
-        await fetchThreads();
+        setGenerationAnalyses([]);
+        setRecommendedIndex(null);
+        setShowNewProfileModal(false);
+        setNewProfileName("");
+        setNewProfileCategory("");
+        setNewProfileContext("");
+        setNewProfileChatHistory("");
+        await fetchProfiles();
       }
     } catch {
-      // Silent fail
+      setError("Network error while creating profile.");
+    } finally {
+      setCreatingProfile(false);
+    }
+  }
+
+  function getProfileDisplayName(profileItem: ReplyProfile) {
+    return profileItem.profile_name || profileItem.contact_name || "Unnamed Profile";
+  }
+
+  function getProfileCategory(profileItem: ReplyProfile) {
+    return profileItem.profile_category || profileItem.relationship_type || "";
+  }
+
+  function openEditProfileModal() {
+    const activeProfile = replyProfiles.find((profileItem) => profileItem.id === activeProfileId);
+    if (!activeProfile) return;
+
+    setEditProfileName(getProfileDisplayName(activeProfile));
+    setEditProfileCategory(getProfileCategory(activeProfile) as (typeof categoryOptions)[number] | "");
+    setEditProfileContext(activeProfile.context_notes || "");
+    setShowEditProfileModal(true);
+  }
+
+  async function saveProfileEdits() {
+    if (!activeProfileId) return;
+    if (!editProfileName.trim()) {
+      setError("Profile name is required.");
+      return;
+    }
+
+    setUpdatingProfile(true);
+    setError("");
+    try {
+      const response = await fetch("/api/reply-profiles", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId: activeProfileId,
+          profileName: editProfileName,
+          profileCategory: editProfileCategory || undefined,
+          contextNotes: editProfileContext,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(data?.error || "Could not update profile.");
+        return;
+      }
+
+      setShowEditProfileModal(false);
+      await fetchProfiles();
+    } catch {
+      setError("Network error while updating profile.");
+    } finally {
+      setUpdatingProfile(false);
     }
   }
 
@@ -181,72 +279,14 @@ export default function DashboardClient({
   }, [initialTemplateInput]);
 
   useEffect(() => {
-    async function initializeThreads() {
-      const response = await fetch("/api/conversations/threads").catch(() => null);
-      const data = await response?.json().catch(() => null);
-
-      if (response?.ok && data?.threads?.length > 0) {
-        setThreads(data.threads);
-        setActiveThreadId(data.threads[0].id);
-        return;
-      }
-
-      const createResponse = await fetch("/api/conversations/threads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "New Conversation" }),
-      }).catch(() => null);
-      const createData = await createResponse?.json().catch(() => null);
-      if (createResponse?.ok && createData?.thread?.id) {
-        setActiveThreadId(createData.thread.id);
-      }
-
-      fetchThreads();
-    }
-
-    initializeThreads();
+    fetchProfiles();
   }, []);
 
   useEffect(() => {
-    if (activeThreadId) {
-      fetchActiveMessages(activeThreadId);
+    if (activeProfileId) {
+      fetchActiveMessages(activeProfileId);
     }
-  }, [activeThreadId]);
-
-  useEffect(() => {
-    if (!isPro) {
-      async function fetchUsage() {
-        try {
-          const response = await fetch("/api/usage");
-          const data = await response.json().catch(() => null);
-          if (response.ok && data?.count !== undefined) {
-            setRemaining(Math.max(0, 5 - data.count));
-          }
-        } catch {
-          // Silent fail, show nothing
-        }
-      }
-      fetchUsage();
-    }
-  }, [isPro]);
-
-  // Fetch messages usage for free users
-  useEffect(() => {
-    if (!isPro) {
-      async function fetchMessagesUsage() {
-        try {
-          const response = await fetch("/api/messages-usage");
-          const data = await response.json().catch(() => null);
-          if (response.ok && data?.messagesUsed !== undefined) {
-            setMessagesUsed(data.messagesUsed);
-          }
-        } catch {
-          // Silent fail, show nothing
-        }
-      }
-      fetchMessagesUsage();
-    }
-  }, [isPro]);
+  }, [activeProfileId]);
 
   useEffect(() => {
     if (tab === "history") {
@@ -405,14 +445,21 @@ export default function DashboardClient({
       return;
     }
 
+    if (!activeProfileId) {
+      setError("Select or create a Reply Profile before generating.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setStyleWarning("");
     setQuickRewriteLoading(null);
-    setLikelyReaction(null);
-    setReactionLoading(false);
-    setStrategicInsight("");
-    setStrategicInsightLoading(false);
+
+    if (input !== lastSubmittedInput) {
+      setRewriteCounts({ calm: 0, assertive: 0, strategic: 0 });
+      setLastSubmittedInput(input);
+    }
+
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -422,7 +469,7 @@ export default function DashboardClient({
           context,
           tone,
           modifier,
-          threadId: activeThreadId || undefined,
+          profileId: activeProfileId || undefined,
           template: selectedTemplate || undefined,
         }),
       });
@@ -432,56 +479,16 @@ export default function DashboardClient({
         return;
       }
 
-      const resolvedThreadId = data?.threadId || activeThreadId;
-      if (resolvedThreadId && resolvedThreadId !== activeThreadId) {
-        setActiveThreadId(resolvedThreadId);
+      const resolvedProfileId = data?.profileId || activeProfileId;
+      if (resolvedProfileId && resolvedProfileId !== activeProfileId) {
+        setActiveProfileId(resolvedProfileId);
       }
 
       setOutputs(data?.outputs || []);
       setOriginalOutputs(data?.outputs || []);
       setToneDetection(data?.detectedTone || "");
-      setGenerationAnalysis(data?.analysis || null);
-
-      if (data?.outputs?.[0]) {
-        setReactionLoading(true);
-        try {
-          const reactionResponse = await fetch("/api/reaction", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reply: data.outputs[0] }),
-          });
-          const reactionData = await reactionResponse.json().catch(() => null);
-          if (reactionResponse.ok) {
-            setLikelyReaction({
-              positive: reactionData?.positive ?? 0,
-              neutral: reactionData?.neutral ?? 0,
-              negative: reactionData?.negative ?? 0,
-              why: reactionData?.why ?? "",
-            });
-          }
-        } catch {
-          // Silent fail - do not block generation
-        } finally {
-          setReactionLoading(false);
-        }
-
-        setStrategicInsightLoading(true);
-        try {
-          const insightResponse = await fetch("/api/strategic-insight", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reply: data.outputs[0] }),
-          });
-          const insightData = await insightResponse.json().catch(() => null);
-          if (insightResponse.ok) {
-            setStrategicInsight(insightData?.insight || "");
-          }
-        } catch {
-          // Silent fail - do not block generation
-        } finally {
-          setStrategicInsightLoading(false);
-        }
-      }
+      setGenerationAnalyses(data?.analyses || []);
+      setRecommendedIndex(typeof data?.recommendedIndex === "number" ? data.recommendedIndex : null);
       
       // Save first reply to history
       if (data?.outputs?.[0]) {
@@ -501,54 +508,9 @@ export default function DashboardClient({
         }
       }
       
-      // For free users, generate pro optimized reply for comparison
-      if (!isPro && data?.outputs?.[0]) {
-        setProReplyLoading(true);
-        try {
-          const proResponse = await fetch("/api/pro-optimized-reply", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ input, context, tone }),
-          });
-          const proData = await proResponse.json().catch(() => null);
-          if (proResponse.ok && proData?.proOptimizedReply) {
-            setProOptimizedReply(proData.proOptimizedReply);
-          }
-        } catch {
-          // Silent fail - show comparison anyway with placeholder
-          setProOptimizedReply("Pro optimized response loading...");
-        } finally {
-          setProReplyLoading(false);
-        }
-      } else if (isPro) {
-        // For pro users, use the "Stronger" variant as the optimized version
-        setProOptimizedReply(data?.outputs?.[1] || data?.outputs?.[0] || null);
-      }
-      if (!isPro) {
-        try {
-          const usageResponse = await fetch("/api/usage");
-          const usageData = await usageResponse.json().catch(() => null);
-          if (usageResponse.ok && usageData?.count !== undefined) {
-            setRemaining(Math.max(0, 5 - usageData.count));
-          }
-        } catch {
-          // Silent fail
-        }
-        
-        try {
-          const messagesResponse = await fetch("/api/messages-usage");
-          const messagesData = await messagesResponse.json().catch(() => null);
-          if (messagesResponse.ok && messagesData?.messagesUsed !== undefined) {
-            setMessagesUsed(messagesData.messagesUsed);
-          }
-        } catch {
-          // Silent fail
-        }
-      }
-
-      await fetchThreads();
-      if (resolvedThreadId) {
-        await fetchActiveMessages(resolvedThreadId);
+      await fetchProfiles();
+      if (resolvedProfileId) {
+        await fetchActiveMessages(resolvedProfileId);
       }
     } catch {
       setError("Network error while generating response.");
@@ -557,16 +519,86 @@ export default function DashboardClient({
     }
   }
 
-  function reactionBar(value: number) {
-    const safe = Math.max(0, Math.min(100, Math.round(value)));
-    const blocks = Math.round(safe / 10);
-    return "█".repeat(blocks);
+  function getStyleKey(index: number): StyleKey {
+    if (index === 1) return "assertive";
+    if (index === 2) return "strategic";
+    return "calm";
+  }
+
+  function canRegenerateStyle(style: StyleKey) {
+    return rewriteCounts[style] < maxStyleRegenerations;
+  }
+
+  async function regenerateStyle(style: StyleKey) {
+    if (!canRegenerateStyle(style)) return;
+    if (!activeProfileId) {
+      setError("Select or create a Reply Profile before generating.");
+      return;
+    }
+
+    setStyleRegenerating(style);
+    setError("");
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          input,
+          context,
+          tone,
+          profileId: activeProfileId,
+          template: selectedTemplate || undefined,
+          modifier: `Regenerate ${style} mode with fresh wording while preserving intent and realism.`,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(data?.error || "Regeneration failed.");
+        return;
+      }
+
+      const nextOutputs = data?.outputs || [];
+      const targetIndex = style === "calm" ? 0 : style === "assertive" ? 1 : 2;
+      if (!nextOutputs[targetIndex]) {
+        setError("Regeneration failed.");
+        return;
+      }
+
+      setOutputs((prev) => {
+        const updated = [...prev];
+        updated[targetIndex] = nextOutputs[targetIndex];
+        return updated;
+      });
+
+      setOriginalOutputs((prev) => {
+        const updated = [...prev];
+        updated[targetIndex] = nextOutputs[targetIndex];
+        return updated;
+      });
+
+      if (Array.isArray(data?.analyses)) {
+        setGenerationAnalyses(data.analyses);
+      }
+      setRecommendedIndex(typeof data?.recommendedIndex === "number" ? data.recommendedIndex : null);
+
+      setRewriteCounts((prev) => ({
+        ...prev,
+        [style]: prev[style] + 1,
+      }));
+    } catch {
+      setError("Network error while regenerating style.");
+    } finally {
+      setStyleRegenerating(null);
+    }
   }
 
   async function rewriteOutput(index: number, mode: RewriteMode) {
     if (!outputs[index]) return;
 
     if (!isPro) {
+      setUpgradeReason("rewrite");
       setShowUpgradeModal(true);
       return;
     }
@@ -674,28 +706,6 @@ export default function DashboardClient({
     }
   }
 
-  async function loadPowerScore() {
-    setPowerLoading(true);
-    setError("");
-    try {
-      const response = await fetch("/api/power-score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input, context }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) {
-        setError(data?.error || "Power score failed.");
-        return;
-      }
-      setScore(data);
-    } catch {
-      setError("Network error while fetching power score.");
-    } finally {
-      setPowerLoading(false);
-    }
-  }
-
   return (
     <div className="space-y-6">
       {!isPro ? (
@@ -728,13 +738,8 @@ export default function DashboardClient({
       {tab === "generate" ? (
       <div className="card p-4 md:p-6">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-xl font-semibold md:text-2xl">Dashboard</h1>
+          <h1 className="text-xl font-semibold md:text-2xl">Reply Workspace</h1>
           <div className="flex items-center gap-2 md:gap-3">
-            {!isPro && remaining !== null ? (
-              <span className="rounded-full border border-slate-700 px-2.5 py-1 text-[10px] text-slate-300 md:px-3 md:text-xs">
-                {remaining} of 5 remaining
-              </span>
-            ) : null}
             {isPro ? (
               <span className="rounded-full border border-emerald-700 bg-emerald-900/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-400 md:px-3 md:text-xs">
                 PRO MEMBER
@@ -749,13 +754,6 @@ export default function DashboardClient({
         {toneDetection ? <p className="mb-3 text-xs text-sky-400">Detected tone: {toneDetection}</p> : null}
         {error ? <p className="mb-3 text-sm text-rose-400">{error}</p> : null}
         {styleWarning ? <p className="mb-3 text-sm text-amber-400">{styleWarning}</p> : null}
-        
-        {/* Usage Progress Meter for Free Users */}
-        {!isPro && messagesUsed !== null ? (
-          <div className="mb-6">
-            <UsageProgressMeter messagesUsed={messagesUsed} limit={6} />
-          </div>
-        ) : null}
         
         {/* Template Selector */}
         <TemplateSelector
@@ -782,12 +780,7 @@ export default function DashboardClient({
         </select>
         {/* Mobile: Sticky Generate Button */}
         <div className="sticky bottom-0 left-0 right-0 z-20 -mx-4 mt-4 border-t border-slate-800 bg-slate-950/95 p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.4)] backdrop-blur md:relative md:mx-0 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none">
-          <button className="h-12 w-full rounded-md bg-sky-500 px-4 py-2 text-base font-medium text-slate-950 disabled:opacity-60 md:h-auto md:w-auto md:text-sm" onClick={() => generate()} disabled={loading || powerLoading}>{loading ? "Generating..." : "Generate Reply"}</button>
-        </div>
-        
-        {/* Desktop: Additional Buttons */}
-        <div className="mt-3 hidden gap-2 md:flex">
-          {isPro ? <button className="h-11 rounded-md border border-slate-700 px-4 py-2 disabled:opacity-60" onClick={loadPowerScore} disabled={loading || powerLoading}>{powerLoading ? "Analyzing..." : "Power score"}</button> : null}
+          <button className="h-12 w-full rounded-md bg-sky-500 px-4 py-2 text-base font-medium text-slate-950 disabled:opacity-60 md:h-auto md:w-auto md:text-sm" onClick={() => generate()} disabled={loading}>{loading ? "Generating..." : "Generate Reply"}</button>
         </div>
 
         {outputs.length ? (
@@ -795,13 +788,44 @@ export default function DashboardClient({
             {outputs.map((output, index) => (
               <article key={index} className="card p-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-base font-semibold md:text-sm">{isPro ? ["Balanced", "Stronger", "Softer"][index] : "Reply"}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-semibold md:text-sm">{["Calm", "Assertive", "Strategic"][index] || "Reply"}</h2>
+                    {recommendedIndex === index ? (
+                      <span className="rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+                        ⭐ Recommended
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="flex gap-3 md:gap-2">
                     <button className="h-11 text-xs text-sky-400 hover:text-sky-300 md:h-auto" onClick={() => navigator.clipboard.writeText(output)}>Copy</button>
                     <button className="h-11 text-xs text-sky-400 hover:text-sky-300 md:h-auto" onClick={() => shareReply(output)}>Share</button>
                     <button className="hidden h-11 text-xs text-sky-400 hover:text-sky-300 md:inline-block md:h-auto" onClick={() => exportAsImage(output, tone)}>Export</button>
                   </div>
                 </div>
+
+                {generationAnalyses[index] ? (
+                  <div className="mb-3 rounded-md border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300">
+                    <p className="text-sm font-semibold text-sky-300">Reply Score: {generationAnalyses[index].reply_score}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <p><span className="text-slate-500">Clarity:</span> {generationAnalyses[index].clarity}</p>
+                      <p><span className="text-slate-500">Influence:</span> {generationAnalyses[index].influence}</p>
+                      <p><span className="text-slate-500">Pressure:</span> {generationAnalyses[index].pressure_level}</p>
+                      <p><span className="text-slate-500">Tone:</span> {generationAnalyses[index].tone_detected}</p>
+                    </div>
+                    <p className="mt-2">
+                      <span className="text-slate-500">Manipulation Risk:</span>{" "}
+                      <span
+                        className={
+                          generationAnalyses[index].manipulation_risk === "High" || generationAnalyses[index].manipulation_risk === "Medium"
+                            ? "font-semibold text-rose-400"
+                            : "text-green-400"
+                        }
+                      >
+                        {generationAnalyses[index].manipulation_risk}
+                      </span>
+                    </p>
+                  </div>
+                ) : null}
                 
                 {/* Template Badge */}
                 {selectedTemplate && index === 0 && (
@@ -819,6 +843,39 @@ export default function DashboardClient({
                 )}
                 
                 <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-200 md:text-sm md:leading-normal">{output}</p>
+
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300"
+                    onClick={() => navigator.clipboard.writeText(output)}
+                  >
+                    Copy Reply
+                  </button>
+                </div>
+
+                {index < 3 ? (
+                  <div className="mt-3 min-h-[56px] rounded-md border border-slate-700 bg-slate-900/40 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs text-slate-400">Refine this mode</p>
+                      {canRegenerateStyle(getStyleKey(index)) ? (
+                        <button
+                          type="button"
+                          className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => regenerateStyle(getStyleKey(index))}
+                          disabled={styleRegenerating !== null}
+                        >
+                          {styleRegenerating === getStyleKey(index)
+                            ? "Regenerating..."
+                            : `Regenerate (${maxStyleRegenerations - rewriteCounts[getStyleKey(index)]} left)`}
+                        </button>
+                      ) : null}
+                    </div>
+                    {!canRegenerateStyle(getStyleKey(index)) ? (
+                      <p className="mt-2 text-[11px] text-slate-500">Maximum refinements reached.</p>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-3 md:p-3">
                   <h3 className="text-sm font-semibold text-slate-100">Quick Rewrite</h3>
@@ -866,91 +923,105 @@ export default function DashboardClient({
           </div>
         ) : null}
 
-        {/* Free vs Pro Response Comparison */}
-        {!isPro && outputs.length > 0 && proOptimizedReply && (
-          <ResponseComparison
-            freeReply={outputs[0]}
-            proReply={proOptimizedReply}
-            isPro={isPro}
-            onUpgradeClick={handleUpgrade}
-          />
-        )}
-
-        {(reactionLoading || likelyReaction) ? (
-          <section className="card p-4 bg-slate-900">
-            <h2 className="text-sm font-semibold text-slate-100 mb-3">Likely Reaction</h2>
-            {reactionLoading ? (
-              <p className="text-sm text-slate-300 animate-pulse">Analyzing likely reactions...</p>
-            ) : likelyReaction ? (
-              <div className="space-y-3">
-                <p className="font-mono text-sm text-slate-200">Positive {reactionBar(likelyReaction.positive)} {likelyReaction.positive}%</p>
-                <p className="font-mono text-sm text-slate-200">Neutral {reactionBar(likelyReaction.neutral)} {likelyReaction.neutral}%</p>
-                <p className="font-mono text-sm text-slate-200">Negative {reactionBar(likelyReaction.negative)} {likelyReaction.negative}%</p>
-                <div className="pt-2">
-                  <p className="text-xs text-slate-400">Why this reaction is likely</p>
-                  <p className="mt-1 text-sm text-slate-200">{likelyReaction.why}</p>
-                </div>
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
-        {(strategicInsightLoading || strategicInsight) ? (
-          <section className="rounded-md border border-sky-500/20 bg-sky-500/5 p-4">
-            <h2 className="text-sm font-semibold text-sky-200">Strategic Insight</h2>
-            {strategicInsightLoading ? (
-              <p className="mt-2 text-sm text-slate-300 animate-pulse">Analyzing strategic leverage...</p>
-            ) : (
-              <p className="mt-2 text-sm text-slate-200">{strategicInsight}</p>
-            )}
-          </section>
-        ) : null}
-
         <section className="rounded-md border border-slate-700 bg-slate-900/40 p-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-slate-100">Active Conversation</h2>
-            <button
-              type="button"
-              className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300"
-              onClick={startNewConversation}
-            >
-              New Conversation
-            </button>
+            <h2 className="text-sm font-semibold text-slate-100">Reply Profiles</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:opacity-50"
+                onClick={openEditProfileModal}
+                disabled={!activeProfileId}
+              >
+                Edit Profile
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300"
+                onClick={() => setShowNewProfileModal(true)}
+              >
+                New Profile
+              </button>
+            </div>
           </div>
 
           <div className="mt-3">
-            <label className="mb-1 block text-xs text-slate-400">Conversation thread</label>
+            <label className="mb-1 block text-xs text-slate-400">Active Contact</label>
             <select
               className="w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm"
-              value={activeThreadId}
-              onChange={(e) => setActiveThreadId(e.target.value)}
+              value={activeProfileId}
+              onChange={(e) => setActiveProfileId(e.target.value)}
             >
-              {threads.map((thread) => (
-                <option key={thread.id} value={thread.id}>
-                  {(thread.title || "New Conversation").slice(0, 40)} • {new Date(thread.created_at).toLocaleDateString()}
+              <option value="">Select a profile</option>
+              {replyProfiles.map((profileItem) => (
+                <option key={profileItem.id} value={profileItem.id}>
+                  {getProfileDisplayName(profileItem)}
+                  {getProfileCategory(profileItem) ? ` • ${getProfileCategory(profileItem)}` : ""}
+                  {` • ${new Date(profileItem.last_activity_at || profileItem.created_at).toLocaleDateString()}`}
                 </option>
               ))}
             </select>
           </div>
 
+          {activeProfileId ? (
+            <div className="mt-3 rounded-md border border-slate-800 bg-slate-950/60 p-3">
+              {(() => {
+                const activeProfile = replyProfiles.find((profileItem) => profileItem.id === activeProfileId);
+                if (!activeProfile) return null;
+
+                return (
+                  <div className="space-y-1 text-xs text-slate-300">
+                    {(activeProfile.style_summary || activeProfile.tone_pattern) ? (
+                      <span className="inline-flex rounded-full border border-emerald-700/50 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
+                        Communication Style Learned
+                      </span>
+                    ) : null}
+                    <p>
+                      <span className="text-slate-500">Profile:</span> {getProfileDisplayName(activeProfile)}
+                    </p>
+                    {getProfileCategory(activeProfile) ? (
+                      <p>
+                        <span className="text-slate-500">Category:</span> {getProfileCategory(activeProfile)}
+                      </p>
+                    ) : null}
+                    {activeProfile.context_notes ? (
+                      <p>
+                        <span className="text-slate-500">Notes:</span> {activeProfile.context_notes}
+                      </p>
+                    ) : null}
+                    <p>
+                      <span className="text-slate-500">Last activity:</span>{" "}
+                      {new Date(activeProfile.last_activity_at || activeProfile.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+
           <div className="mt-4 rounded-md border border-slate-800 bg-slate-950/60 p-3">
-            {threadsLoading || activeMessagesLoading ? (
-              <p className="text-sm text-slate-400">Loading conversation...</p>
+            {profilesLoading || activeMessagesLoading ? (
+              <p className="text-sm text-slate-400">Loading profile memory...</p>
+            ) : !activeProfileId ? (
+              <p className="text-sm text-slate-400">Create or select a Reply Profile to begin.</p>
             ) : activeMessages.length === 0 ? (
-              <p className="text-sm text-slate-400">No messages yet. Send a message to start this conversation.</p>
+              <p className="text-sm text-slate-400">No saved messages yet for this contact.</p>
             ) : (
               <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
                 {activeMessages.map((message) => (
                   <div
                     key={message.id}
                     className={`rounded-md px-3 py-2 text-sm ${
-                      message.role === "user"
-                        ? "ml-8 border border-sky-700/40 bg-sky-900/20 text-sky-100"
-                        : "mr-8 border border-slate-700 bg-slate-900 text-slate-200"
+                      message.role === "incoming" || message.role === "history_import"
+                        ? "mr-8 border border-slate-700 bg-slate-900 text-slate-200"
+                        : "ml-8 border border-sky-700/40 bg-sky-900/20 text-sky-100"
                     }`}
                   >
                     <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-400">
-                      {message.role === "user" ? "User" : "Assistant"}
+                      {message.role === "incoming" && "Incoming"}
+                      {message.role === "history_import" && "Imported history"}
+                      {message.role === "assistant_suggestion" && "Suggested reply"}
+                      {message.role === "user_reply" && "Your sent reply"}
                     </p>
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   </div>
@@ -960,59 +1031,6 @@ export default function DashboardClient({
           </div>
         </section>
 
-        {generationAnalysis && isPro ? (
-          <section className="card p-4 bg-slate-900">
-            <h2 className="text-sm font-semibold text-slate-100 mb-3">Generation Analysis</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-slate-400">Tone Detected</p>
-                <p className="mt-2 text-sm font-semibold text-sky-400">{generationAnalysis.tone_detected}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Pressure Level</p>
-                <div className="mt-1 h-2 rounded bg-slate-800"><div className="h-2 rounded bg-rose-500" style={{ width: `${generationAnalysis.pressure_level}%` }} /></div>
-                <p className="mt-1 text-xs font-semibold">{generationAnalysis.pressure_level}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Manipulation</p>
-                <p className="mt-2 text-sm font-semibold">{generationAnalysis.manipulation_detected ? <span className="text-rose-400">Detected</span> : <span className="text-green-400">None</span>}</p>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        {score ? (
-          <section className="card p-5">
-            <h2 className="text-lg font-semibold">Power Balance Score: {score.score}</h2>
-            <div className="mt-2 h-2 rounded bg-slate-800"><div className="h-2 rounded bg-sky-500" style={{ width: `${score.score}%` }} /></div>
-            <p className="mt-3 text-sm text-slate-300">Leverage: {score.leverage}</p>
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-slate-400">Assertiveness</p>
-                <div className="mt-1 h-2 rounded bg-slate-800"><div className="h-2 rounded bg-amber-500" style={{ width: `${score.assertiveness_score}%` }} /></div>
-                <p className="mt-1 text-xs font-semibold">{score.assertiveness_score}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Pressure Level</p>
-                <div className="mt-1 h-2 rounded bg-slate-800"><div className="h-2 rounded bg-rose-500" style={{ width: `${score.pressure_level}%` }} /></div>
-                <p className="mt-1 text-xs font-semibold">{score.pressure_level}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Tone Detected</p>
-                <p className="mt-2 text-xs font-semibold">{score.tone_detected}</p>
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-slate-300">Manipulation detected: {score.manipulation_detected ? "Yes" : "No"}</p>
-            {score.risks?.length > 0 && (
-              <div className="mt-3">
-                <p className="text-xs text-slate-400">Risks:</p>
-                <ul className="mt-1 text-xs text-slate-300">
-                  {score.risks.map((risk, i) => <li key={i}>• {risk}</li>)}
-                </ul>
-              </div>
-            )}
-          </section>
-        ) : null}
         
         {/* Pro Feature Preview Section */}
         <ProFeaturePreview isPro={isPro} onUpgradeClick={handleUpgrade} />
@@ -1133,14 +1151,154 @@ export default function DashboardClient({
         </div>
       ) : null}
 
+      {showNewProfileModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+          <div className="w-full max-w-xl rounded-lg border border-slate-700 bg-slate-900 p-5">
+            <h2 className="text-lg font-semibold text-slate-100">New Reply Profile</h2>
+            <p className="mt-1 text-sm text-slate-400">Create your own named workspace for one real person.</p>
+
+            <div className="mt-4 space-y-3">
+              <input
+                className="w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
+                placeholder="Profile name (e.g. Sarah, Boss, Client Milan, Mom)"
+                value={newProfileName}
+                onChange={(e) => setNewProfileName(e.target.value)}
+              />
+
+              <select
+                className="w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
+                value={newProfileCategory}
+                onChange={(e) => setNewProfileCategory(e.target.value as (typeof categoryOptions)[number] | "")}
+              >
+                <option value="">No category (optional)</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+
+              <textarea
+                className="min-h-[90px] w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
+                placeholder="Optional short context"
+                value={newProfileContext}
+                onChange={(e) => setNewProfileContext(e.target.value)}
+              />
+
+              <textarea
+                className="min-h-[120px] w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
+                placeholder="Optional: paste chat history to train style memory"
+                value={newProfileChatHistory}
+                onChange={(e) => setNewProfileChatHistory(e.target.value)}
+              />
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+                onClick={() => {
+                  setShowNewProfileModal(false);
+                  setNewProfileName("");
+                  setNewProfileCategory("");
+                  setNewProfileContext("");
+                  setNewProfileChatHistory("");
+                }}
+                disabled={creatingProfile}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 disabled:opacity-60"
+                onClick={createNewProfile}
+                disabled={creatingProfile}
+              >
+                {creatingProfile ? "Creating..." : "Create Profile"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showEditProfileModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+          <div className="w-full max-w-xl rounded-lg border border-slate-700 bg-slate-900 p-5">
+            <h2 className="text-lg font-semibold text-slate-100">Edit Profile</h2>
+            <p className="mt-1 text-sm text-slate-400">Rename and personalize this reply workspace.</p>
+
+            <div className="mt-4 space-y-3">
+              <input
+                className="w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
+                placeholder="Profile name"
+                value={editProfileName}
+                onChange={(e) => setEditProfileName(e.target.value)}
+              />
+
+              <select
+                className="w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
+                value={editProfileCategory}
+                onChange={(e) => setEditProfileCategory(e.target.value as (typeof categoryOptions)[number] | "")}
+              >
+                <option value="">No category (optional)</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+
+              <textarea
+                className="min-h-[100px] w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-sm"
+                placeholder="Optional context notes"
+                value={editProfileContext}
+                onChange={(e) => setEditProfileContext(e.target.value)}
+              />
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+                onClick={() => setShowEditProfileModal(false)}
+                disabled={updatingProfile}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 disabled:opacity-60"
+                onClick={saveProfileEdits}
+                disabled={updatingProfile}
+              >
+                {updatingProfile ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {showUpgradeModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
           <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5">
-            <h2 className="text-lg font-semibold text-slate-100">Pro Coming Soon</h2>
+            <h2 className="text-lg font-semibold text-slate-100">
+              {upgradeReason === "profiles" ? "Unlock More Reply Profiles" : "Pro Coming Soon"}
+            </h2>
             <p className="mt-2 text-sm text-slate-300">
-              Advanced rewrite modes will be available in the Pro version. Stay tuned!
+              {upgradeReason === "profiles"
+                ? "Free plan includes 1 Reply Profile. Upgrade to Pro to save up to 3 profiles."
+                : "Advanced rewrite modes will be available in the Pro version. Stay tuned!"}
             </p>
             <div className="mt-4 flex justify-end gap-2">
+              {upgradeReason === "profiles" ? (
+                <button
+                  type="button"
+                  className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950"
+                  onClick={handleUpgrade}
+                >
+                  Upgrade
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"

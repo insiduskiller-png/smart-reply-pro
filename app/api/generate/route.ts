@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
-import { detectTone, generateReply, powerScoreAnalysis } from "@/lib/openai";
+import { detectTone, generateReply, generateStyleSummary, powerScoreAnalysis } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
 import {
-  createConversationThread,
-  getConversationMessagesByThread,
+  getProfileMessageCount,
+  getProfileMessagesByProfile,
+  getReplyProfileById,
   getUserProfile,
-  getConversationThreadById,
   insertConversation,
-  insertConversationMessage,
+  insertProfileMessage,
   insertGeneration,
-  supabaseService,
+  touchReplyProfileActivity,
+  updateReplyProfileStyleMemory,
 } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
 import { trackEvent } from "@/lib/analytics";
@@ -55,76 +56,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // ENFORCE GENERATION LIMITS (free tier only, before any OpenAI calls)
-    if (!isPro) {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-      const { data: limitData, error: limitError, count } = await supabaseService
-        .from("usage_limits")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id)
-        .gte("created_at", twentyFourHoursAgo);
-
-      if (limitError) {
-        console.error("Generation limit check error:", limitError);
-      }
-
-      const generationCount = count ?? 0;
-
-      // Enforce 5 generations per day for free tier
-      if (generationCount >= 5) {
-        return NextResponse.json(
-          { 
-            error: "Free limit reached. Upgrade to Pro for unlimited generations.",
-            remaining: 0,
-            limit: 5,
-            used: generationCount
-          },
-          { status: 403 }
-        );
-      }
-
-      // Pre-register this generation in usage_limits (BEFORE OpenAI call)
-      const { error: insertError } = await supabaseService
-        .from("usage_limits")
-        .insert({ user_id: user.id });
-
-      if (insertError) {
-        console.error("Failed to record generation usage:", insertError);
-        return NextResponse.json(
-          { error: "Unable to process request. Please try again." },
-          { status: 500 }
-        );
-      }
-    }
-
     // NOW PROCESS REQUEST (limits already enforced)
     const body = await request.json().catch(() => ({}));
     const input = sanitizeText(body.input, 4000);
     const context = sanitizeText(body.context, 4000);
     const tone = sanitizeText(body.tone, 64) || "Neutral";
     const modifier = sanitizeText(body.modifier, 200);
-    const requestedThreadId = sanitizeText(body.threadId, 80);
+    const requestedProfileId = sanitizeText(body.profileId, 80);
     const template = sanitizeText(body.template, 64);
 
     if (!input) return NextResponse.json({ error: "Input required" }, { status: 400 });
 
-    let activeThread = requestedThreadId
-      ? await getConversationThreadById(requestedThreadId, user.id)
-      : null;
-
-    if (!activeThread) {
-      activeThread = await createConversationThread({
-        userId: user.id,
-        title: input.slice(0, 60) || "New Conversation",
-      });
+    if (!requestedProfileId) {
+      return NextResponse.json({ error: "Select an active Reply Profile first." }, { status: 400 });
     }
 
-    if (!activeThread) {
-      return NextResponse.json(
-        { error: "Failed to initialize conversation thread." },
-        { status: 500 },
-      );
+    const activeProfile = await getReplyProfileById(requestedProfileId, user.id);
+    if (!activeProfile) {
+      return NextResponse.json({ error: "Reply Profile not found." }, { status: 404 });
     }
 
     // Check if free user selected premium style
@@ -135,42 +84,90 @@ export async function POST(request: Request) {
       );
     }
 
-    const previousMessages = await getConversationMessagesByThread({
-      threadId: activeThread.id,
+    const previousMessages = await getProfileMessagesByProfile({
+      profileId: activeProfile.id,
       userId: user.id,
-      limit: 10,
+      limit: 20,
     });
 
     const conversationHistory = previousMessages
       .slice()
       .reverse()
-      .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`)
+      .map((message) => {
+        if (message.role === "incoming") return `Incoming: ${message.content}`;
+        if (message.role === "user_reply") return `User Reply: ${message.content}`;
+        if (message.role === "history_import") return `Imported History: ${message.content}`;
+        return `Assistant Suggestion: ${message.content}`;
+      })
       .join("\n");
 
     const detectedTone = await detectTone(input);
-    const outputs = isPro
-      ? await Promise.all([
-          generateReply({ input, context, tone, modifier, variant: "Balanced", conversationHistory, template }),
-          generateReply({ input, context, tone, modifier, variant: "Stronger", conversationHistory, template }),
-          generateReply({ input, context, tone, modifier, variant: "Softer", conversationHistory, template }),
-        ])
-      : [await generateReply({ input, context, tone, modifier, conversationHistory, template })];
+    const styleContext = {
+      contactName: activeProfile.profile_name || activeProfile.contact_name,
+      relationshipType: activeProfile.profile_category || activeProfile.relationship_type || "Unspecified",
+      contextNotes: activeProfile.context_notes ?? undefined,
+      styleSummary: activeProfile.style_summary ?? undefined,
+      tonePattern: activeProfile.tone_pattern ?? undefined,
+      sentenceLength: activeProfile.sentence_length ?? undefined,
+      directnessLevel: activeProfile.directness_level ?? undefined,
+      emojiUsage: activeProfile.emoji_usage ?? undefined,
+      formalityLevel: activeProfile.formality_level ?? undefined,
+      conflictStyle: activeProfile.conflict_style ?? undefined,
+    };
 
-    // Generate analysis for pro users
-    let analysis = null;
-    if (isPro) {
-      try {
-        const rawAnalysis = await powerScoreAnalysis(outputs[0], context);
-        const parsed = JSON.parse(rawAnalysis);
-        analysis = {
+    const variants = ["Calm", "Assertive", "Strategic"] as const;
+    const outputs = await Promise.all(
+      variants.map((variant) =>
+        generateReply({
+          input,
+          context,
+          tone,
+          modifier,
+          variant,
+          conversationHistory,
+          template,
+          profileContext: styleContext,
+        }),
+      ),
+    );
+
+    let analyses: Array<{
+      reply_score: number;
+      clarity: "Low" | "Medium" | "High";
+      influence: "Low" | "Medium" | "High";
+      tone_detected: string;
+      pressure_level: number;
+      manipulation_risk: "None" | "Low" | "Medium" | "High";
+    }> = [];
+
+    try {
+      const rawAnalyses = await Promise.all(outputs.map((reply) => powerScoreAnalysis(reply, context)));
+      analyses = rawAnalyses.map((raw) => {
+        const parsed = JSON.parse(raw);
+        return {
+          reply_score: parsed.reply_score ?? 75,
+          clarity: parsed.clarity ?? "Medium",
+          influence: parsed.influence ?? "Medium",
           tone_detected: parsed.tone_detected ?? "Neutral",
           pressure_level: parsed.pressure_level ?? 50,
-          manipulation_detected: parsed.manipulation_detected ?? false,
+          manipulation_risk: parsed.manipulation_risk ?? (parsed.manipulation_detected ? "Medium" : "None"),
         };
-      } catch {
-        // Silent fail - don't block response
-      }
+      });
+    } catch {
+      analyses = outputs.map(() => ({
+        reply_score: 75,
+        clarity: "Medium",
+        influence: "Medium",
+        tone_detected: "Neutral",
+        pressure_level: 50,
+        manipulation_risk: "None",
+      }));
     }
+
+    const recommendedIndex = analyses.reduce((bestIndex, current, currentIndex, arr) => {
+      if (arr[bestIndex]?.reply_score === undefined) return currentIndex;
+      return current.reply_score > arr[bestIndex].reply_score ? currentIndex : bestIndex;
+    }, 0);
 
     await insertGeneration({
       user_id: user.id,
@@ -186,25 +183,81 @@ export async function POST(request: Request) {
       tone,
     });
 
-    await insertConversationMessage({
-      threadId: activeThread.id,
+    await insertProfileMessage({
+      profileId: activeProfile.id,
       userId: user.id,
-      role: "user",
+      role: "incoming",
       content: input,
     });
 
-    await insertConversationMessage({
-      threadId: activeThread.id,
+    await insertProfileMessage({
+      profileId: activeProfile.id,
       userId: user.id,
-      role: "assistant",
+      role: "assistant_suggestion",
       content: outputs[0],
     });
+
+    await insertProfileMessage({
+      profileId: activeProfile.id,
+      userId: user.id,
+      role: "user_reply",
+      content: outputs[0],
+    });
+
+    await touchReplyProfileActivity(activeProfile.id, user.id);
+
+    // Dynamic style learning refresh every few messages
+    try {
+      const profileMessageCount = await getProfileMessageCount({
+        profileId: activeProfile.id,
+        userId: user.id,
+      });
+
+      if (profileMessageCount >= 4 && profileMessageCount % 4 === 0) {
+        const styleMessages = await getProfileMessagesByProfile({
+          profileId: activeProfile.id,
+          userId: user.id,
+          limit: 60,
+        });
+
+        const userStyleCorpus = styleMessages
+          .slice()
+          .reverse()
+          .filter((message) => message.role === "user_reply" || message.role === "history_import")
+          .map((message) => message.content)
+          .join("\n\n");
+
+        if (userStyleCorpus) {
+          const styleRaw = await generateStyleSummary({
+            contactName: activeProfile.profile_name || activeProfile.contact_name,
+            relationshipType: activeProfile.profile_category || activeProfile.relationship_type || "Unspecified",
+            contextNotes: activeProfile.context_notes ?? undefined,
+            chatHistory: userStyleCorpus,
+          });
+
+          const parsedStyle = JSON.parse(styleRaw);
+          await updateReplyProfileStyleMemory({
+            profileId: activeProfile.id,
+            userId: user.id,
+            styleSummary: parsedStyle?.summary,
+            tonePattern: parsedStyle?.tone_pattern,
+            sentenceLength: parsedStyle?.sentence_length,
+            directnessLevel: parsedStyle?.directness_level,
+            emojiUsage: parsedStyle?.emoji_usage,
+            formalityLevel: parsedStyle?.formality_level,
+            conflictStyle: parsedStyle?.conflict_style,
+          });
+        }
+      }
+    } catch (styleUpdateErr) {
+      console.debug("Dynamic style refresh skipped:", styleUpdateErr);
+    }
 
     // Track reply generation
     try {
       await trackEvent(
         "reply_generated",
-        { tone, variant: isPro ? "Balanced" : undefined, isPro },
+        { tone, variant: isPro ? "Calm" : undefined, isPro },
         user.id
       );
     } catch (analyticsErr) {
@@ -214,8 +267,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       outputs,
       detectedTone,
-      analysis,
-      threadId: activeThread.id,
+      analyses,
+      recommendedIndex,
+      profileId: activeProfile.id,
     });
   } catch (error) {
     return NextResponse.json(

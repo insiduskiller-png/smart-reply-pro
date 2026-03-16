@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
-import { getUserProfile, supabaseService } from "@/lib/supabase";
+import { getUserProfile } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
 import { rewriteReplyWithInstruction } from "@/lib/openai";
 
@@ -57,48 +57,6 @@ export async function POST(request: Request) {
           },
         }
       );
-    }
-
-    // ENFORCE GENERATION LIMITS (free tier only, before any OpenAI calls)
-    if (!isPro) {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-      const { data: limitData, error: limitError, count } = await supabaseService
-        .from("usage_limits")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id)
-        .gte("created_at", twentyFourHoursAgo);
-
-      if (limitError) {
-        console.error("Generation limit check error:", limitError);
-      }
-
-      const generationCount = count ?? 0;
-
-      if (generationCount >= 5) {
-        return NextResponse.json(
-          {
-            error: "Free limit reached. Upgrade to Pro for unlimited rewrites.",
-            remaining: 0,
-            limit: 5,
-            used: generationCount
-          },
-          { status: 403 }
-        );
-      }
-
-      // Pre-register this rewrite in usage_limits (BEFORE OpenAI call)
-      const { error: insertError } = await supabaseService
-        .from("usage_limits")
-        .insert({ user_id: user.id });
-
-      if (insertError) {
-        console.error("Failed to record rewrite usage:", insertError);
-        return NextResponse.json(
-          { error: "Unable to process request. Please try again." },
-          { status: 500 }
-        );
-      }
     }
 
     const body = await request.json().catch(() => ({}));
