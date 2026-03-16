@@ -190,15 +190,19 @@ export default function DashboardClient({
     });
 
     try {
+      const formPayload = {
+        contactName: newProfileName,
+        relationshipType: newProfileRelationshipType || undefined,
+        contextNotes: newProfileContext,
+        chatHistory: newProfileChatHistory,
+      };
+
+      console.info("[UI][createNewProfile] payload before submit", formPayload);
+
       const response = await fetch("/api/reply-profiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contactName: newProfileName,
-          relationshipType: newProfileRelationshipType || undefined,
-          contextNotes: newProfileContext,
-          chatHistory: newProfileChatHistory,
-        }),
+        body: JSON.stringify(formPayload),
       });
 
       const data = await response.json().catch(() => null);

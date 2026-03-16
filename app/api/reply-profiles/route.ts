@@ -30,10 +30,21 @@ function mapCreateProfileError(error: {
 } | null | undefined) {
   if (!error) return "Could not create profile. Please try again.";
 
+  const columnFromError = (() => {
+    const source = `${error.message ?? ""} ${error.details ?? ""}`;
+    const match = source.match(/column\s+"([a-zA-Z0-9_]+)"/i);
+    return match?.[1] ?? "";
+  })();
+
   if (error.code === "42501") return "Database permission error while creating profile.";
   if (error.code === "42P01") return "Reply profile table is missing. Please run migrations.";
   if (error.code === "42703") return "Profile schema mismatch detected. Please run latest migrations.";
-  if (error.code === "23502") return "Missing required profile field. Please complete required fields.";
+  if (error.code === "23502") {
+    if (columnFromError === "contact_name") return "Profile name is required.";
+    if (columnFromError === "user_id") return "You must be logged in to create a profile.";
+    if (columnFromError) return `Missing required field: ${columnFromError}.`;
+    return "Missing required profile field. Please complete required fields.";
+  }
   if (error.code === "23503") return "Invalid user reference for profile creation.";
 
   return error.message || "Could not create profile. Please try again.";
@@ -54,7 +65,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const user = await requireUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "You must be logged in to create a profile." }, { status: 401 });
 
   try {
     console.info("[reply-profiles][POST] create requested", { userId: user.id });
@@ -88,6 +99,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}));
+    console.info("[reply-profiles][POST] submitted form payload", {
+      contactName: body?.contactName ?? null,
+      relationshipType: body?.relationshipType ?? null,
+      contextNotes: body?.contextNotes ?? null,
+      chatHistory: body?.chatHistory ?? null,
+    });
+
     const contactName = sanitizeText(body.contactName, 80);
     const relationshipTypeInput = sanitizeText(body.relationshipType, 30);
     const relationshipType = relationshipTypes.has(relationshipTypeInput)
@@ -96,16 +114,36 @@ export async function POST(request: Request) {
     const contextNotes = sanitizeText(body.contextNotes, 1000);
     const chatHistory = sanitizeText(body.chatHistory, 10000);
 
-    console.info("[reply-profiles][POST] sanitized payload", {
-      userId: user.id,
-      contactName,
-      relationshipType: relationshipType || null,
-      contextNotesLength: contextNotes.length,
-      chatHistoryLength: chatHistory.length,
-    });
+    const validatedPayload = {
+      user_id: user.id,
+      contact_name: contactName,
+      relationship_type: relationshipType || null,
+      context_notes: contextNotes || null,
+      style_summary: null as string | null,
+      message_history: chatHistory || null,
+    };
 
-    if (!contactName) {
-      return NextResponse.json({ error: "Profile name is required." }, { status: 400 });
+    console.info("[reply-profiles][POST] validated payload (pre-style)", validatedPayload);
+
+    const missingRequired: string[] = [];
+    if (!validatedPayload.user_id) missingRequired.push("user_id");
+    if (!validatedPayload.contact_name) missingRequired.push("contact_name");
+
+    if (missingRequired.length > 0) {
+      console.error("[reply-profiles][POST] validation failed", {
+        missingRequired,
+        validatedPayload,
+      });
+
+      if (missingRequired.includes("contact_name")) {
+        return NextResponse.json({ error: "Profile name is required." }, { status: 400 });
+      }
+
+      if (missingRequired.includes("user_id")) {
+        return NextResponse.json({ error: "You must be logged in to create a profile." }, { status: 401 });
+      }
+
+      return NextResponse.json({ error: `Missing required field: ${missingRequired[0]}` }, { status: 400 });
     }
 
     let styleSummary = "";
@@ -122,15 +160,19 @@ export async function POST(request: Request) {
       console.error("Style summary generation failed:", styleError);
     }
 
+    validatedPayload.style_summary =
+      typeof parsedStyle?.summary === "string"
+        ? parsedStyle.summary
+        : styleSummary || null;
+
+    console.info("[reply-profiles][POST] validated payload (final pre-insert)", validatedPayload);
+
     const createResult = await createReplyProfile({
       userId: user.id,
       contactName,
       relationshipType: relationshipType || undefined,
       contextNotes,
-      styleSummary:
-        typeof parsedStyle?.summary === "string"
-          ? parsedStyle.summary
-          : styleSummary || undefined,
+      styleSummary: validatedPayload.style_summary || undefined,
       messageHistory: chatHistory || undefined,
     });
 

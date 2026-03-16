@@ -241,10 +241,30 @@ export async function createReplyProfile(params: {
     context_notes: params.contextNotes ?? null,
     style_summary: params.styleSummary ?? null,
     message_history: params.messageHistory ?? null,
+    created_at: now,
     updated_at: now,
   };
 
-  console.info("[createReplyProfile] Attempting primary insert", primaryPayload);
+  console.info("[createReplyProfile] Canonical payload before insert", {
+    user_id: primaryPayload.user_id,
+    contact_name: primaryPayload.contact_name,
+    relationship_type: primaryPayload.relationship_type,
+    context_notes: primaryPayload.context_notes,
+    style_summary: primaryPayload.style_summary,
+    message_history: primaryPayload.message_history,
+    created_at: primaryPayload.created_at,
+    updated_at: primaryPayload.updated_at,
+  });
+
+  if (!primaryPayload.user_id || !primaryPayload.contact_name) {
+    console.error("[createReplyProfile] Missing required canonical field", {
+      missing: [
+        !primaryPayload.user_id ? "user_id" : null,
+        !primaryPayload.contact_name ? "contact_name" : null,
+      ].filter(Boolean),
+      payload: primaryPayload,
+    });
+  }
 
   const primary = await supabaseService
     .from("reply_profiles")
@@ -276,6 +296,7 @@ export async function createReplyProfile(params: {
     style_summary: params.styleSummary ?? null,
     message_history: params.messageHistory ?? null,
     created_at: now,
+    updated_at: now,
   };
 
   console.info("[createReplyProfile] Attempting fallback insert", fallbackPayload);
