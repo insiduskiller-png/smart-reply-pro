@@ -448,7 +448,6 @@ export async function updateReplyProfileStyleMemory(params: {
       directness_level: params.directnessLevel ?? null,
       emoji_usage: params.emojiUsage ?? null,
       formality_level: params.formalityLevel ?? null,
-        relationship_type: params.relationshipType ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", params.profileId)
