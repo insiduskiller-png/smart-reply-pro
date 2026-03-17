@@ -804,8 +804,116 @@ export default function DashboardClient({
           isPro={isPro}
           onUpgradeClick={handleUpgrade}
         />
+
+        <section className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-100">Reply Profiles</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:opacity-50"
+                onClick={openEditProfileModal}
+                disabled={!activeProfileId}
+              >
+                Edit Profile
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300"
+                onClick={() => setShowNewProfileModal(true)}
+              >
+                New Profile
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <label className="mb-1 block text-xs text-slate-400">Active Contact</label>
+            <select
+              className="w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm"
+              value={activeProfileId}
+              onChange={(e) => setActiveProfileId(e.target.value)}
+            >
+              <option value="">Select a profile</option>
+              {replyProfiles.map((profileItem) => (
+                <option key={profileItem.id} value={profileItem.id}>
+                  {getProfileDisplayName(profileItem)}
+                  {getProfileRelationshipType(profileItem) ? ` • ${getProfileRelationshipType(profileItem)}` : ""}
+                  {` • ${new Date(profileItem.created_at).toLocaleDateString()}`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {activeProfileId ? (
+            <div className="mt-3 rounded-md border border-slate-800 bg-slate-950/60 p-3">
+              {(() => {
+                const activeProfile = replyProfiles.find((profileItem) => profileItem.id === activeProfileId);
+                if (!activeProfile) return null;
+
+                return (
+                  <div className="space-y-1 text-xs text-slate-300">
+                    {activeProfile.style_memory ? (
+                      <span className="inline-flex rounded-full border border-emerald-700/50 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
+                        Communication Style Learned
+                      </span>
+                    ) : null}
+                    <p>
+                      <span className="text-slate-500">Profile:</span> {getProfileDisplayName(activeProfile)}
+                    </p>
+                    {getProfileRelationshipType(activeProfile) ? (
+                      <p>
+                        <span className="text-slate-500">Relationship:</span> {getProfileRelationshipType(activeProfile)}
+                      </p>
+                    ) : null}
+                    {activeProfile.context_notes ? (
+                      <p>
+                        <span className="text-slate-500">Notes:</span> {activeProfile.context_notes}
+                      </p>
+                    ) : null}
+                    <p>
+                      <span className="text-slate-500">Last activity:</span>{" "}
+                      {new Date(activeProfile.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+
+          <div className="mt-4 rounded-md border border-slate-800 bg-slate-950/60 p-3">
+            {profilesLoading || activeMessagesLoading ? (
+              <p className="text-sm text-slate-400">Loading profile memory...</p>
+            ) : !activeProfileId ? (
+              <p className="text-sm text-slate-400">Create or select a Reply Profile to begin.</p>
+            ) : activeMessages.length === 0 ? (
+              <p className="text-sm text-slate-400">No saved messages yet for this contact.</p>
+            ) : (
+              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                {activeMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`rounded-md px-3 py-2 text-sm ${
+                      message.role === "incoming" || message.role === "history_import"
+                        ? "mr-8 border border-slate-700 bg-slate-900 text-slate-200"
+                        : "ml-8 border border-sky-700/40 bg-sky-900/20 text-sky-100"
+                    }`}
+                  >
+                    <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-400">
+                      {message.role === "incoming" && "Incoming"}
+                      {message.role === "history_import" && "Imported history"}
+                      {message.role === "assistant_suggestion" && "Suggested reply"}
+                      {message.role === "user_reply" && "Your sent reply"}
+                    </p>
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
         
-        <textarea className="min-h-[120px] w-full rounded-md border border-slate-700 bg-slate-950 p-4 text-base md:min-h-28 md:p-3 md:text-sm" placeholder="Paste incoming message" value={input} onChange={(e) => handleInputChange(e.target.value)} />
+        <textarea className="mt-4 min-h-[120px] w-full rounded-md border border-slate-700 bg-slate-950 p-4 text-base md:min-h-28 md:p-3 md:text-sm" placeholder="Paste incoming message" value={input} onChange={(e) => handleInputChange(e.target.value)} />
         <div className="mt-2 text-xs text-slate-400">
           {suggesting ? "✨ Suggesting best tone..." : input.length >= 10 ? "✓ Tone suggested" : ""}
         </div>
@@ -965,115 +1073,6 @@ export default function DashboardClient({
           </div>
         ) : null}
 
-        <section className="rounded-md border border-slate-700 bg-slate-900/40 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-slate-100">Reply Profiles</h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:opacity-50"
-                onClick={openEditProfileModal}
-                disabled={!activeProfileId}
-              >
-                Edit Profile
-              </button>
-              <button
-                type="button"
-                className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300"
-                onClick={() => setShowNewProfileModal(true)}
-              >
-                New Profile
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <label className="mb-1 block text-xs text-slate-400">Active Contact</label>
-            <select
-              className="w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm"
-              value={activeProfileId}
-              onChange={(e) => setActiveProfileId(e.target.value)}
-            >
-              <option value="">Select a profile</option>
-              {replyProfiles.map((profileItem) => (
-                <option key={profileItem.id} value={profileItem.id}>
-                  {getProfileDisplayName(profileItem)}
-                  {getProfileRelationshipType(profileItem) ? ` • ${getProfileRelationshipType(profileItem)}` : ""}
-                  {` • ${new Date(profileItem.created_at).toLocaleDateString()}`}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {activeProfileId ? (
-            <div className="mt-3 rounded-md border border-slate-800 bg-slate-950/60 p-3">
-              {(() => {
-                const activeProfile = replyProfiles.find((profileItem) => profileItem.id === activeProfileId);
-                if (!activeProfile) return null;
-
-                return (
-                  <div className="space-y-1 text-xs text-slate-300">
-                    {activeProfile.style_memory ? (
-                      <span className="inline-flex rounded-full border border-emerald-700/50 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
-                        Communication Style Learned
-                      </span>
-                    ) : null}
-                    <p>
-                      <span className="text-slate-500">Profile:</span> {getProfileDisplayName(activeProfile)}
-                    </p>
-                    {getProfileRelationshipType(activeProfile) ? (
-                      <p>
-                        <span className="text-slate-500">Relationship:</span> {getProfileRelationshipType(activeProfile)}
-                      </p>
-                    ) : null}
-                    {activeProfile.context_notes ? (
-                      <p>
-                        <span className="text-slate-500">Notes:</span> {activeProfile.context_notes}
-                      </p>
-                    ) : null}
-                    <p>
-                      <span className="text-slate-500">Last activity:</span>{" "}
-                      {new Date(activeProfile.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : null}
-
-          <div className="mt-4 rounded-md border border-slate-800 bg-slate-950/60 p-3">
-            {profilesLoading || activeMessagesLoading ? (
-              <p className="text-sm text-slate-400">Loading profile memory...</p>
-            ) : !activeProfileId ? (
-              <p className="text-sm text-slate-400">Create or select a Reply Profile to begin.</p>
-            ) : activeMessages.length === 0 ? (
-              <p className="text-sm text-slate-400">No saved messages yet for this contact.</p>
-            ) : (
-              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                {activeMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`rounded-md px-3 py-2 text-sm ${
-                      message.role === "incoming" || message.role === "history_import"
-                        ? "mr-8 border border-slate-700 bg-slate-900 text-slate-200"
-                        : "ml-8 border border-sky-700/40 bg-sky-900/20 text-sky-100"
-                    }`}
-                  >
-                    <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-400">
-                      {message.role === "incoming" && "Incoming"}
-                      {message.role === "history_import" && "Imported history"}
-                      {message.role === "assistant_suggestion" && "Suggested reply"}
-                      {message.role === "user_reply" && "Your sent reply"}
-                    </p>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        
         {/* Pro Feature Preview Section */}
         <ProFeaturePreview isPro={isPro} onUpgradeClick={handleUpgrade} />
       </div>
