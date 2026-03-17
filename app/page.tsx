@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { trackHomepageVisit } from "@/lib/analytics";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 function analyzeMessage(message: string) {
   const text = message.toLowerCase();
@@ -14,11 +16,12 @@ function analyzeMessage(message: string) {
         ? "Defensive"
         : "Neutral";
 
-  const pressureLevel = text.includes("deadline") || text.includes("today") || text.includes("asap") || text.includes("now")
-    ? "High"
-    : text.includes("soon") || text.includes("quick")
-      ? "Medium"
-      : "Low";
+  const pressureLevel =
+    text.includes("deadline") || text.includes("today") || text.includes("asap") || text.includes("now")
+      ? "High"
+      : text.includes("soon") || text.includes("quick")
+        ? "Medium"
+        : "Low";
 
   const hiddenIntent = text.includes("just") || text.includes("simple") || text.includes("quick")
     ? "Minimizing effort while asking for commitment"
@@ -32,23 +35,16 @@ function analyzeMessage(message: string) {
 }
 
 export default function Home() {
-  const [incomingMessage, setIncomingMessage] = useState("");
-
-import { useRouter } from "next/navigation";
-  useEffect(() => {
-import { supabaseBrowser } from "@/lib/supabase-browser";
-    trackHomepageVisit().catch(err => console.debug("Failed to track homepage visit:", err));
-  }, []);
   const router = useRouter();
-
+  const [incomingMessage, setIncomingMessage] = useState("");
   const [redirecting, setRedirecting] = useState(false);
+
+  useEffect(() => {
+    trackHomepageVisit().catch((err) => console.debug("Failed to track homepage visit:", err));
+  }, []);
+
   const analysis = useMemo(() => analyzeMessage(incomingMessage), [incomingMessage]);
   const hasInput = incomingMessage.trim().length > 0;
-
-  return (
-    <main className="mx-auto flex min-h-[80vh] max-w-3xl items-center px-4 py-10 md:py-16">
-      <section className="w-full text-center">
-        <h1 className="text-4xl font-semibold tracking-tight text-slate-100 md:text-5xl">Don’t send it yet.</h1>
 
   async function handleGenerateClick() {
     if (redirecting) return;
@@ -69,12 +65,17 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
       setRedirecting(false);
     }
   }
-        <p className="mt-2 text-4xl font-extrabold tracking-tight text-white md:text-6xl">Control how this conversation ends.</p>
+
+  return (
+    <main className="mx-auto flex min-h-[80vh] max-w-3xl items-center px-4 py-10 md:py-16">
+      <section className="w-full text-center">
+        <h1 className="text-4xl font-semibold tracking-tight text-slate-100 md:text-5xl">Don’t send it yet.</h1>
+        <p className="mt-2 text-4xl font-extrabold tracking-tight text-white md:text-6xl">Control how your conversation ends.</p>
 
         <p className="mx-auto mt-8 max-w-2xl text-lg text-slate-300 md:text-xl">
           One reply can shift everything. Make yours intentional.
         </p>
-        <p className="mt-2 text-4xl font-extrabold tracking-tight text-white md:text-6xl">Control how your conversation ends.</p>
+
         <div className="mx-auto mt-8 max-w-2xl">
           <textarea
             className="min-h-[132px] w-full rounded-lg border border-slate-700 bg-slate-950 p-4 text-base text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none"
@@ -84,11 +85,11 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
           />
         </div>
 
-        <p className="mt-3 text-sm text-slate-400">⚠️ Most people respond emotionally here.</p>
-
         {hasInput ? (
           <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-slate-800 bg-slate-900/50 p-4 text-left">
             <div className="grid gap-3 md:grid-cols-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-400">Tone detected</p>
                 <p className="mt-1 text-sm font-medium text-slate-100">{analysis.toneDetected}</p>
               </div>
               <div>
@@ -106,14 +107,14 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
         <div className="mt-8">
           <button
             type="button"
-            className="rounded-md bg-sky-500 px-6 py-3 text-base font-semibold text-slate-950 hover:bg-sky-400"
-          >
-            Generate the best reply
-          </button>
-        </div>
             className="rounded-md bg-sky-500 px-6 py-3 text-base font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-60"
             onClick={handleGenerateClick}
             disabled={redirecting}
-    </main>
+          >
             {redirecting ? "Redirecting..." : "Generate the best reply"}
+          </button>
+        </div>
+      </section>
+    </main>
+  );
 }
