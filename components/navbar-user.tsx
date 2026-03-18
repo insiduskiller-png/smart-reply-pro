@@ -16,7 +16,7 @@ export default function NavbarUser() {
     if (profileName) return profileName;
     const metadataName = user?.user_metadata?.username?.trim();
     if (metadataName) return metadataName;
-    return (user?.email ?? "Member").split("@")[0];
+    return user?.email?.split("@")[0] || "Member";
   }, [profile?.username, user?.email, user?.user_metadata?.username]);
 
   async function handleLogout() {
@@ -80,18 +80,31 @@ export default function NavbarUser() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((value) => !value)}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        className="rounded-md px-2 py-1 text-sm font-semibold transition hover:bg-slate-800/70 hover:scale-[1.01]"
-      >
-        <span className={usernameClass}>{displayName}</span>
-      </button>
+      <div className="text-right">
+        <button
+          type="button"
+          onClick={() => setIsOpen((value) => !value)}
+          aria-haspopup="menu"
+          aria-expanded={isOpen}
+          className="rounded-md px-2 py-1 text-sm font-semibold transition hover:bg-slate-800/70 hover:scale-[1.01]"
+        >
+          <span className={usernameClass}>{displayName}</span>
+        </button>
+        {!isPro ? (
+          <div className="pr-2">
+            <Link
+              href="/pricing"
+              className="text-xs text-slate-400 transition hover:text-slate-200"
+              onClick={() => setIsOpen(false)}
+            >
+              Pricing
+            </Link>
+          </div>
+        ) : null}
+      </div>
 
       {isOpen ? (
-        <div className="absolute right-0 top-11 z-50 w-52 rounded-xl border border-slate-700 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur">
+        <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-slate-700 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur">
           <Link
             href="/dashboard"
             className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"

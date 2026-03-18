@@ -16,7 +16,7 @@ export function normalizeUsernamePreset(value?: string | null): UsernameColorPre
 
 export function getUsernameTextClass(isPro: boolean, usernameColor?: string | null) {
   if (!isPro) {
-    return "text-white/85";
+    return "text-white";
   }
 
   const preset = normalizeUsernamePreset(usernameColor);
