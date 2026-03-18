@@ -8,6 +8,35 @@ body {
   @apply rounded-xl border border-slate-800 bg-slate-900/80 shadow-xl;
 }
 
+.username-gradient {
+  @apply bg-[length:200%_200%] bg-clip-text text-transparent;
+  animation: usernameShift 7s ease-in-out infinite;
+}
+
+.username-gradient-blue-purple {
+  @apply bg-gradient-to-r from-sky-300 via-blue-400 to-violet-400;
+}
+
+.username-gradient-cyan-neon {
+  @apply bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500;
+}
+
+.username-gradient-gold-orange {
+  @apply bg-gradient-to-r from-amber-200 via-orange-300 to-orange-500;
+}
+
+@keyframes usernameShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* Mobile-first utilities */
 @media (max-width: 767px) {
   /* Ensure touch targets are at least 44px */

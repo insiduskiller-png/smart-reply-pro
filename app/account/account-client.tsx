@@ -1,6 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  getUsernameTextClass,
+  normalizeUsernamePreset,
+  USERNAME_STYLE_OPTIONS,
+  type UsernameColorPreset,
+} from "@/lib/username-style";
 
 interface User {
   id: string;
@@ -12,6 +19,7 @@ interface Profile {
   username?: string | null;
   subscription_status?: string | null;
   created_at?: string | null;
+  username_color?: string | null;
 }
 
 export default function AccountClient() {
@@ -26,6 +34,14 @@ export default function AccountClient() {
   const [savingUsername, setSavingUsername] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
+  const [savingUsernameColor, setSavingUsernameColor] = useState(false);
+  const [usernameColor, setUsernameColor] = useState<UsernameColorPreset>("default");
+  const [editingSection, setEditingSection] = useState<"username" | "email" | null>(null);
+
+  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
+
+  const displayName = (profile?.username?.trim() || user?.email || "Member").split("@")[0];
+  const identityClass = getUsernameTextClass(isPro, profile?.username_color);
 
   useEffect(() => {
     async function load() {
@@ -49,6 +65,7 @@ export default function AccountClient() {
           const profileData = await profileRes.json();
           setProfile(profileData.profile ?? null);
           setUsername(profileData.profile?.username ?? "");
+          setUsernameColor(normalizeUsernamePreset(profileData.profile?.username_color));
         } else {
           setProfile(null);
         }
@@ -101,10 +118,39 @@ export default function AccountClient() {
     }
   }
 
+  async function handleUsernameColorSave() {
+    setSavingUsernameColor(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username_color: usernameColor }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setError(payload?.error || "Unable to save customization.");
+        return;
+      }
+
+      setProfile(payload.profile ?? profile);
+      setSuccess("Profile customization updated.");
+    } catch {
+      setError("Unable to save customization.");
+    } finally {
+      setSavingUsernameColor(false);
+    }
+  }
+
   async function handlePasswordReset() {
     setSendingReset(true);
     setError("");
     setSuccess("");
+
     try {
       const response = await fetch("/api/account/password-reset", {
         method: "POST",
@@ -159,91 +205,187 @@ export default function AccountClient() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
+      <main className="mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
         <div className="card p-4 text-sm text-slate-300 md:p-6">Loading account...</div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
-      <div className="card space-y-6 p-4 md:p-6">
+    <main className="mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold md:text-2xl">Account</h1>
-          <p className="mt-1 text-sm text-slate-300">Manage your profile details.</p>
+          <h1 className="text-2xl font-semibold md:text-3xl">Account Settings</h1>
+          <p className="mt-1 text-sm text-slate-300">Manage your identity and preferences</p>
         </div>
 
-        <div className="space-y-3 text-sm text-slate-300 md:space-y-2">
-          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
-            <span className="text-xs text-slate-400">Username:</span>{" "}
-            <span className="font-medium">{profile?.username || user?.email || "-"}</span>
-          </div>
-          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
-            <span className="text-xs text-slate-400">Email:</span>{" "}
-            <span className="font-medium">{user?.email || "-"}</span>
-          </div>
-          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
-            <span className="text-xs text-slate-400">Subscription status:</span>{" "}
-            <span className="font-medium">{(profile?.subscription_status ?? "free").toLowerCase() === "pro" ? "Pro" : "Free"}</span>
-          </div>
-          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 md:border-0 md:bg-transparent md:p-0">
-            <span className="text-xs text-slate-400">Member since:</span>{" "}
-            <span className="font-medium">{formatDate(profile?.created_at ?? user?.created_at ?? null)}</span>
-          </div>
-        </div>
+        {error ? <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</p> : null}
+        {success ? <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{success}</p> : null}
 
-        {error ? <p className="text-sm text-rose-400">{error}</p> : null}
-        {success ? <p className="text-sm text-emerald-400">{success}</p> : null}
+        <section className="card space-y-4 p-5 md:p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Profile Identity</h2>
+          <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-[0_0_24px_rgba(56,189,248,0.12)]">
+            <p className={`text-3xl font-bold tracking-tight md:text-4xl ${identityClass}`}>{displayName}</p>
+            <p className="mt-2 text-sm text-slate-300">{user?.email || "-"}</p>
+            <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">Member since</p>
+                <p className="mt-1 font-medium text-slate-100">{formatDate(profile?.created_at ?? user?.created_at ?? null)}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">Plan status</p>
+                <p className="mt-1 font-medium text-slate-100">{isPro ? "Pro" : "Free"}</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        <div className="space-y-5 md:space-y-4">
-          <div className="space-y-3 md:space-y-2">
-            <label className="text-sm font-medium text-slate-300">Username</label>
-            <input
-              className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base md:h-10 md:px-3 md:text-sm"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="Username"
-            />
-            <button
-              type="button"
-              className="h-11 w-full rounded-md border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-60 md:h-auto md:w-auto"
-              onClick={handleUsernameChange}
-              disabled={savingUsername}
+        <section className="card space-y-4 p-5 md:p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Account Actions</h2>
+
+          <div className="space-y-3">
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <p className="font-medium text-slate-100">Change Username</p>
+                  <p className="text-sm text-slate-400">Update how your identity appears.</p>
+                </div>
+                <button
+                  type="button"
+                  className="h-10 rounded-md border border-slate-600 px-4 text-sm font-medium text-slate-200 transition hover:scale-[1.01] hover:bg-slate-800"
+                  onClick={() => setEditingSection((value) => (value === "username" ? null : "username"))}
+                >
+                  {editingSection === "username" ? "Close" : "Edit"}
+                </button>
+              </div>
+
+              {editingSection === "username" ? (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    placeholder="Username"
+                  />
+                  <button
+                    type="button"
+                    className="h-11 rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
+                    onClick={handleUsernameChange}
+                    disabled={savingUsername}
+                  >
+                    {savingUsername ? "Saving..." : "Save Username"}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <p className="font-medium text-slate-100">Change Email</p>
+                  <p className="text-sm text-slate-400">Update your login and notification email.</p>
+                </div>
+                <button
+                  type="button"
+                  className="h-10 rounded-md border border-slate-600 px-4 text-sm font-medium text-slate-200 transition hover:scale-[1.01] hover:bg-slate-800"
+                  onClick={() => setEditingSection((value) => (value === "email" ? null : "email"))}
+                >
+                  {editingSection === "email" ? "Close" : "Edit"}
+                </button>
+              </div>
+
+              {editingSection === "email" ? (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="Email"
+                  />
+                  <button
+                    type="button"
+                    className="h-11 rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
+                    onClick={handleEmailChange}
+                    disabled={savingEmail}
+                  >
+                    {savingEmail ? "Saving..." : "Save Email"}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <p className="font-medium text-slate-100">Change Password</p>
+                  <p className="text-sm text-slate-400">Receive a secure reset link by email.</p>
+                </div>
+                <button
+                  type="button"
+                  className="h-10 rounded-md border border-slate-600 px-4 text-sm font-medium text-slate-200 transition hover:scale-[1.01] hover:bg-slate-800 disabled:opacity-60"
+                  onClick={handlePasswordReset}
+                  disabled={sendingReset}
+                >
+                  {sendingReset ? "Sending..." : "Send Reset Link"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {isPro ? (
+          <section className="card space-y-4 p-5 md:p-6">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Profile Customization</h2>
+              <p className="mt-1 text-sm text-slate-300">Customize how your identity appears across the platform</p>
+            </div>
+
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+              <label className="mb-2 block text-sm font-medium text-slate-200" htmlFor="username-color">
+                Username style
+              </label>
+              <select
+                id="username-color"
+                className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100"
+                value={usernameColor}
+                onChange={(event) => setUsernameColor(event.target.value as UsernameColorPreset)}
+              >
+                {USERNAME_STYLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-5">
+                <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">Live preview</p>
+                <p className={`text-3xl font-bold ${getUsernameTextClass(true, usernameColor)}`}>{displayName}</p>
+              </div>
+
+              <button
+                type="button"
+                className="mt-4 h-11 rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
+                onClick={handleUsernameColorSave}
+                disabled={savingUsernameColor}
+              >
+                {savingUsernameColor ? "Saving..." : "Save Customization"}
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="card space-y-3 p-5 md:p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Subscription</h2>
+          <p className="text-base text-slate-100">Current Plan: {isPro ? "Pro" : "Free"}</p>
+          {!isPro ? (
+            <Link
+              href="/pricing"
+              className="inline-flex h-10 items-center rounded-md border border-slate-600 px-4 text-sm font-medium text-slate-200 transition hover:scale-[1.01] hover:bg-slate-800"
             >
-              {savingUsername ? "Updating..." : "Change Username"}
-            </button>
-          </div>
-
-          <div className="space-y-3 md:space-y-2">
-            <label className="text-sm font-medium text-slate-300">Email</label>
-            <input
-              className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base md:h-10 md:px-3 md:text-sm"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Email"
-            />
-            <button
-              type="button"
-              className="h-11 w-full rounded-md border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-60 md:h-auto md:w-auto"
-              onClick={handleEmailChange}
-              disabled={savingEmail}
-            >
-              {savingEmail ? "Updating..." : "Change Email"}
-            </button>
-          </div>
-
-          <div className="space-y-3 md:space-y-2">
-            <p className="text-sm font-medium text-slate-300">Password</p>
-            <button
-              type="button"
-              className="h-11 w-full rounded-md border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-60 md:h-auto md:w-auto"
-              onClick={handlePasswordReset}
-              disabled={sendingReset}
-            >
-              {sendingReset ? "Sending..." : "Change Password"}
-            </button>
-          </div>
-        </div>
+              View Pro plan
+            </Link>
+          ) : null}
+        </section>
       </div>
     </main>
   );

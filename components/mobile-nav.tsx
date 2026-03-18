@@ -4,11 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import { getUsernameTextClass } from "@/lib/username-style";
 
 export default function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, profile, loading } = useAuth();
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
+  const usernameClass = getUsernameTextClass(isPro, profile?.username_color);
 
   async function handleLogout() {
     try {
@@ -37,19 +39,7 @@ export default function MobileNav() {
           </Link>
           
           <div className="flex items-center gap-3">
-            {!loading && user && (
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    isPro
-                      ? "border border-amber-500/40 bg-amber-500/10 text-amber-300"
-                      : "border border-slate-600 bg-slate-800/60 text-slate-300"
-                  }`}
-                >
-                  {isPro ? "Pro" : "Free"}
-                </span>
-              </div>
-            )}
+            {!loading && user ? <span className={`text-sm font-semibold ${usernameClass}`}>{displayName}</span> : null}
             
             {/* Hamburger Button */}
             <button
@@ -100,16 +90,7 @@ export default function MobileNav() {
               {/* User welcome block */}
               {!loading && user && (
                 <div className="border-b border-slate-800 px-4 py-4">
-                  <p className="text-sm font-semibold text-slate-100">{displayName}</p>
-                  <span
-                    className={`mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                      isPro
-                        ? "border border-amber-500/40 bg-amber-500/10 text-amber-300"
-                        : "border border-slate-600 bg-slate-800/60 text-slate-300"
-                    }`}
-                  >
-                    {isPro ? "Pro Member" : "Free Member"}
-                  </span>
+                  <p className={`text-base font-semibold ${usernameClass}`}>{displayName}</p>
                 </div>
               )}
 
@@ -137,14 +118,14 @@ export default function MobileNav() {
                         className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
                         onClick={() => setIsOpen(false)}
                       >
-                        Account
+                        Account Settings
                       </Link>
                       <Link
                         href="/pricing"
                         className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
                         onClick={() => setIsOpen(false)}
                       >
-                        {isPro ? "Manage Pro" : "Upgrade to Pro"}
+                        Pricing
                       </Link>
                       <button
                         onClick={() => {

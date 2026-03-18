@@ -3,184 +3,165 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-type Profile = {
-  subscription_status?: string | null;
-};
-
 export default function PricingPage() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    async function checkAuthAndProfile() {
+    async function checkAuth() {
       try {
         const response = await fetch("/api/auth/me", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
-
-        if (response.ok) {
-          setIsLoggedIn(true);
-          
-          // Fetch profile
-          try {
-            const profileResponse = await fetch("/api/user/profile", {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-            });
-
-            if (profileResponse.ok) {
-              const profileData = await profileResponse.json();
-              setProfile(profileData.profile ?? null);
-            }
-          } catch {
-            setProfile(null);
-          }
-        } else {
-          setIsLoggedIn(false);
-          setProfile(null);
-        }
+        setIsLoggedIn(response.ok);
       } catch {
         setIsLoggedIn(false);
-        setProfile(null);
       } finally {
         setCheckingAuth(false);
       }
     }
 
-    checkAuthAndProfile();
+    checkAuth();
   }, []);
 
-  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
-
-  async function startCheckout() {
-    if (!isLoggedIn) {
-      window.location.href = "/login?next=/pricing";
-      return;
-    }
-
-    if (isPro) {
-      return; // Do nothing if already Pro
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/checkout", { method: "POST" });
-      const data = await response.json();
-
-      if (response.status === 401) {
-        window.location.href = "/login?next=/pricing";
-        return;
-      }
-
-      if (!response.ok || !data?.url) {
-        setError(data?.error || "Checkout failed. Please try again in a moment.");
-        return;
-      }
-
-      window.location.href = data.url;
-    } catch {
-      setError("Network error while creating checkout session.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function getButtonText() {
-    if (checkingAuth) return "Loading...";
-    if (!isLoggedIn) return "Create Account to Upgrade";
-    if (isPro) return "Pro Active";
-    if (loading) return "Redirecting...";
-    return "Upgrade to Pro";
-  }
-
-  function getButtonClass() {
-    if (isPro || !isLoggedIn) {
-      return "mt-6 h-12 w-full rounded-md bg-slate-700 px-4 py-2 text-base font-medium text-slate-400 cursor-not-allowed md:h-auto md:text-sm";
-    }
-    return "mt-6 h-12 w-full rounded-md bg-sky-500 px-4 py-2 text-base font-medium text-slate-950 disabled:opacity-60 hover:bg-sky-400 md:h-auto md:text-sm";
-  }
+  const freePlanHref = isLoggedIn ? "/dashboard" : "/register";
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-16">
-      <h1 className="mb-6 text-center text-2xl font-bold md:mb-8 md:text-3xl">Choose Your Plan</h1>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-        <section className="card p-5 md:p-6">
-          <h2 className="text-xl font-semibold md:text-xl">Free</h2>
-          <p className="mt-2 text-lg font-medium text-slate-300 md:text-base">€0/month</p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-300">
+    <main className="mx-auto max-w-5xl px-4 py-10 md:px-6 md:py-16">
+      <section className="mx-auto max-w-3xl text-center">
+        <h1 className="text-3xl font-bold leading-tight md:text-5xl">
+          Stop guessing what to say. Start controlling the outcome.
+        </h1>
+        <p className="mx-auto mt-4 max-w-2xl text-base text-slate-300 md:text-lg">
+          Smart Reply Pro learns how you communicate and helps you respond with clarity, confidence, and
+          strategy — in real time.
+        </p>
+
+        <ul className="mx-auto mt-6 max-w-2xl space-y-2 text-left text-sm text-slate-200 md:text-base">
+          <li className="flex items-start gap-3">
+            <span className="mt-1 text-sky-400">•</span>
+            <span>Replies that sound like you — not like AI</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="mt-1 text-sky-400">•</span>
+            <span>Understand tone, pressure, and intent before you respond</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="mt-1 text-sky-400">•</span>
+            <span>Turn conversations into decisions, not reactions</span>
+          </li>
+        </ul>
+      </section>
+
+      <section className="mt-10 grid gap-4 md:mt-12 md:grid-cols-2 md:gap-6">
+        <article className="card p-6">
+          <h2 className="text-xl font-semibold">Free</h2>
+          <p className="mt-2 text-2xl font-semibold text-white">€0 <span className="text-base font-medium text-slate-300">/ month</span></p>
+          <p className="mt-2 text-sm text-slate-300">Personalized replies for one active person</p>
+
+          <ul className="mt-5 space-y-2 text-sm text-slate-200">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Unlimited replies</span>
+              <span>Unlimited reply generations</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Basic message analysis</span>
+              <span>1 active Reply Profile (AI adapts to one person)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>1 Reply Profile</span>
+              <span>Style learning from your past messages</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Focused reply support</span>
+              <span>Context-aware replies</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-sky-400">✓</span>
+              <span>Basic strategy modes (Neutral, Calm, Assertive)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-sky-400">✓</span>
+              <span>Profile-based personalization</span>
             </li>
           </ul>
-        </section>
-        <section className="card border-2 border-sky-500 bg-sky-950/20 p-5 md:p-6">
-          <div className="mb-2 inline-block rounded-full bg-sky-500 px-2 py-0.5 text-xs font-semibold text-slate-950">
-            RECOMMENDED
+
+          <div className="mt-6">
+            {checkingAuth ? (
+              <div className="h-12 w-full rounded-md border border-slate-700 bg-slate-800/70 px-4 py-3 text-center text-sm font-medium text-slate-300">
+                Loading...
+              </div>
+            ) : (
+              <Link
+                href={freePlanHref}
+                className="flex h-12 w-full items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+              >
+                Start Free
+              </Link>
+            )}
           </div>
-          <h2 className="text-xl font-semibold md:text-xl">Pro</h2>
-          <p className="mt-2 text-lg font-medium text-slate-300 md:text-base">€5.50/month</p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-300">
+        </article>
+
+        <article className="card border-sky-500/70 bg-sky-950/20 p-6 shadow-[0_0_30px_rgba(56,189,248,0.12)]">
+          <div className="mb-2 inline-block rounded-full border border-sky-400/60 bg-sky-400/15 px-3 py-1 text-xs font-semibold text-sky-300">
+            Coming Soon
+          </div>
+          <h2 className="text-xl font-semibold">Pro</h2>
+          <p className="mt-2 text-2xl font-semibold text-white">€5.50 <span className="text-base font-medium text-slate-300">/ month</span></p>
+          <p className="mt-2 text-sm text-slate-200">Full conversation control across multiple people</p>
+
+          <ul className="mt-5 space-y-2 text-sm text-slate-200">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Unlimited replies</span>
+              <span>3 active Reply Profiles (different people, different styles)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Full conversation analysis</span>
+              <span>Advanced personalization engine (deeper adaptation over time)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Up to 3 Reply Profiles</span>
+              <span>Multiple reply options (choose the best move)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>3 strategic reply options</span>
+              <span>Strategic escalation tools (control direction of conversations)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Advanced messaging modes</span>
+              <span>Enhanced strategy modes (Calm / Assertive / Strategic refined)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Deeper context-based reply support</span>
+              <span>Faster learning and higher consistency</span>
             </li>
           </ul>
-          <p className="mt-6 rounded-md border border-slate-700 bg-slate-900/50 px-4 py-3 text-center text-sm font-semibold text-slate-400">
-            Upgrade to unlock full control
-          </p>
-          {!isLoggedIn && !checkingAuth ? (
-            <p className="mt-3 text-center text-xs text-slate-400 md:text-left">
-              Don&apos;t have an account?{" "}
-              <Link className="text-sky-400 hover:text-sky-300" href="/register">
-                Sign up
-              </Link>
-              {" or "}
-              <Link className="text-sky-400 hover:text-sky-300" href="/login">
-                Log in
-              </Link>
-            </p>
-          ) : null}
-        </section>
-      </div>
+
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            className="mt-6 h-12 w-full cursor-not-allowed rounded-md border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300"
+          >
+            Pro version coming soon
+          </button>
+        </article>
+      </section>
+
+      <p className="mt-6 text-center text-sm text-slate-300">
+        Your conversations shape your opportunities. Choose how you show up.
+      </p>
+
+      <section className="mx-auto mt-12 max-w-3xl rounded-xl border border-slate-800 bg-slate-900/70 p-6 text-center md:mt-14 md:p-8">
+        <h3 className="text-2xl font-semibold md:text-3xl">
+          This isn’t about better replies. It’s about better outcomes.
+        </h3>
+        <p className="mt-3 text-sm text-slate-300 md:text-base">
+          Most people respond emotionally and hope for the best. Smart Reply Pro helps you slow down,
+          understand the situation, and respond with intent.
+        </p>
+      </section>
     </main>
   );
 }

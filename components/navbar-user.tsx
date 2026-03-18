@@ -1,12 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import { getUsernameTextClass } from "@/lib/username-style";
 
 export default function NavbarUser() {
   const { user, profile, loading } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const displayName = useMemo(() => {
+    const profileName = profile?.username?.trim();
+    if (profileName) return profileName;
+    const metadataName = user?.user_metadata?.username?.trim();
+    if (metadataName) return metadataName;
+    return (user?.email ?? "Member").split("@")[0];
+  }, [profile?.username, user?.email, user?.user_metadata?.username]);
 
   async function handleLogout() {
     try {
@@ -34,35 +45,70 @@ export default function NavbarUser() {
     );
   }
 
-  const displayName = useMemo(() => {
-    const profileName = profile?.username?.trim();
-    if (profileName) return profileName;
-    const metadataName = user.user_metadata?.username?.trim();
-    if (metadataName) return metadataName;
-    return (user.email ?? "Member").split("@")[0];
-  }, [profile?.username, user.email, user.user_metadata?.username]);
-
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
+  const usernameClass = getUsernameTextClass(isPro, profile?.username_color);
+
+  useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!dropdownRef.current) return;
+      if (!dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
 
   return (
-    <div className="flex items-center gap-3">
-      <Link href="/dashboard" className="hover:text-sky-400">Dashboard</Link>
-      <div className="text-right">
-        <p className="text-sm text-slate-100">Welcome, {displayName}</p>
-        <span
-          className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            isPro
-              ? "border border-amber-500/40 bg-amber-500/10 text-amber-300"
-              : "border border-slate-600 bg-slate-800/60 text-slate-300"
-          }`}
-        >
-          {isPro ? "Pro Member" : "Free Member"}
-        </span>
-      </div>
-      <Link href="/account" className="text-xs text-slate-300 hover:text-sky-300">Account</Link>
-      <button type="button" className="text-xs text-slate-300 hover:text-sky-300" onClick={handleLogout}>
-        Logout
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        className="rounded-md px-2 py-1 text-sm font-semibold transition hover:bg-slate-800/70 hover:scale-[1.01]"
+      >
+        <span className={usernameClass}>{displayName}</span>
       </button>
+
+      {isOpen ? (
+        <div className="absolute right-0 top-11 z-50 w-52 rounded-xl border border-slate-700 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur">
+          <Link
+            href="/dashboard"
+            className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            onClick={() => setIsOpen(false)}
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/account"
+            className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            onClick={() => setIsOpen(false)}
+          >
+            Account Settings
+          </Link>
+          <div className="my-1 h-px bg-slate-700" />
+          <button
+            type="button"
+            className="block w-full rounded-md px-3 py-2 text-left text-sm text-rose-300 transition hover:bg-slate-800"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

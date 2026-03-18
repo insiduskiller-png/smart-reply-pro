@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
+import { getUsernameTextClass } from "@/lib/username-style";
 
 export default function UserStatusBadge() {
   const { user, profile, loading } = useAuth();
@@ -18,6 +19,7 @@ export default function UserStatusBadge() {
   }, [profile?.username, user]);
 
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
+  const usernameClass = getUsernameTextClass(isPro, profile?.username_color);
 
   if (loading) {
     return <div className="h-10" />;
@@ -34,16 +36,9 @@ export default function UserStatusBadge() {
 
   return (
     <div className="text-right">
-      <p className="text-sm text-slate-200">Welcome, {displayName}</p>
-      <span
-        className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-          isPro
-            ? "border border-amber-500/40 bg-amber-500/10 text-amber-300"
-            : "border border-slate-600 bg-slate-800/60 text-slate-300"
-        }`}
-      >
-        {isPro ? "Pro Member" : "Free Member"}
-      </span>
+      <p className="text-sm font-semibold">
+        <span className={usernameClass}>{displayName}</span>
+      </p>
     </div>
   );
 }

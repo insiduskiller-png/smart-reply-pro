@@ -14,6 +14,7 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 type AuthProfile = {
   username?: string | null;
   subscription_status?: string | null;
+  username_color?: string | null;
 };
 
 type AuthContextValue = {
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabaseBrowser
       .from("profiles")
-      .select("username, subscription_status")
+      .select("username, subscription_status, username_color")
       .eq("id", userId)
       .single();
 
