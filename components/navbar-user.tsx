@@ -24,31 +24,21 @@ export default function NavbarUser() {
       await supabaseBrowser.auth.signOut();
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
-      window.location.href = "/";
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
     }
-  }
-
-  if (loading) {
-    return <div className="h-9 w-28" />;
-  }
-
-  if (!user) {
-    return (
-      <div className="flex items-center gap-3">
-        <Link href="/login" className="hover:text-sky-400">
-          Sign In
-        </Link>
-        <Link href="/register" className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-sky-400">
-          Create Account
-        </Link>
-      </div>
-    );
   }
 
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
   const usernameClass = getUsernameTextClass(isPro, profile?.username_color);
 
   useEffect(() => {
+    if (!user) {
+      setIsOpen(false);
+      return;
+    }
+
     function closeOnOutsideClick(event: MouseEvent) {
       if (!dropdownRef.current) return;
       if (!dropdownRef.current.contains(event.target as Node)) {
@@ -69,7 +59,24 @@ export default function NavbarUser() {
       document.removeEventListener("mousedown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, []);
+  }, [user]);
+
+  if (loading) {
+    return <div className="h-9 w-28" />;
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-3">
+        <Link href="/login" className="hover:text-sky-400">
+          Sign In
+        </Link>
+        <Link href="/register" className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-sky-400">
+          Create Account
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>

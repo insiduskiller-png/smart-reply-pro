@@ -38,9 +38,13 @@ export default function AccountClient() {
   const [usernameColor, setUsernameColor] = useState<UsernameColorPreset>("default");
   const [editingSection, setEditingSection] = useState<"username" | "email" | null>(null);
 
-  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
+  const subscriptionStatus = typeof profile?.subscription_status === "string"
+    ? profile.subscription_status
+    : "free";
+  const isPro = subscriptionStatus.toLowerCase() === "pro";
 
-  const displayName = (profile?.username?.trim() || user?.email || "Member").split("@")[0];
+  const displayName =
+    profile?.username?.trim() || user?.email?.split("@")[0] || "Member";
   const identityClass = getUsernameTextClass(isPro, profile?.username_color);
 
   useEffect(() => {

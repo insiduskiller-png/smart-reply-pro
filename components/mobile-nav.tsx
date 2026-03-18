@@ -17,7 +17,9 @@ export default function MobileNav() {
       await supabaseBrowser.auth.signOut();
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
-      window.location.href = "/";
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
     }
   }
 
@@ -26,7 +28,8 @@ export default function MobileNav() {
     if (profileName) return profileName;
     const metadataName = user?.user_metadata?.username?.trim();
     if (metadataName) return metadataName;
-    return (user?.email ?? "Member").split("@")[0];
+    const emailPrefix = user?.email?.split("@")[0];
+    return emailPrefix || "Member";
   }, [profile?.username, user?.email, user?.user_metadata?.username]);
 
   return (
