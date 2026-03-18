@@ -27,6 +27,10 @@ Writing standard:
 - Be concise, clear, emotionally calibrated, and useful in real life.
 - Vary rhythm and openings. Avoid repetitive sentence patterns.
 - Use natural, human phrasing. Slight imperfection is acceptable if it improves realism.
+- Always match the user's natural writing style based on style_memory.
+- Do NOT default to formal or assistant-like language.
+- Do NOT sound like customer support.
+- The reply must feel like it was written by the user.
 
 Hard bans unless absolutely required by context:
 - robotic politeness
@@ -127,6 +131,7 @@ export async function generateReply(params: {
     relationshipType: string;
     contextNotes?: string;
     styleSummary?: string;
+    profileSummary?: string;
   };
 }) {
   // Build tone-specific instructions
@@ -161,13 +166,13 @@ export async function generateReply(params: {
   let variantInstructions = "";
   switch (params.variant) {
     case "Calm":
-      variantInstructions = "Calm mode: de-escalate tension and keep emotional stability. Stay neutral, composed, respectful, and non-confrontational while remaining clear and human.";
+      variantInstructions = "Calm mode: de-escalate tension and keep emotional stability. Stay neutral, composed, respectful, and non-confrontational while remaining clear and human. Use profile_summary to reduce emotional triggers and keep the exchange grounded.";
       break;
     case "Assertive":
-      variantInstructions = "Assertive mode: communicate boundaries and expectations with direct, confident, respectful firmness. Avoid passive phrasing. Keep it concise and decisive.";
+      variantInstructions = "Assertive mode: communicate boundaries and expectations with direct, confident, respectful firmness. Avoid passive phrasing. Keep it concise and decisive. Use profile_summary to maintain boundaries without unnecessary escalation.";
       break;
     case "Strategic":
-      variantInstructions = "Strategic mode: maximize persuasion and influence with psychologically aware, outcome-oriented phrasing. Use subtle framing and positioning while sounding natural and emotionally intelligent.";
+      variantInstructions = "Strategic mode: maximize persuasion and influence with psychologically aware, outcome-oriented phrasing. Use subtle framing and positioning while sounding natural and emotionally intelligent. Use profile_summary to optimize persuasion and strategic intent.";
       break;
     case "Pro Optimized":
       variantInstructions = "Pro optimized: highest realism, strongest calibration, crisp phrasing, and confident close.";
@@ -217,9 +222,17 @@ Reply Profile Context:
 ${params.profileContext ? `- Contact name: ${params.profileContext.contactName}
 - Relationship type: ${params.profileContext.relationshipType}
 - Context notes: ${params.profileContext.contextNotes || "None"}
-- Style summary: ${params.profileContext.styleSummary || "Not available yet"}` : "No reply profile provided"}
+- style_memory (PRIMARY writing style source): ${params.profileContext.styleSummary || "Not available yet"}
+- profile_summary (SECONDARY guidance): ${params.profileContext.profileSummary || "Not available yet"}` : "No reply profile provided"}
 
 ${params.conversationHistory ? `Previous Conversation:\n${params.conversationHistory}\n\n` : ""}Incoming Message:\n${params.input}\n\nContext (if any):\n${params.context || "None"}\n\nCommunication Mode:\n${params.tone}\n\nMode Instructions:\n${toneInstructions}\n\n${params.variant ? `Variation: ${params.variant}\n` : ""}${params.modifier ? `Additional Modifier: ${params.modifier}\n` : ""}Constraints:
+- Always match the user's natural writing style based on style_memory.
+- style_memory is the PRIMARY driver of tone, phrasing, rhythm, and realism.
+- Use profile_summary only as SECONDARY guidance to improve clarity, emotional awareness, pressure control, and strategic intent.
+- Never let profile_summary override the user's writing style from style_memory.
+- Do NOT default to formal or assistant-like language.
+- Do NOT sound like customer support.
+- The reply must feel like it was written by the user.
 - default 2-5 sentences
 - avoid generic AI phrasing and customer-support tone
 - maintain clarity, self-respect, and calm authority
@@ -249,6 +262,27 @@ export async function generateStyleSummary(params: {
       {
         role: "user",
         content: `Contact: ${params.contactName}\nRelationship: ${params.relationshipType}\nContext Notes: ${params.contextNotes || "None"}\n\nChat History (if provided):\n${params.chatHistory || "None"}`,
+      },
+    ],
+    0.2,
+  );
+}
+
+export async function generateProfileSummary(params: {
+  contactName: string;
+  relationshipType: string;
+  contextNotes?: string;
+  styleMemory?: string;
+}) {
+  return callOpenAI(
+    [
+      {
+        role: "system",
+        content: `${SECURITY_PROMPT}\n\nCreate a concise human-readable profile summary for message strategy.\n\nRules:\n- style_memory is the main source; context_notes is supplemental\n- describe likely communication preferences, triggers, and what works best\n- keep it practical and neutral\n- 1-2 sentences maximum, no bullet points, no JSON\n- do not invent facts not implied by the input\n- output plain text only`,
+      },
+      {
+        role: "user",
+        content: `Contact: ${params.contactName}\nRelationship: ${params.relationshipType}\n\nstyle_memory:\n${params.styleMemory || "Not available"}\n\ncontext_notes:\n${params.contextNotes || "None"}`,
       },
     ],
     0.2,

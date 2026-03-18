@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { sanitizeText } from "@/lib/security";
-import { generateStyleSummary } from "@/lib/openai";
+import { generateProfileSummary, generateStyleSummary } from "@/lib/openai";
 import {
   createReplyProfile,
   getReplyProfileCountByUser,
@@ -164,6 +164,19 @@ export async function POST(request: Request) {
         ? parsedStyle.summary
         : styleMemoryInput || styleSummary || null;
 
+    let profileSummary: string | null = null;
+    try {
+      const summary = await generateProfileSummary({
+        contactName: profileName,
+        relationshipType: category || "Unspecified",
+        contextNotes,
+        styleMemory: validatedPayload.style_memory || undefined,
+      });
+      profileSummary = sanitizeText(summary, 1200) || null;
+    } catch (summaryError) {
+      console.debug("Profile summary generation skipped:", summaryError);
+    }
+
     console.info("[reply-profiles][POST] validated payload (final pre-insert)", validatedPayload);
 
     const createResult = await createReplyProfile({
@@ -172,6 +185,7 @@ export async function POST(request: Request) {
       category: category || undefined,
       contextNotes,
       styleMemory: validatedPayload.style_memory || undefined,
+      profileSummary: profileSummary || undefined,
     });
 
     const createdProfile = createResult.profile;

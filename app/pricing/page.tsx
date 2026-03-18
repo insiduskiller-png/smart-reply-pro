@@ -116,15 +116,19 @@ export default function PricingPage() {
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>5 generations per day</span>
+              <span>Unlimited replies</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Single output</span>
+              <span>Basic message analysis</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-slate-600">✕</span>
-              <span className="text-slate-500">No power score</span>
+              <span className="mt-0.5 text-sky-400">✓</span>
+              <span>1 Reply Profile</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-sky-400">✓</span>
+              <span>Focused reply support</span>
             </li>
           </ul>
         </section>
@@ -137,19 +141,31 @@ export default function PricingPage() {
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Unlimited generations</span>
+              <span>Unlimited replies</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>Power score engine</span>
+              <span>Full conversation analysis</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-sky-400">✓</span>
-              <span>3 response variants + escalation tools</span>
+              <span>Up to 3 Reply Profiles</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-sky-400">✓</span>
+              <span>3 strategic reply options</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-sky-400">✓</span>
+              <span>Advanced messaging modes</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-sky-400">✓</span>
+              <span>Deeper context-based reply support</span>
             </li>
           </ul>
           <p className="mt-6 rounded-md border border-slate-700 bg-slate-900/50 px-4 py-3 text-center text-sm font-semibold text-slate-400">
-            Pro version coming soon.
+            Upgrade to unlock full control
           </p>
           {!isLoggedIn && !checkingAuth ? (
             <p className="mt-3 text-center text-xs text-slate-400 md:text-left">

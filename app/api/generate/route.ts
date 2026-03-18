@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
-import { detectTone, generateReply, generateStyleSummary, powerScoreAnalysis } from "@/lib/openai";
+import { detectTone, generateProfileSummary, generateReply, generateStyleSummary, powerScoreAnalysis } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
 import {
+  incrementReplyProfileInteraction,
   getProfileMessageCount,
   getProfileMessagesByProfile,
   getReplyProfileById,
@@ -11,6 +12,7 @@ import {
   insertProfileMessage,
   insertGeneration,
   touchReplyProfileActivity,
+  updateReplyProfileSummary,
   updateReplyProfileStyleMemory,
 } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
@@ -107,6 +109,7 @@ export async function POST(request: Request) {
       relationshipType: activeProfile.category || "Unspecified",
       contextNotes: activeProfile.context_notes ?? undefined,
       styleSummary: activeProfile.style_memory ?? undefined,
+      profileSummary: activeProfile.profile_summary ?? undefined,
     };
 
     const variants = ["Calm", "Assertive", "Strategic"] as const;
@@ -200,8 +203,17 @@ export async function POST(request: Request) {
 
     await touchReplyProfileActivity(activeProfile.id, user.id);
 
-    // Dynamic style learning refresh every few messages
+    const interactionUpdate = await incrementReplyProfileInteraction({
+      profileId: activeProfile.id,
+      userId: user.id,
+    });
+
+    // Controlled learning loop: style memory stays primary; summary refreshes periodically.
     try {
+      const interactionCount = Number(interactionUpdate?.interaction_count ?? activeProfile.interaction_count ?? 0);
+      const summaryRefreshInterval = 4;
+
+      // Keep existing style memory refresh behavior intact.
       const profileMessageCount = await getProfileMessageCount({
         profileId: activeProfile.id,
         userId: user.id,
@@ -237,8 +249,25 @@ export async function POST(request: Request) {
           });
         }
       }
+
+      // Refresh lightweight intelligence summary every N interactions.
+      if (interactionCount > 0 && interactionCount % summaryRefreshInterval === 0) {
+        const latestProfile = await getReplyProfileById(activeProfile.id, user.id);
+        const profileSummaryRaw = await generateProfileSummary({
+          contactName: latestProfile?.profile_name || activeProfile.profile_name,
+          relationshipType: latestProfile?.category || activeProfile.category || "Unspecified",
+          contextNotes: latestProfile?.context_notes ?? activeProfile.context_notes ?? undefined,
+          styleMemory: latestProfile?.style_memory ?? activeProfile.style_memory ?? undefined,
+        });
+
+        await updateReplyProfileSummary({
+          profileId: activeProfile.id,
+          userId: user.id,
+          profileSummary: sanitizeText(profileSummaryRaw, 1200) || null,
+        });
+      }
     } catch (styleUpdateErr) {
-      console.debug("Dynamic style refresh skipped:", styleUpdateErr);
+      console.debug("Dynamic profile intelligence refresh skipped:", styleUpdateErr);
     }
 
     // Track reply generation

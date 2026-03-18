@@ -29,6 +29,9 @@ type ReplyProfile = {
   category?: string | null;
   context_notes?: string | null;
   style_memory?: string | null;
+  profile_summary?: string | null;
+  interaction_count?: number | null;
+  intelligence_model?: unknown;
   created_at: string;
 };
 

@@ -231,6 +231,7 @@ export async function createReplyProfile(params: {
   category?: string;
   contextNotes?: string;
   styleMemory?: string;
+  profileSummary?: string;
 }) {
   const now = new Date().toISOString();
   const primaryPayload = {
@@ -239,6 +240,8 @@ export async function createReplyProfile(params: {
     category: params.category ?? null,
     context_notes: params.contextNotes ?? null,
     style_memory: params.styleMemory ?? null,
+    profile_summary: params.profileSummary ?? null,
+    interaction_count: 0,
     created_at: now,
   };
 
@@ -248,6 +251,8 @@ export async function createReplyProfile(params: {
     category: primaryPayload.category,
     context_notes: primaryPayload.context_notes,
     style_memory: primaryPayload.style_memory,
+    profile_summary: primaryPayload.profile_summary,
+    interaction_count: primaryPayload.interaction_count,
     created_at: primaryPayload.created_at,
   });
 
@@ -328,7 +333,7 @@ export async function createReplyProfile(params: {
 export async function getReplyProfilesByUser(userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, user_id, profile_name, category, context_notes, style_memory, created_at")
+    .select("id, user_id, profile_name, category, context_notes, style_memory, profile_summary, interaction_count, intelligence_model, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(20);
@@ -357,7 +362,7 @@ export async function getReplyProfilesByUser(userId: string) {
 export async function getReplyProfileById(profileId: string, userId: string) {
   const primary = await supabaseService
     .from("reply_profiles")
-    .select("id, user_id, profile_name, category, context_notes, style_memory, created_at")
+    .select("id, user_id, profile_name, category, context_notes, style_memory, profile_summary, interaction_count, intelligence_model, created_at")
     .eq("id", profileId)
     .eq("user_id", userId)
     .single();
@@ -443,6 +448,62 @@ export async function updateReplyProfileStyleMemory(params: {
 
   if (error) {
     console.error("Error updating reply profile style memory:", error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function updateReplyProfileSummary(params: {
+  profileId: string;
+  userId: string;
+  profileSummary?: string | null;
+}) {
+  const { data, error } = await supabaseService
+    .from("reply_profiles")
+    .update({
+      profile_summary: params.profileSummary ?? null,
+    })
+    .eq("id", params.profileId)
+    .eq("user_id", params.userId)
+    .select("id, profile_summary")
+    .single();
+
+  if (error) {
+    console.error("Error updating reply profile summary:", error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function incrementReplyProfileInteraction(params: {
+  profileId: string;
+  userId: string;
+}) {
+  const selected = await supabaseService
+    .from("reply_profiles")
+    .select("interaction_count")
+    .eq("id", params.profileId)
+    .eq("user_id", params.userId)
+    .single();
+
+  if (selected.error) {
+    console.error("Error reading reply profile interaction count:", selected.error);
+    return null;
+  }
+
+  const nextCount = Number(selected.data?.interaction_count ?? 0) + 1;
+  const { data, error } = await supabaseService
+    .from("reply_profiles")
+    .update({ interaction_count: nextCount })
+    .eq("id", params.profileId)
+    .eq("user_id", params.userId)
+    .select("id, interaction_count")
+    .single();
+
+  if (error) {
+    console.error("Error incrementing reply profile interaction count:", error);
     return null;
   }
 
