@@ -15,6 +15,7 @@ type AuthProfile = {
   username?: string | null;
   subscription_status?: string | null;
   username_color?: string | null;
+  username_style?: string | null;
 };
 
 type AuthContextValue = {
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabaseBrowser
         .from("profiles")
-        .select("username, subscription_status, username_color")
+        .select("username, subscription_status, username_color, username_style")
         .eq("id", userId)
         .single();
 
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile({
           ...(legacyResult.data ?? {}),
           username_color: "#ffffff",
+          username_style: "solid",
         });
         console.info("profile fetch completed", { userId, ok: true, legacyFallback: true });
         return;
@@ -70,7 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setProfile(data ?? null);
+      setProfile({
+        ...(data ?? {}),
+        username_color: data?.username_color || "#ffffff",
+        username_style: data?.username_style || "solid",
+      });
       console.info("profile fetch completed", { userId, ok: true, legacyFallback: false });
     } catch {
       setProfile(null);
