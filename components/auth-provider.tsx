@@ -34,37 +34,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabaseBrowser
-      .from("profiles")
-      .select("username, subscription_status, username_color")
-      .eq("id", userId)
-      .single();
+    console.info("profile fetch started", { userId });
 
-    if (error?.code === "42703") {
-      const legacyResult = await supabaseBrowser
+    try {
+      const { data, error } = await supabaseBrowser
         .from("profiles")
-        .select("username, subscription_status")
+        .select("username, subscription_status, username_color")
         .eq("id", userId)
         .single();
 
-      if (legacyResult.error) {
-        setProfile(null);
+      if (error?.code === "42703") {
+        const legacyResult = await supabaseBrowser
+          .from("profiles")
+          .select("username, subscription_status")
+          .eq("id", userId)
+          .single();
+
+        if (legacyResult.error) {
+          setProfile(null);
+          console.info("profile fetch completed", { userId, ok: false, legacyFallback: true });
+          return;
+        }
+
+        setProfile({
+          ...(legacyResult.data ?? {}),
+          username_color: "#ffffff",
+        });
+        console.info("profile fetch completed", { userId, ok: true, legacyFallback: true });
         return;
       }
 
-      setProfile({
-        ...(legacyResult.data ?? {}),
-        username_color: "#ffffff",
-      });
-      return;
-    }
+      if (error) {
+        setProfile(null);
+        console.info("profile fetch completed", { userId, ok: false, legacyFallback: false });
+        return;
+      }
 
-    if (error) {
+      setProfile(data ?? null);
+      console.info("profile fetch completed", { userId, ok: true, legacyFallback: false });
+    } catch {
       setProfile(null);
-      return;
+      console.info("profile fetch completed", { userId, ok: false, legacyFallback: false });
     }
-
-    setProfile(data ?? null);
   }, []);
 
   const refreshProfile = useCallback(async () => {

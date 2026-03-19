@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase-browser";
@@ -11,78 +11,133 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const didRedirectRef = useRef(false);
 
   useEffect(() => {
+    let mounted = true;
+
+    async function redirectIfAlreadyLoggedIn() {
+      try {
+        const meResponse = await fetch("/api/auth/me", { cache: "no-store" });
+        const meData = await meResponse.json().catch(() => null);
+        if (mounted && meResponse.ok && meData?.user) {
+          console.info("login: already authenticated, redirecting to dashboard");
+          router.replace("/dashboard");
+          return;
+        }
+
+        const {
+          data: { session },
+        } = await supabaseBrowser.auth.getSession();
+
+        if (mounted && session?.user) {
+          await fetch("/api/auth/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accessToken: session.access_token }),
+          }).catch(() => null);
+
+          console.info("login: client session found, redirecting to dashboard");
+          router.replace("/dashboard");
+        }
+      } catch {
+        // Non-blocking check only
+      }
+    }
+
+    void redirectIfAlreadyLoggedIn();
+
     const {
       data: { subscription },
     } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
-      if (session && !didRedirectRef.current) {
-        didRedirectRef.current = true;
-        setLoading(false);
+      if (session) {
+        console.info("login: auth state listener observed session");
         router.replace("/dashboard");
-        router.refresh();
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (!email || !password) {
       setError("Please enter email and password");
       return;
     }
 
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    let redirectAttempted = false;
+
+    console.info("login started");
     setLoading(true);
     setError("");
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
 
-      const data = await response.json();
-      console.log("Login response:", data);
+      clearTimeout(timeoutId);
+
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        setError(data.error || "Login failed");
+        setError(data?.error || "Login failed");
         return;
       }
 
       if (data.success) {
+        console.info("supabase auth success");
+
         if (data.sessionToken && data.refreshToken) {
-          // Trigger auth listener ASAP without blocking redirect on slower devices
+          console.info("session received");
+
+          // Sync browser session without blocking redirect.
           void supabaseBrowser.auth
             .setSession({
               access_token: data.sessionToken,
               refresh_token: data.refreshToken,
             })
             .catch(() => {
-              // Keep server-cookie auth flow working even if client session sync fails
+              // Server-cookie auth flow should still succeed.
             });
         }
 
-        didRedirectRef.current = true;
+        console.info("redirecting to dashboard");
+        redirectAttempted = true;
         router.replace("/dashboard");
-        router.refresh();
+
+        // Fallback in case client navigation gets stalled by runtime state.
+        fallbackTimer = setTimeout(() => {
+          if (typeof window !== "undefined") {
+            window.location.assign("/dashboard");
+          }
+        }, 1200);
+
         return;
       }
 
       setError("Login failed. Please try again.");
     } catch (e) {
       console.error("Login error:", e);
-      setError("Network error. Please try again.");
+      const isAbort = e instanceof DOMException && e.name === "AbortError";
+      setError(isAbort ? "Login timed out. Please try again." : "Network error. Please try again.");
     } finally {
-      if (!didRedirectRef.current) {
-        setLoading(false);
+      if (!redirectAttempted && fallbackTimer) {
+        clearTimeout(fallbackTimer);
       }
+      setLoading(false);
+      console.info("login finished");
     }
   }
 

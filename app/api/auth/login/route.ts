@@ -3,6 +3,7 @@ import { supabase, ensureUserProfile } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
+    console.info("login api: login started");
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -32,9 +33,15 @@ export async function POST(req: Request) {
       );
     }
 
+    console.info("login api: supabase auth success", { userId: data.user?.id ?? null });
+    console.info("login api: session received", { hasAccessToken: Boolean(data.session.access_token) });
+
     // Ensure profile exists for user (non-blocking, do not delay login redirect)
+    console.info("profile fetch started", { userId: data.user?.id ?? null });
     void ensureUserProfile(data.user).catch((profileErr) => {
       console.error("Profile creation error:", profileErr);
+    }).finally(() => {
+      console.info("profile fetch completed", { userId: data.user?.id ?? null });
     });
 
     const response = NextResponse.json({
@@ -54,6 +61,8 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
+
+    console.info("login api: login finished", { success: true, userId: data.user?.id ?? null });
 
     return response;
   } catch (err) {
