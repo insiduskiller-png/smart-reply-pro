@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trackHomepageVisit } from "@/lib/analytics";
+import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 function analyzeMessage(message: string) {
@@ -36,6 +38,7 @@ function analyzeMessage(message: string) {
 
 export default function Home() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [incomingMessage, setIncomingMessage] = useState("");
   const [redirecting, setRedirecting] = useState(false);
 
@@ -45,6 +48,7 @@ export default function Home() {
 
   const analysis = useMemo(() => analyzeMessage(incomingMessage), [incomingMessage]);
   const hasInput = incomingMessage.trim().length > 0;
+  const showLoggedOutExperience = !loading && !user;
 
   async function handleGenerateClick() {
     if (redirecting) return;
@@ -76,44 +80,54 @@ export default function Home() {
           One reply can shift everything. Make yours intentional.
         </p>
 
-        <div className="mx-auto mt-8 max-w-2xl">
-          <textarea
-            className="min-h-[132px] w-full rounded-lg border border-slate-700 bg-slate-950 p-4 text-base text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none"
-            placeholder="Paste the message you received..."
-            value={incomingMessage}
-            onChange={(e) => setIncomingMessage(e.target.value)}
-          />
-        </div>
-
-        {hasInput ? (
-          <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-slate-800 bg-slate-900/50 p-4 text-left">
-            <div className="grid gap-3 md:grid-cols-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-400">Tone detected</p>
-                <p className="mt-1 text-sm font-medium text-slate-100">{analysis.toneDetected}</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-400">Pressure level</p>
-                <p className="mt-1 text-sm font-medium text-slate-100">{analysis.pressureLevel}</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-slate-400">Hidden intent</p>
-                <p className="mt-1 text-sm font-medium text-slate-100">{analysis.hiddenIntent}</p>
-              </div>
+        {showLoggedOutExperience ? (
+          <>
+            <div className="mx-auto mt-8 max-w-2xl">
+              <textarea
+                className="min-h-[132px] w-full rounded-lg border border-slate-700 bg-slate-950 p-4 text-base text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none"
+                placeholder="Paste the message you received..."
+                value={incomingMessage}
+                onChange={(e) => setIncomingMessage(e.target.value)}
+              />
             </div>
+
+            {hasInput ? (
+              <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-slate-800 bg-slate-900/50 p-4 text-left">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-slate-400">Tone detected</p>
+                    <p className="mt-1 text-sm font-medium text-slate-100">{analysis.toneDetected}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-slate-400">Pressure level</p>
+                    <p className="mt-1 text-sm font-medium text-slate-100">{analysis.pressureLevel}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-slate-400">Hidden intent</p>
+                    <p className="mt-1 text-sm font-medium text-slate-100">{analysis.hiddenIntent}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-8">
+              <button
+                type="button"
+                className="rounded-md bg-sky-500 px-6 py-3 text-base font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-60"
+                onClick={handleGenerateClick}
+                disabled={redirecting}
+              >
+                {redirecting ? "Redirecting..." : "Generate the best reply"}
+              </button>
+            </div>
+          </>
+        ) : user ? (
+          <div className="mt-6">
+            <Link href="/dashboard" className="text-sm font-medium text-sky-300 transition hover:text-sky-200">
+              Go to Dashboard
+            </Link>
           </div>
         ) : null}
-
-        <div className="mt-8">
-          <button
-            type="button"
-            className="rounded-md bg-sky-500 px-6 py-3 text-base font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-60"
-            onClick={handleGenerateClick}
-            disabled={redirecting}
-          >
-            {redirecting ? "Redirecting..." : "Generate the best reply"}
-          </button>
-        </div>
       </section>
     </main>
   );

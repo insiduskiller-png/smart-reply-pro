@@ -40,6 +40,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq("id", userId)
       .single();
 
+    if (error?.code === "42703") {
+      const legacyResult = await supabaseBrowser
+        .from("profiles")
+        .select("username, subscription_status")
+        .eq("id", userId)
+        .single();
+
+      if (legacyResult.error) {
+        setProfile(null);
+        return;
+      }
+
+      setProfile({
+        ...(legacyResult.data ?? {}),
+        username_color: "#ffffff",
+      });
+      return;
+    }
+
     if (error) {
       setProfile(null);
       return;
@@ -78,15 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setSession(currentSession ?? null);
       setUser(currentSession?.user ?? null);
-      setLoading(false);
 
       if (currentSession?.user?.id) {
         void syncServerSession(currentSession.access_token);
-        void fetchProfile(currentSession.user.id);
+        await fetchProfile(currentSession.user.id);
       } else {
         void syncServerSession();
         setProfile(null);
       }
+
+      setLoading(false);
     }
 
     initializeSession();
@@ -94,17 +114,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabaseBrowser.auth.onAuthStateChange(async (_event, nextSession) => {
+      setLoading(true);
       setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
-      setLoading(false);
 
       if (nextSession?.user?.id) {
         void syncServerSession(nextSession.access_token);
-        void fetchProfile(nextSession.user.id);
+        await fetchProfile(nextSession.user.id);
       } else {
         void syncServerSession();
         setProfile(null);
       }
+
+      setLoading(false);
     });
 
     return () => {

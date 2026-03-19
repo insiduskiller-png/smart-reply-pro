@@ -1,23 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { getUsernameTextClass } from "@/lib/username-style";
+import { resolveUsernameColor } from "@/lib/username-style";
 
 export default function NavbarUser() {
   const { user, profile, loading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-
-  const displayName = useMemo(() => {
-    const profileName = profile?.username?.trim();
-    if (profileName) return profileName;
-    const metadataName = user?.user_metadata?.username?.trim();
-    if (metadataName) return metadataName;
-    return user?.email?.split("@")[0] || "Member";
-  }, [profile?.username, user?.email, user?.user_metadata?.username]);
+  const displayName = profile?.username?.trim() || "User";
+  const usernameColor = resolveUsernameColor(profile?.username_color);
 
   async function handleLogout() {
     try {
@@ -31,7 +25,6 @@ export default function NavbarUser() {
   }
 
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
-  const usernameClass = getUsernameTextClass(isPro, profile?.username_color);
 
   useEffect(() => {
     if (!user) {
@@ -88,7 +81,7 @@ export default function NavbarUser() {
           aria-expanded={isOpen}
           className="rounded-md px-2 py-1 text-sm font-semibold transition hover:bg-slate-800/70 hover:scale-[1.01]"
         >
-          <span className={usernameClass}>{displayName}</span>
+          <span style={{ color: usernameColor }}>{displayName}</span>
         </button>
         {!isPro ? (
           <div className="pr-2">

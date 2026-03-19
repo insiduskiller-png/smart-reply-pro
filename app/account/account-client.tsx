@@ -8,6 +8,7 @@ import {
   USERNAME_STYLE_OPTIONS,
   type UsernameColorPreset,
 } from "@/lib/username-style";
+import { useAuth } from "@/components/auth-provider";
 
 interface User {
   id: string;
@@ -23,6 +24,7 @@ interface Profile {
 }
 
 export default function AccountClient() {
+  const { refreshProfile } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,6 +116,7 @@ export default function AccountClient() {
         return;
       }
       setProfile(payload.profile ?? profile);
+      await refreshProfile();
       setSuccess("Username updated.");
     } catch {
       setError("Unable to update username.");
@@ -142,6 +145,7 @@ export default function AccountClient() {
       }
 
       setProfile(payload.profile ?? profile);
+      await refreshProfile();
       setSuccess("Profile customization updated.");
     } catch {
       setError("Unable to save customization.");

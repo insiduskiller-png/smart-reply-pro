@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { getUsernameTextClass } from "@/lib/username-style";
+import { resolveUsernameColor } from "@/lib/username-style";
 
 export default function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, profile, loading } = useAuth();
-  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
-  const usernameClass = getUsernameTextClass(isPro, profile?.username_color);
+  const displayName = profile?.username?.trim() || "User";
+  const usernameColor = resolveUsernameColor(profile?.username_color);
 
   async function handleLogout() {
     try {
@@ -23,15 +23,6 @@ export default function MobileNav() {
     }
   }
 
-  const displayName = useMemo(() => {
-    const profileName = profile?.username?.trim();
-    if (profileName) return profileName;
-    const metadataName = user?.user_metadata?.username?.trim();
-    if (metadataName) return metadataName;
-    const emailPrefix = user?.email?.split("@")[0];
-    return emailPrefix || "Member";
-  }, [profile?.username, user?.email, user?.user_metadata?.username]);
-
   return (
     <>
       {/* Mobile Header */}
@@ -42,7 +33,7 @@ export default function MobileNav() {
           </Link>
           
           <div className="flex items-center gap-3">
-            {!loading && user ? <span className={`text-sm font-semibold ${usernameClass}`}>{displayName}</span> : null}
+            {!loading && user ? <span className="text-sm font-semibold" style={{ color: usernameColor }}>{displayName}</span> : null}
             
             {/* Hamburger Button */}
             <button
@@ -93,7 +84,7 @@ export default function MobileNav() {
               {/* User welcome block */}
               {!loading && user && (
                 <div className="border-b border-slate-800 px-4 py-4">
-                  <p className={`text-base font-semibold ${usernameClass}`}>{displayName}</p>
+                  <p className="text-base font-semibold" style={{ color: usernameColor }}>{displayName}</p>
                 </div>
               )}
 

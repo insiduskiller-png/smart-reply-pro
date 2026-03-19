@@ -30,3 +30,29 @@ export function getUsernameTextClass(isPro: boolean, usernameColor?: string | nu
 
   return "username-gradient username-gradient-blue-purple";
 }
+
+export function resolveUsernameColor(usernameColor?: string | null) {
+  if (!usernameColor) {
+    return "#ffffff";
+  }
+
+  const normalized = usernameColor.trim().toLowerCase();
+
+  if (normalized.startsWith("#")) {
+    return normalized;
+  }
+
+  if (normalized === "cyan-neon") {
+    return "#22d3ee";
+  }
+
+  if (normalized === "gold-orange") {
+    return "#fbbf24";
+  }
+
+  if (normalized === "blue-purple" || normalized === "default") {
+    return "#c4b5fd";
+  }
+
+  return "#ffffff";
+}
