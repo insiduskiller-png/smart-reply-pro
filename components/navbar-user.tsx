@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { getUsernameTextClass, resolveUsernameColor, resolveUsernameStyle } from "@/lib/username-style";
+import { getUsernameTextClass, resolveUsernameColor } from "@/lib/username-style";
 
 export default function NavbarUser() {
   const { user, profile, loading } = useAuth();
@@ -12,7 +12,6 @@ export default function NavbarUser() {
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const displayName = profile?.username?.trim() || "User";
   const usernameColor = profile?.username_color || "#ffffff";
-  const usernameStyle = profile?.username_style || "solid";
 
   async function handleLogout() {
     try {
@@ -27,8 +26,7 @@ export default function NavbarUser() {
 
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
   const resolvedColor = resolveUsernameColor(usernameColor);
-  const resolvedStyle = resolveUsernameStyle(usernameStyle);
-  const usernameClass = resolvedStyle === "gradient" ? getUsernameTextClass(isPro, resolvedColor) : "";
+  const usernameClass = getUsernameTextClass(isPro, resolvedColor);
 
   useEffect(() => {
     if (!user) {
@@ -85,7 +83,7 @@ export default function NavbarUser() {
           aria-expanded={isOpen}
           className="rounded-md px-2 py-1 text-sm font-semibold transition hover:bg-slate-800/70 hover:scale-[1.01]"
         >
-          <span className={usernameClass} style={resolvedStyle === "solid" ? { color: resolvedColor } : undefined}>{displayName}</span>
+          <span className={usernameClass}>{displayName}</span>
         </button>
         {!isPro ? (
           <div className="pr-2">

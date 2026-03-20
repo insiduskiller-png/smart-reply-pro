@@ -88,7 +88,7 @@ export async function ensureUserProfile(user: { id: string; email?: string | nul
         email: email,
         username: username,
         username_color: "#ffffff",
-        username_style: "solid",
+        username_style: "gradient",
         subscription_status: "free",
         created_at: new Date().toISOString(),
       }, {
@@ -108,7 +108,7 @@ export async function ensureUserProfile(user: { id: string; email?: string | nul
           email: email,
           username: username,
           username_color: "#ffffff",
-          username_style: "solid",
+          username_style: "gradient",
           subscription_status: "free",
           created_at: new Date().toISOString(),
         }, {
@@ -125,7 +125,7 @@ export async function ensureUserProfile(user: { id: string; email?: string | nul
           email: email,
           username: username,
           username_color: "#ffffff",
-          username_style: "solid",
+          username_style: "gradient",
           subscription_status: "free",
           created_at: new Date().toISOString(),
         };
@@ -146,7 +146,7 @@ export async function ensureUserProfile(user: { id: string; email?: string | nul
       email: email,
       username: username,
       username_color: "#ffffff",
-      username_style: "solid",
+      username_style: "gradient",
       subscription_status: "free",
       created_at: new Date().toISOString(),
     };

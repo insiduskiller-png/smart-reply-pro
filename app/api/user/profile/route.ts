@@ -7,7 +7,7 @@ function withProfileCustomizationFallback<T extends Record<string, unknown> | nu
   return {
     ...(profile ?? {}),
     username_color: (profile?.username_color as string | null | undefined) || "#ffffff",
-    username_style: (profile?.username_style as string | null | undefined) || "solid",
+    username_style: (profile?.username_style as string | null | undefined) || "gradient",
   };
 }
 
@@ -30,6 +30,20 @@ export async function GET() {
       .select("*")
       .eq("id", user.id)
       .single();
+
+    if (error?.code === "42703") {
+      const fallback = await supabaseService
+        .from("profiles")
+        .select("id, username, subscription_status, created_at, email")
+        .eq("id", user.id)
+        .single();
+
+      if (fallback.error) {
+        return NextResponse.json({ error: fallback.error.message }, { status: 400 });
+      }
+
+      return NextResponse.json({ profile: withProfileCustomizationFallback(fallback.data) });
+    }
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -58,12 +72,14 @@ export async function POST(request: Request) {
     }
 
     if (Object.prototype.hasOwnProperty.call(body, "username_color")) {
-      updates.username_color = sanitizeText(body.username_color, 80) || null;
+      updates.username_color = sanitizeText(body.username_color, 80) || "#ffffff";
     }
 
-    if (Object.prototype.hasOwnProperty.call(body, "username_style")) {
-      const sanitized = sanitizeText(body.username_style, 40)?.toLowerCase();
-      updates.username_style = sanitized === "gradient" ? "gradient" : "solid";
+    if (
+      Object.prototype.hasOwnProperty.call(body, "username_color") ||
+      Object.prototype.hasOwnProperty.call(body, "username_style")
+    ) {
+      updates.username_style = "gradient";
     }
 
     if (Object.keys(updates).length === 0) {

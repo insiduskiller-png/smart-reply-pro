@@ -5,10 +5,8 @@ import { useEffect, useState } from "react";
 import {
   getUsernameTextClass,
   normalizeUsernamePreset,
-  resolveUsernameStyle,
-  USERNAME_STYLE_OPTIONS,
+  USERNAME_COLOR_OPTIONS,
   type UsernameColorPreset,
-  type UsernameRenderStyle,
 } from "@/lib/username-style";
 import { useAuth } from "@/components/auth-provider";
 
@@ -41,7 +39,6 @@ export default function AccountClient() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [savingUsernameColor, setSavingUsernameColor] = useState(false);
   const [usernameColor, setUsernameColor] = useState<UsernameColorPreset>("default");
-  const [usernameStyle, setUsernameStyle] = useState<UsernameRenderStyle>("solid");
   const [editingSection, setEditingSection] = useState<"username" | "email" | null>(null);
 
   const subscriptionStatus = typeof profile?.subscription_status === "string"
@@ -52,10 +49,7 @@ export default function AccountClient() {
   const displayName =
     profile?.username?.trim() || user?.email?.split("@")[0] || "Member";
   const resolvedColor = profile?.username_color || "#ffffff";
-  const resolvedStyle = profile?.username_style || "solid";
-  const identityClass = resolvedStyle === "gradient"
-    ? getUsernameTextClass(isPro, resolvedColor)
-    : "";
+  const identityClass = getUsernameTextClass(isPro, resolvedColor);
 
   useEffect(() => {
     async function load() {
@@ -80,7 +74,6 @@ export default function AccountClient() {
           setProfile(profileData.profile ?? null);
           setUsername(profileData.profile?.username ?? "");
           setUsernameColor(normalizeUsernamePreset(profileData.profile?.username_color));
-          setUsernameStyle(resolveUsernameStyle(profileData.profile?.username_style));
         } else {
           setProfile(null);
         }
@@ -143,7 +136,7 @@ export default function AccountClient() {
       const response = await fetch("/api/user/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username_color: usernameColor, username_style: usernameStyle }),
+        body: JSON.stringify({ username_color: usernameColor, username_style: "gradient" }),
       });
 
       const payload = await response.json().catch(() => null);
@@ -244,7 +237,6 @@ export default function AccountClient() {
           <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-[0_0_24px_rgba(56,189,248,0.12)]">
             <p
               className={`text-3xl font-bold tracking-tight md:text-4xl ${identityClass}`}
-              style={resolvedStyle === "solid" ? { color: resolvedColor } : undefined}
             >
               {displayName}
             </p>
@@ -372,31 +364,17 @@ export default function AccountClient() {
                 value={usernameColor}
                 onChange={(event) => setUsernameColor(event.target.value as UsernameColorPreset)}
               >
-                {USERNAME_STYLE_OPTIONS.map((option) => (
+                {USERNAME_COLOR_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
 
-              <label className="mb-2 mt-4 block text-sm font-medium text-slate-200" htmlFor="username-render-style">
-                Rendering style
-              </label>
-              <select
-                id="username-render-style"
-                className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100"
-                value={usernameStyle}
-                onChange={(event) => setUsernameStyle(resolveUsernameStyle(event.target.value))}
-              >
-                <option value="solid">Solid</option>
-                <option value="gradient">Gradient</option>
-              </select>
-
               <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-5">
                 <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">Live preview</p>
                 <p
-                  className={`text-3xl font-bold ${usernameStyle === "gradient" ? getUsernameTextClass(true, usernameColor) : ""}`}
-                  style={usernameStyle === "solid" ? { color: usernameColor } : undefined}
+                  className={`text-3xl font-bold ${getUsernameTextClass(true, usernameColor)}`}
                 >
                   {displayName}
                 </p>

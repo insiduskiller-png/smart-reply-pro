@@ -1,7 +1,6 @@
 export type UsernameColorPreset = "default" | "blue-purple" | "cyan-neon" | "gold-orange";
-export type UsernameRenderStyle = "solid" | "gradient";
 
-export const USERNAME_STYLE_OPTIONS: Array<{ value: UsernameColorPreset; label: string }> = [
+export const USERNAME_COLOR_OPTIONS: Array<{ value: UsernameColorPreset; label: string }> = [
   { value: "default", label: "Default (Blue → Purple)" },
   { value: "blue-purple", label: "Blue → Purple" },
   { value: "cyan-neon", label: "Cyan → Neon Blue" },
@@ -56,11 +55,4 @@ export function resolveUsernameColor(usernameColor?: string | null) {
   }
 
   return "#ffffff";
-}
-
-export function resolveUsernameStyle(usernameStyle?: string | null): UsernameRenderStyle {
-  if (usernameStyle === "gradient") {
-    return "gradient";
-  }
-  return "solid";
 }

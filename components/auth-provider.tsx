@@ -38,49 +38,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.info("profile fetch started", { userId });
 
     try {
-      const { data, error } = await supabaseBrowser
-        .from("profiles")
-        .select("username, subscription_status, username_color, username_style")
-        .eq("id", userId)
-        .single();
+      const response = await fetch("/api/user/profile", {
+        method: "GET",
+        cache: "no-store",
+      });
 
-      if (error?.code === "42703") {
-        const legacyResult = await supabaseBrowser
-          .from("profiles")
-          .select("username, subscription_status")
-          .eq("id", userId)
-          .single();
-
-        if (legacyResult.error) {
-          setProfile(null);
-          console.info("profile fetch completed", { userId, ok: false, legacyFallback: true });
-          return;
-        }
-
-        setProfile({
-          ...(legacyResult.data ?? {}),
-          username_color: "#ffffff",
-          username_style: "solid",
-        });
-        console.info("profile fetch completed", { userId, ok: true, legacyFallback: true });
+      if (!response.ok) {
+        setProfile(null);
+        console.info("profile fetch completed", { userId, ok: false, source: "api" });
         return;
       }
 
-      if (error) {
+      const payload = await response.json().catch(() => null) as {
+        profile?: AuthProfile & { id?: string };
+      } | null;
+
+      const nextProfile = payload?.profile;
+      if (nextProfile?.id && nextProfile.id !== userId) {
         setProfile(null);
-        console.info("profile fetch completed", { userId, ok: false, legacyFallback: false });
+        console.info("profile fetch completed", { userId, ok: false, source: "api", reason: "profile-id-mismatch" });
         return;
       }
 
       setProfile({
-        ...(data ?? {}),
-        username_color: data?.username_color || "#ffffff",
-        username_style: data?.username_style || "solid",
+        ...(nextProfile ?? {}),
+        username_color: nextProfile?.username_color || "#ffffff",
+        username_style: nextProfile?.username_style || "gradient",
       });
-      console.info("profile fetch completed", { userId, ok: true, legacyFallback: false });
+      console.info("profile fetch completed", { userId, ok: true, source: "api" });
     } catch {
       setProfile(null);
-      console.info("profile fetch completed", { userId, ok: false, legacyFallback: false });
+      console.info("profile fetch completed", { userId, ok: false, source: "api" });
     }
   }, []);
 

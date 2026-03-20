@@ -4,18 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { getUsernameTextClass, resolveUsernameColor, resolveUsernameStyle } from "@/lib/username-style";
+import { getUsernameTextClass, resolveUsernameColor } from "@/lib/username-style";
 
 export default function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, profile, loading } = useAuth();
   const displayName = profile?.username?.trim() || "User";
   const usernameColor = profile?.username_color || "#ffffff";
-  const usernameStyle = profile?.username_style || "solid";
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
   const resolvedColor = resolveUsernameColor(usernameColor);
-  const resolvedStyle = resolveUsernameStyle(usernameStyle);
-  const usernameClass = resolvedStyle === "gradient" ? getUsernameTextClass(isPro, resolvedColor) : "";
+  const usernameClass = getUsernameTextClass(isPro, resolvedColor);
 
   async function handleLogout() {
     try {
@@ -38,7 +36,7 @@ export default function MobileNav() {
           </Link>
           
           <div className="flex items-center gap-3">
-            {!loading && user ? <span className={`text-sm font-semibold ${usernameClass}`} style={resolvedStyle === "solid" ? { color: resolvedColor } : undefined}>{displayName}</span> : null}
+            {!loading && user ? <span className={`text-sm font-semibold ${usernameClass}`}>{displayName}</span> : null}
             
             {/* Hamburger Button */}
             <button
@@ -89,7 +87,7 @@ export default function MobileNav() {
               {/* User welcome block */}
               {!loading && user && (
                 <div className="border-b border-slate-800 px-4 py-4">
-                  <p className={`text-base font-semibold ${usernameClass}`} style={resolvedStyle === "solid" ? { color: resolvedColor } : undefined}>{displayName}</p>
+                  <p className={`text-base font-semibold ${usernameClass}`}>{displayName}</p>
                 </div>
               )}
 
