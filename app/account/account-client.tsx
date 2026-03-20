@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   normalizeUsernamePreset,
+  USERNAME_TRANSITION_DURATION_MS,
   USERNAME_COLOR_OPTIONS,
   type UsernameColorPreset,
 } from "@/lib/username-style";
@@ -421,8 +422,9 @@ export default function AccountClient() {
                 <AnimatedUsername
                   text={displayName}
                   isPro
-                  colorPreset={usernameColor}
+                  colorPreset={resolvedColor}
                   className="text-3xl font-bold"
+                  durationMs={USERNAME_TRANSITION_DURATION_MS}
                   onTransitionStateChange={handleSavedUsernameTransitionStateChange}
                   onTransitionComplete={handleSavedUsernameTransitionComplete}
                 />
@@ -430,11 +432,11 @@ export default function AccountClient() {
 
               <button
                 type="button"
-                className="mt-4 h-11 rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
+                className="mt-4 inline-flex h-11 min-w-[12.5rem] items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
                 onClick={handleUsernameColorSave}
                 disabled={savingUsernameColor || isUsernameTransitioning}
               >
-                {savingUsernameColor || isUsernameTransitioning ? "In Progress..." : "Save Customization"}
+                {savingUsernameColor || isUsernameTransitioning ? "Applying..." : "Save Customization"}
               </button>
             </div>
           </section>

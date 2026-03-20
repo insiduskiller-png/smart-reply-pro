@@ -1,4 +1,5 @@
 export type UsernameColorPreset = "default" | "blue-purple" | "cyan-neon" | "gold-orange";
+export const USERNAME_TRANSITION_DURATION_MS = 10000;
 
 export const USERNAME_COLOR_OPTIONS: Array<{ value: UsernameColorPreset; label: string }> = [
   { value: "default", label: "Default (Blue → Purple)" },

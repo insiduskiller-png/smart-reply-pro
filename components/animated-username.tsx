@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { getUsernameGradientClass, normalizeUsernamePreset, type UsernameColorPreset } from "@/lib/username-style";
+import {
+  getUsernameGradientClass,
+  normalizeUsernamePreset,
+  USERNAME_TRANSITION_DURATION_MS,
+  type UsernameColorPreset,
+} from "@/lib/username-style";
 
 type AnimatedUsernameProps = {
   text: string;
@@ -19,7 +24,7 @@ export default function AnimatedUsername({
   isPro,
   colorPreset,
   className,
-  durationMs = 1200,
+  durationMs = USERNAME_TRANSITION_DURATION_MS,
   onTransitionStateChange,
   onTransitionComplete,
 }: AnimatedUsernameProps) {
@@ -112,11 +117,11 @@ export default function AnimatedUsername({
 
   return (
     <span className={`username-liquid ${className ?? ""}`.trim()}>
-      <span className={`username-liquid-layer username-text-clip ${previousGradientClass}`}>
+      <span className={`username-liquid-layer username-liquid-previous username-text-clip ${previousGradientClass}`}>
         {text}
       </span>
       <span
-        className={`username-liquid-layer username-text-clip ${currentGradientClass} username-liquid-fill`}
+        className={`username-liquid-layer username-liquid-current username-text-clip ${currentGradientClass} username-liquid-fill`}
         style={{ "--username-liquid-duration": `${durationMs}ms` } as CSSProperties}
         onAnimationEnd={finishTransition}
       >
