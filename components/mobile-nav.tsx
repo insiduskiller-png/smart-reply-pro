@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { getUsernameTextClass, resolveUsernameColor } from "@/lib/username-style";
+import AnimatedUsername from "@/components/animated-username";
 
 export default function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,8 +12,6 @@ export default function MobileNav() {
   const displayName = profile?.username?.trim() || "User";
   const usernameColor = profile?.username_color || "#ffffff";
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
-  const resolvedColor = resolveUsernameColor(usernameColor);
-  const usernameClass = getUsernameTextClass(isPro, resolvedColor);
 
   async function handleLogout() {
     try {
@@ -36,7 +34,14 @@ export default function MobileNav() {
           </Link>
           
           <div className="flex items-center gap-3">
-            {!loading && user ? <span className={`text-sm font-semibold ${usernameClass}`}>{displayName}</span> : null}
+            {!loading && user ? (
+              <AnimatedUsername
+                text={displayName}
+                isPro={isPro}
+                colorPreset={usernameColor}
+                className="text-sm font-semibold"
+              />
+            ) : null}
             
             {/* Hamburger Button */}
             <button
@@ -87,7 +92,12 @@ export default function MobileNav() {
               {/* User welcome block */}
               {!loading && user && (
                 <div className="border-b border-slate-800 px-4 py-4">
-                  <p className={`text-base font-semibold ${usernameClass}`}>{displayName}</p>
+                  <AnimatedUsername
+                    text={displayName}
+                    isPro={isPro}
+                    colorPreset={usernameColor}
+                    className="text-base font-semibold"
+                  />
                 </div>
               )}
 

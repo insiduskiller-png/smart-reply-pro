@@ -2,15 +2,13 @@
 
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { getUsernameTextClass, resolveUsernameColor } from "@/lib/username-style";
+import AnimatedUsername from "@/components/animated-username";
 
 export default function UserStatusBadge() {
   const { user, profile, loading } = useAuth();
   const displayName = profile?.username?.trim() || "User";
   const usernameColor = profile?.username_color || "#ffffff";
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
-  const resolvedColor = resolveUsernameColor(usernameColor);
-  const usernameClass = getUsernameTextClass(isPro, resolvedColor);
 
   if (loading) {
     return <div className="h-10" />;
@@ -28,7 +26,12 @@ export default function UserStatusBadge() {
   return (
     <div className="text-right">
       <p className="text-sm font-semibold">
-        <span className={usernameClass}>{displayName}</span>
+        <AnimatedUsername
+          text={displayName}
+          isPro={isPro}
+          colorPreset={usernameColor}
+          className="text-sm font-semibold"
+        />
       </p>
     </div>
   );

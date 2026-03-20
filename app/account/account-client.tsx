@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  getUsernameTextClass,
   normalizeUsernamePreset,
   USERNAME_COLOR_OPTIONS,
   type UsernameColorPreset,
 } from "@/lib/username-style";
 import { useAuth } from "@/components/auth-provider";
+import AnimatedUsername from "@/components/animated-username";
 
 interface User {
   id: string;
@@ -25,7 +25,7 @@ interface Profile {
 }
 
 export default function AccountClient() {
-  const { refreshProfile } = useAuth();
+  const { refreshProfile, setProfileState } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +38,8 @@ export default function AccountClient() {
   const [sendingReset, setSendingReset] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
   const [savingUsernameColor, setSavingUsernameColor] = useState(false);
+  const [isUsernameTransitioning, setIsUsernameTransitioning] = useState(false);
+  const [awaitingSavedTransition, setAwaitingSavedTransition] = useState(false);
   const [usernameColor, setUsernameColor] = useState<UsernameColorPreset>("default");
   const [editingSection, setEditingSection] = useState<"username" | "email" | null>(null);
 
@@ -49,7 +51,6 @@ export default function AccountClient() {
   const displayName =
     profile?.username?.trim() || user?.email?.split("@")[0] || "Member";
   const resolvedColor = profile?.username_color || "#ffffff";
-  const identityClass = getUsernameTextClass(isPro, resolvedColor);
 
   useEffect(() => {
     async function load() {
@@ -117,7 +118,9 @@ export default function AccountClient() {
         setError(payload?.error || "Unable to update username.");
         return;
       }
-      setProfile(payload.profile ?? profile);
+      const nextProfile = payload?.profile ?? profile;
+      setProfile(nextProfile);
+      setProfileState(nextProfile ?? null);
       await refreshProfile();
       setSuccess("Username updated.");
     } catch {
@@ -128,11 +131,17 @@ export default function AccountClient() {
   }
 
   async function handleUsernameColorSave() {
+    if (savingUsernameColor || isUsernameTransitioning) {
+      return;
+    }
+
     setSavingUsernameColor(true);
     setError("");
     setSuccess("");
 
     try {
+      const previousProfileColor = normalizeUsernamePreset(profile?.username_color);
+
       const response = await fetch("/api/user/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -146,14 +155,48 @@ export default function AccountClient() {
         return;
       }
 
-      setProfile(payload.profile ?? profile);
+      const nextProfile = payload?.profile ?? profile;
+      setProfile(nextProfile);
+      setProfileState(nextProfile ?? null);
+
+      const nextProfileColor = normalizeUsernamePreset(nextProfile?.username_color);
+      if (nextProfileColor !== previousProfileColor) {
+        setAwaitingSavedTransition(true);
+        setIsUsernameTransitioning(true);
+      } else {
+        setAwaitingSavedTransition(false);
+        setIsUsernameTransitioning(false);
+      }
+
       await refreshProfile();
       setSuccess("Profile customization updated.");
     } catch {
+      setAwaitingSavedTransition(false);
+      setIsUsernameTransitioning(false);
       setError("Unable to save customization.");
     } finally {
       setSavingUsernameColor(false);
     }
+  }
+
+  function handleSavedUsernameTransitionStateChange(transitioning: boolean) {
+    if (!awaitingSavedTransition) {
+      return;
+    }
+
+    if (!transitioning) {
+      setAwaitingSavedTransition(false);
+      setIsUsernameTransitioning(false);
+    }
+  }
+
+  function handleSavedUsernameTransitionComplete() {
+    if (!awaitingSavedTransition) {
+      return;
+    }
+
+    setAwaitingSavedTransition(false);
+    setIsUsernameTransitioning(false);
   }
 
   async function handlePasswordReset() {
@@ -235,11 +278,12 @@ export default function AccountClient() {
         <section className="card space-y-4 p-5 md:p-6">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Profile Identity</h2>
           <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-[0_0_24px_rgba(56,189,248,0.12)]">
-            <p
-              className={`text-3xl font-bold tracking-tight md:text-4xl ${identityClass}`}
-            >
-              {displayName}
-            </p>
+            <AnimatedUsername
+              text={displayName}
+              isPro={isPro}
+              colorPreset={resolvedColor}
+              className="text-3xl font-bold tracking-tight md:text-4xl"
+            />
             <p className="mt-2 text-sm text-slate-300">{user?.email || "-"}</p>
             <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
               <div>
@@ -363,6 +407,7 @@ export default function AccountClient() {
                 className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100"
                 value={usernameColor}
                 onChange={(event) => setUsernameColor(event.target.value as UsernameColorPreset)}
+                disabled={savingUsernameColor || isUsernameTransitioning}
               >
                 {USERNAME_COLOR_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -373,20 +418,23 @@ export default function AccountClient() {
 
               <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-5">
                 <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">Live preview</p>
-                <p
-                  className={`text-3xl font-bold ${getUsernameTextClass(true, usernameColor)}`}
-                >
-                  {displayName}
-                </p>
+                <AnimatedUsername
+                  text={displayName}
+                  isPro
+                  colorPreset={usernameColor}
+                  className="text-3xl font-bold"
+                  onTransitionStateChange={handleSavedUsernameTransitionStateChange}
+                  onTransitionComplete={handleSavedUsernameTransitionComplete}
+                />
               </div>
 
               <button
                 type="button"
                 className="mt-4 h-11 rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
                 onClick={handleUsernameColorSave}
-                disabled={savingUsernameColor}
+                disabled={savingUsernameColor || isUsernameTransitioning}
               >
-                {savingUsernameColor ? "Saving..." : "Save Customization"}
+                {savingUsernameColor || isUsernameTransitioning ? "In Progress..." : "Save Customization"}
               </button>
             </div>
           </section>

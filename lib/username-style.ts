@@ -14,45 +14,15 @@ export function normalizeUsernamePreset(value?: string | null): UsernameColorPre
   return "default";
 }
 
-export function getUsernameTextClass(isPro: boolean, usernameColor?: string | null) {
-  if (!isPro) {
-    return "text-white";
-  }
-
+export function getUsernameGradientClass(usernameColor?: string | null) {
   const preset = normalizeUsernamePreset(usernameColor);
 
   if (preset === "cyan-neon") {
-    return "username-gradient username-gradient-cyan-neon";
+    return "username-gradient-cyan-neon";
   }
   if (preset === "gold-orange") {
-    return "username-gradient username-gradient-gold-orange";
+    return "username-gradient-gold-orange";
   }
 
-  return "username-gradient username-gradient-blue-purple";
-}
-
-export function resolveUsernameColor(usernameColor?: string | null) {
-  if (!usernameColor) {
-    return "#ffffff";
-  }
-
-  const normalized = usernameColor.trim().toLowerCase();
-
-  if (normalized.startsWith("#")) {
-    return normalized;
-  }
-
-  if (normalized === "cyan-neon") {
-    return "#22d3ee";
-  }
-
-  if (normalized === "gold-orange") {
-    return "#fbbf24";
-  }
-
-  if (normalized === "blue-purple" || normalized === "default") {
-    return "#c4b5fd";
-  }
-
-  return "#ffffff";
+  return "username-gradient-blue-purple";
 }

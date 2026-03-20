@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { getUsernameTextClass, resolveUsernameColor } from "@/lib/username-style";
+import AnimatedUsername from "@/components/animated-username";
 
 export default function NavbarUser() {
   const { user, profile, loading } = useAuth();
@@ -25,8 +25,6 @@ export default function NavbarUser() {
   }
 
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
-  const resolvedColor = resolveUsernameColor(usernameColor);
-  const usernameClass = getUsernameTextClass(isPro, resolvedColor);
 
   useEffect(() => {
     if (!user) {
@@ -83,7 +81,12 @@ export default function NavbarUser() {
           aria-expanded={isOpen}
           className="rounded-md px-2 py-1 text-sm font-semibold transition hover:bg-slate-800/70 hover:scale-[1.01]"
         >
-          <span className={usernameClass}>{displayName}</span>
+          <AnimatedUsername
+            text={displayName}
+            isPro={isPro}
+            colorPreset={usernameColor}
+            className="text-sm font-semibold"
+          />
         </button>
         {!isPro ? (
           <div className="pr-2">

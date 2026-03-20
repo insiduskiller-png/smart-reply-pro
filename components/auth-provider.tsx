@@ -24,6 +24,7 @@ type AuthContextValue = {
   profile: AuthProfile | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
+  setProfileState: (nextProfile: AuthProfile | null) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,6 +34,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const normalizeProfile = useCallback((nextProfile: AuthProfile | null) => {
+    if (!nextProfile) {
+      return null;
+    }
+
+    return {
+      ...nextProfile,
+      username_color: nextProfile?.username_color || "#ffffff",
+      username_style: nextProfile?.username_style || "gradient",
+    };
+  }, []);
+
+  const setProfileState = useCallback((nextProfile: AuthProfile | null) => {
+    setProfile(normalizeProfile(nextProfile));
+  }, [normalizeProfile]);
 
   const fetchProfile = useCallback(async (userId: string) => {
     console.info("profile fetch started", { userId });
@@ -44,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        setProfile(null);
+        setProfileState(null);
         console.info("profile fetch completed", { userId, ok: false, source: "api" });
         return;
       }
@@ -55,22 +72,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const nextProfile = payload?.profile;
       if (nextProfile?.id && nextProfile.id !== userId) {
-        setProfile(null);
+        setProfileState(null);
         console.info("profile fetch completed", { userId, ok: false, source: "api", reason: "profile-id-mismatch" });
         return;
       }
 
-      setProfile({
-        ...(nextProfile ?? {}),
-        username_color: nextProfile?.username_color || "#ffffff",
-        username_style: nextProfile?.username_style || "gradient",
-      });
+      setProfileState(nextProfile ?? null);
       console.info("profile fetch completed", { userId, ok: true, source: "api" });
     } catch {
-      setProfile(null);
+      setProfileState(null);
       console.info("profile fetch completed", { userId, ok: false, source: "api" });
     }
-  }, []);
+  }, [setProfileState]);
 
   const refreshProfile = useCallback(async () => {
     if (!user?.id) return;
@@ -108,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchProfile(currentSession.user.id);
       } else {
         void syncServerSession();
-        setProfile(null);
+        setProfileState(null);
       }
 
       setLoading(false);
@@ -128,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchProfile(nextSession.user.id);
       } else {
         void syncServerSession();
-        setProfile(null);
+        setProfileState(null);
       }
 
       setLoading(false);
@@ -141,8 +154,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile, syncServerSession]);
 
   const value = useMemo(
-    () => ({ session, user, profile, loading, refreshProfile }),
-    [session, user, profile, loading, refreshProfile],
+    () => ({ session, user, profile, loading, refreshProfile, setProfileState }),
+    [session, user, profile, loading, refreshProfile, setProfileState],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
