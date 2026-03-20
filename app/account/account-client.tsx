@@ -41,6 +41,8 @@ export default function AccountClient() {
   const [savingUsernameColor, setSavingUsernameColor] = useState(false);
   const [isUsernameTransitioning, setIsUsernameTransitioning] = useState(false);
   const [awaitingSavedTransition, setAwaitingSavedTransition] = useState(false);
+  const [transitionPreviousTheme, setTransitionPreviousTheme] = useState<UsernameColorPreset | null>(null);
+  const [transitionNextTheme, setTransitionNextTheme] = useState<UsernameColorPreset | null>(null);
   const [usernameColor, setUsernameColor] = useState<UsernameColorPreset>("default");
   const [editingSection, setEditingSection] = useState<"username" | "email" | null>(null);
 
@@ -162,9 +164,13 @@ export default function AccountClient() {
 
       const nextProfileColor = normalizeUsernamePreset(nextProfile?.username_color);
       if (nextProfileColor !== previousProfileColor) {
+        setTransitionPreviousTheme(previousProfileColor);
+        setTransitionNextTheme(nextProfileColor);
         setAwaitingSavedTransition(true);
         setIsUsernameTransitioning(true);
       } else {
+        setTransitionPreviousTheme(null);
+        setTransitionNextTheme(null);
         setAwaitingSavedTransition(false);
         setIsUsernameTransitioning(false);
       }
@@ -172,6 +178,8 @@ export default function AccountClient() {
       await refreshProfile();
       setSuccess("Profile customization updated.");
     } catch {
+      setTransitionPreviousTheme(null);
+      setTransitionNextTheme(null);
       setAwaitingSavedTransition(false);
       setIsUsernameTransitioning(false);
       setError("Unable to save customization.");
@@ -186,6 +194,8 @@ export default function AccountClient() {
     }
 
     if (!transitioning) {
+      setTransitionPreviousTheme(null);
+      setTransitionNextTheme(null);
       setAwaitingSavedTransition(false);
       setIsUsernameTransitioning(false);
     }
@@ -196,6 +206,8 @@ export default function AccountClient() {
       return;
     }
 
+    setTransitionPreviousTheme(null);
+    setTransitionNextTheme(null);
     setAwaitingSavedTransition(false);
     setIsUsernameTransitioning(false);
   }
@@ -425,6 +437,9 @@ export default function AccountClient() {
                   colorPreset={resolvedColor}
                   className="text-3xl font-bold"
                   durationMs={USERNAME_TRANSITION_DURATION_MS}
+                  previousTheme={transitionPreviousTheme}
+                  nextTheme={transitionNextTheme || resolvedColor}
+                  isTransitioning={awaitingSavedTransition && isUsernameTransitioning}
                   onTransitionStateChange={handleSavedUsernameTransitionStateChange}
                   onTransitionComplete={handleSavedUsernameTransitionComplete}
                 />

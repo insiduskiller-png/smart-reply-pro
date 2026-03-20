@@ -14,16 +14,3 @@ export function normalizeUsernamePreset(value?: string | null): UsernameColorPre
   }
   return "default";
 }
-
-export function getUsernameGradientClass(usernameColor?: string | null) {
-  const preset = normalizeUsernamePreset(usernameColor);
-
-  if (preset === "cyan-neon") {
-    return "username-gradient-cyan-neon";
-  }
-  if (preset === "gold-orange") {
-    return "username-gradient-gold-orange";
-  }
-
-  return "username-gradient-blue-purple";
-}
