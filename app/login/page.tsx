@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clearBrowserSession } from "@/lib/client-auth";
 import { isTemporarySessionExpired, setStoredSessionMode } from "@/lib/session-persistence";
@@ -9,15 +9,21 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const expiredMessage = searchParams.get("expired") === "1"
-    ? "Your session expired. Please sign in again."
-    : "";
+  const [showExpiredMessage, setShowExpiredMessage] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    setShowExpiredMessage(params.get("expired") === "1");
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -212,9 +218,9 @@ export default function LoginPage() {
             </div>
           )}
 
-          {!error && expiredMessage ? (
+          {!error && showExpiredMessage ? (
             <div className="mt-4 rounded-md border border-amber-800/60 bg-amber-950/40 p-3 text-sm text-amber-200">
-              {expiredMessage}
+              Your session expired. Please sign in again.
             </div>
           ) : null}
 
