@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trackHomepageVisit } from "@/lib/analytics";
 import { useAuth } from "@/components/auth-provider";
-import { supabaseBrowser } from "@/lib/supabase-browser";
 
 function analyzeMessage(message: string) {
   const text = message.toLowerCase();
@@ -51,15 +50,11 @@ export default function Home() {
   const showLoggedOutExperience = !loading && !user;
 
   async function handleGenerateClick() {
-    if (redirecting) return;
+    if (redirecting || loading) return;
     setRedirecting(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabaseBrowser.auth.getSession();
-
-      if (session?.user) {
+      if (user) {
         router.replace("/dashboard");
         return;
       }

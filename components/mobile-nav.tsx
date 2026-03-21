@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { supabaseBrowser } from "@/lib/supabase-browser";
 import AnimatedUsername from "@/components/animated-username";
+import { logoutUser } from "@/lib/client-auth";
 
 export default function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,14 +14,7 @@ export default function MobileNav() {
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
 
   async function handleLogout() {
-    try {
-      await supabaseBrowser.auth.signOut();
-      await fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      if (typeof window !== "undefined") {
-        window.location.href = "/";
-      }
-    }
+    await logoutUser("/");
   }
 
   return (

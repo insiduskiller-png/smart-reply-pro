@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { supabaseBrowser } from "@/lib/supabase-browser";
 import AnimatedUsername from "@/components/animated-username";
+import { logoutUser } from "@/lib/client-auth";
 
 export default function NavbarUser() {
   const { user, profile, loading } = useAuth();
@@ -14,24 +14,12 @@ export default function NavbarUser() {
   const usernameColor = profile?.username_color || "#ffffff";
 
   async function handleLogout() {
-    try {
-      await supabaseBrowser.auth.signOut();
-      await fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      if (typeof window !== "undefined") {
-        window.location.href = "/";
-      }
-    }
+    await logoutUser("/");
   }
 
   const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
 
   useEffect(() => {
-    if (!user) {
-      setIsOpen(false);
-      return;
-    }
-
     function closeOnOutsideClick(event: MouseEvent) {
       if (!dropdownRef.current) return;
       if (!dropdownRef.current.contains(event.target as Node)) {
@@ -52,7 +40,7 @@ export default function NavbarUser() {
       document.removeEventListener("mousedown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [user]);
+  }, []);
 
   if (loading) {
     return <div className="h-9 w-28" />;

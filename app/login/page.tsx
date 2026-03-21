@@ -1,22 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { clearBrowserSession } from "@/lib/client-auth";
+import { isTemporarySessionExpired, setStoredSessionMode } from "@/lib/session-persistence";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const expiredMessage = searchParams.get("expired") === "1"
+    ? "Your session expired. Please sign in again."
+    : "";
 
   useEffect(() => {
     let mounted = true;
 
     async function redirectIfAlreadyLoggedIn() {
       try {
+        if (isTemporarySessionExpired()) {
+          await clearBrowserSession();
+          return;
+        }
+
         const meResponse = await fetch("/api/auth/me", { cache: "no-store" });
         const meData = await meResponse.json().catch(() => null);
         if (mounted && meResponse.ok && meData?.user) {
@@ -48,8 +60,13 @@ export default function LoginPage() {
 
     const {
       data: { subscription },
-    } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+    } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
+        if (isTemporarySessionExpired()) {
+          await clearBrowserSession();
+          return;
+        }
+
         console.info("login: auth state listener observed session");
         router.replace("/dashboard");
       }
@@ -98,6 +115,7 @@ export default function LoginPage() {
 
       if (data.success) {
         console.info("supabase auth success");
+        setStoredSessionMode(rememberMe ? "persistent" : "temporary");
 
         if (data.sessionToken && data.refreshToken) {
           console.info("session received");
@@ -167,6 +185,17 @@ export default function LoginPage() {
               className="h-12 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-base text-white placeholder:text-slate-500 disabled:opacity-60 md:h-10 md:px-3 md:text-sm"
               required
             />
+
+            <label className="flex items-center gap-3 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={loading}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-950 text-sky-500 focus:ring-sky-500"
+              />
+              <span>Remember me</span>
+            </label>
             
             <button
               type="submit"
@@ -182,6 +211,12 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          {!error && expiredMessage ? (
+            <div className="mt-4 rounded-md border border-amber-800/60 bg-amber-950/40 p-3 text-sm text-amber-200">
+              {expiredMessage}
+            </div>
+          ) : null}
 
           <div className="mt-5 text-center text-sm text-slate-400">
             Don&apos;t have an account?{" "}

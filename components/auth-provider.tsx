@@ -8,7 +8,15 @@ import {
   useMemo,
   useState,
 } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
+import { clearBrowserSession } from "@/lib/client-auth";
+import {
+  clearSessionPersistenceState,
+  getStoredSessionMode,
+  isTemporarySessionExpired,
+  touchTemporarySessionActivity,
+} from "@/lib/session-persistence";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 type AuthProfile = {
@@ -30,6 +38,8 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
@@ -88,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!user?.id) return;
     await fetchProfile(user.id);
-  }, [fetchProfile, user?.id]);
+  }, [fetchProfile, user]);
 
   const syncServerSession = useCallback(async (accessToken?: string) => {
     if (!accessToken) {
@@ -103,6 +113,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const expireTemporarySession = useCallback(async () => {
+    setSession(null);
+    setUser(null);
+    setProfileState(null);
+    await clearBrowserSession();
+
+    if (typeof window === "undefined" || window.location.pathname.startsWith("/login")) {
+      return;
+    }
+
+    router.replace("/login?expired=1");
+  }, [router, setProfileState]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -113,10 +136,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!mounted) return;
 
+      if (currentSession?.user && isTemporarySessionExpired()) {
+        await expireTemporarySession();
+
+        if (mounted) {
+          setLoading(false);
+        }
+        return;
+      }
+
       setSession(currentSession ?? null);
       setUser(currentSession?.user ?? null);
 
       if (currentSession?.user?.id) {
+        if (getStoredSessionMode() === "temporary") {
+          touchTemporarySessionActivity();
+        }
+
         void syncServerSession(currentSession.access_token);
         await fetchProfile(currentSession.user.id);
       } else {
@@ -131,27 +167,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabaseBrowser.auth.onAuthStateChange(async (_event, nextSession) => {
+    } = supabaseBrowser.auth.onAuthStateChange(async (event, nextSession) => {
       setLoading(true);
+
+      if (nextSession?.user && isTemporarySessionExpired()) {
+        await expireTemporarySession();
+
+        if (mounted) {
+          setLoading(false);
+        }
+        return;
+      }
+
       setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user?.id) {
+        if (getStoredSessionMode() === "temporary") {
+          touchTemporarySessionActivity();
+        }
+
         void syncServerSession(nextSession.access_token);
         await fetchProfile(nextSession.user.id);
       } else {
+        if (event === "SIGNED_OUT") {
+          clearSessionPersistenceState();
+        }
+
         void syncServerSession();
         setProfileState(null);
       }
 
-      setLoading(false);
+      if (mounted) {
+        setLoading(false);
+      }
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile, syncServerSession]);
+  }, [expireTemporarySession, fetchProfile, setProfileState, syncServerSession]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    if (isTemporarySessionExpired()) {
+      window.setTimeout(() => {
+        void expireTemporarySession();
+      }, 0);
+      return;
+    }
+
+    touchTemporarySessionActivity();
+  }, [expireTemporarySession, pathname, user]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    function handleResume() {
+      if (document.visibilityState === "hidden") {
+        return;
+      }
+
+      if (isTemporarySessionExpired()) {
+        void expireTemporarySession();
+        return;
+      }
+
+      touchTemporarySessionActivity();
+    }
+
+    document.addEventListener("visibilitychange", handleResume);
+    window.addEventListener("focus", handleResume);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleResume);
+      window.removeEventListener("focus", handleResume);
+    };
+  }, [expireTemporarySession, user]);
 
   const value = useMemo(
     () => ({ session, user, profile, loading, refreshProfile, setProfileState }),
