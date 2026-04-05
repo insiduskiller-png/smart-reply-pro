@@ -37,21 +37,18 @@ export default function Home() {
       <div className="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(14,165,233,0.12),transparent_35%),linear-gradient(180deg,rgba(15,23,42,0.35),rgba(2,6,23,0))]" />
 
       <section className="mx-auto max-w-6xl px-4 pb-14 pt-12 sm:px-6 md:pb-20 md:pt-20">
-        <div className="relative overflow-hidden rounded-[2.2rem] border border-slate-800 bg-[linear-gradient(180deg,rgba(15,23,42,0.85),rgba(15,23,42,0.62))] p-6 shadow-2xl shadow-slate-950/40 sm:p-8 md:p-10">
-          <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-sky-400/12 blur-3xl" />
-          <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-indigo-400/10 blur-3xl" />
-
-          <div className="relative max-w-4xl">
+        <div className="grid items-start gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
+          <div>
             <div className="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-sky-200">
               Strategic AI for replies
             </div>
 
-            <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
+            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
               Write replies that stay calm, sharp, and in control.
             </h1>
 
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Smart Reply Pro is purpose-built for reply strategy. It reads tone, emotional pressure, and social context to help you respond with clarity, confidence, and leverage.
+              Smart Reply Pro is purpose-built for reply strategy. It reads tone, emotional pressure, and social context so your message lands with clarity, confidence, and leverage.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -75,18 +72,23 @@ export default function Home() {
             <p className="mt-3 text-sm text-slate-400">{primaryCtaSubtext}</p>
           </div>
 
-          <div className="relative mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-              <p className="text-sm font-semibold text-white">Built for strategic communication</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Built for high-stakes replies across dating, work, and personal conversations.</p>
-            </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-              <p className="text-sm font-semibold text-white">Specialized beyond general AI</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Purpose-trained for tone reading, emotional intelligence, and socially aware wording.</p>
-            </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-              <p className="text-sm font-semibold text-white">Fast path to action</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Paste a message, choose your goal, and get refined reply options in seconds.</p>
+          <div className="relative">
+            <div className="absolute -right-20 -top-14 -z-10 h-56 w-56 rounded-full bg-sky-400/12 blur-3xl" />
+            <div className="absolute -bottom-14 -left-10 -z-10 h-40 w-40 rounded-full bg-indigo-400/10 blur-3xl" />
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                <p className="text-sm font-semibold text-white">Built for strategic communication</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">Built for high-stakes replies across dating, work, and personal conversations.</p>
+              </div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                <p className="text-sm font-semibold text-white">Specialized beyond general AI</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">Purpose-trained for tone reading, emotional intelligence, and socially aware wording.</p>
+              </div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                <p className="text-sm font-semibold text-white">Fast path to action</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">Paste a message, choose your goal, and get refined reply options in seconds.</p>
+              </div>
             </div>
           </div>
         </div>
