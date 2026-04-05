@@ -44,7 +44,9 @@ export default function Home() {
             </div>
 
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
-              Write replies that stay calm, sharp, and in control.
+              Don’t send it yet.
+              <br className="hidden sm:block" />
+              <span className="sm:block">Control how your conversation ends.</span>
             </h1>
 
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
