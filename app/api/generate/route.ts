@@ -7,7 +7,6 @@ import {
   getProfileMessageCount,
   getProfileMessagesByProfile,
   getReplyProfileById,
-  getUserProfile,
   insertConversation,
   insertProfileMessage,
   insertGeneration,
@@ -17,6 +16,8 @@ import {
 } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
 import { trackEvent } from "@/lib/analytics";
+import { hasProAccess, PRO_ENABLED } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 const proPremiumTones = ["Tactical Control", "Precision Authority", "Psychological Edge"];
 
@@ -26,12 +27,9 @@ export async function POST(request: Request) {
 
   try {
     // EARLY AUTH: Fetch user profile immediately to enforce generation limits BEFORE any API calls
-    const profile = await getUserProfile(user.id);
-    if (!profile) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 400 });
-    }
+    const { profile } = await bootstrapUserProfile(user, { source: "api-generate" });
 
-    const isPro = profile.subscription_status === "pro";
+    const isPro = hasProAccess(profile.subscription_status);
 
     // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
     const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);
@@ -81,7 +79,7 @@ export async function POST(request: Request) {
     // Check if free user selected premium style
     if (!isPro && proPremiumTones.includes(tone)) {
       return NextResponse.json(
-        { error: "This style requires Pro plan." },
+        { error: PRO_ENABLED ? "This style requires Pro plan." : "Advanced styles will be available in Pro." },
         { status: 403 }
       );
     }

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { PRO_ENABLED, PRO_WAITLIST_HREF } from "@/lib/billing";
 
 interface ProFeaturePreviewProps {
   isPro: boolean;
@@ -39,6 +41,7 @@ const proFeatures: Feature[] = [
 export default function ProFeaturePreview({ isPro, onUpgradeClick }: ProFeaturePreviewProps) {
   const [showLockedModal, setShowLockedModal] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
+  const isProAvailable = PRO_ENABLED;
 
   const handleFeatureClick = (feature: Feature) => {
     if (!isPro) {
@@ -98,8 +101,13 @@ export default function ProFeaturePreview({ isPro, onUpgradeClick }: ProFeatureP
         {!isPro && (
           <div className="mt-6 rounded-lg border border-slate-700 bg-slate-900/50 p-4 text-center">
             <p className="text-sm text-slate-400">
-              Pro features coming soon
+              {isProAvailable ? "Pro features available with Pro access" : "Pro features are being prepared for a later release"}
             </p>
+            {!isProAvailable ? (
+              <Link href={PRO_WAITLIST_HREF} className="mt-3 inline-flex text-sm font-medium text-sky-300 hover:text-sky-200">
+                Join Waitlist
+              </Link>
+            ) : null}
           </div>
         )}
 
@@ -112,10 +120,41 @@ export default function ProFeaturePreview({ isPro, onUpgradeClick }: ProFeatureP
         )}
       </div>
 
-      {/* Locked Feature Modal - Hidden until Pro is available */}
-      {false && showLockedModal && selectedFeature && !isPro && (
-        <></>
-      )}
+      {showLockedModal && selectedFeature && !isPro ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+            <h4 className="text-lg font-semibold text-white">{selectedFeature.name}</h4>
+            <p className="mt-2 text-sm text-slate-400">{selectedFeature.description}</p>
+            <p className="mt-4 text-sm text-slate-300">
+              {isProAvailable
+                ? "This feature is available with Pro access."
+                : "This feature is part of the upcoming Pro release and is not active during the free public launch."}
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              {!isProAvailable ? (
+                <Link href={PRO_WAITLIST_HREF} className="rounded-md bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-300">
+                  Get notified
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="rounded-md bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-300"
+                  onClick={onUpgradeClick}
+                >
+                  Learn More
+                </button>
+              )}
+              <button
+                type="button"
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+                onClick={() => setShowLockedModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

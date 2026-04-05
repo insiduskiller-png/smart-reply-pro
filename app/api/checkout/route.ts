@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createCheckoutSession } from "@/lib/stripe";
+import { PRO_PLAN_ACTIVE } from "@/lib/billing";
 
 export async function POST(request: Request) {
+  if (!PRO_PLAN_ACTIVE) {
+    return NextResponse.json(
+      { error: "Pro checkout will be available when the Pro tier launches." },
+      { status: 409 },
+    );
+  }
+
   const user = await requireUser();
   if (!user) {
     return NextResponse.json({ error: "Please log in to upgrade." }, { status: 401 });

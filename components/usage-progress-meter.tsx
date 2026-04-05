@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { PRO_WAITLIST_HREF } from "@/lib/billing";
 
 interface UsageProgressMeterProps {
   messagesUsed: number;
@@ -9,32 +11,11 @@ interface UsageProgressMeterProps {
 
 export default function UsageProgressMeter({ messagesUsed, limit }: UsageProgressMeterProps) {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [isUpgrading, setIsUpgrading] = useState(false);
   const percentage = Math.min((messagesUsed / limit) * 100, 100);
   const isAtLimit = messagesUsed >= limit;
 
   const handleUpgrade = () => {
     setIsUpgradeModalOpen(true);
-  };
-
-  const handleStartProTrial = async () => {
-    setIsUpgrading(true);
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await response.json().catch(() => null);
-      if (response.ok && data?.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data?.error || "Failed to start upgrade process");
-      }
-    } catch {
-      alert("Failed to start upgrade process");
-    } finally {
-      setIsUpgrading(false);
-    }
   };
 
   return (
@@ -93,13 +74,13 @@ export default function UsageProgressMeter({ messagesUsed, limit }: UsageProgres
       >
         {isAtLimit ? (
           <>
-            <div className="text-base font-semibold">Upgrade to Pro</div>
-            <div className="text-xs opacity-90">€5.50 / month</div>
+            <div className="text-base font-semibold">Pro Waitlist</div>
+            <div className="text-xs opacity-90">Get notified when advanced tiers launch</div>
           </>
         ) : (
           <>
-            <div className="text-sm">Upgrade to Pro</div>
-            <div className="text-xs opacity-75">€5.50 / month — Get 1000 messages/day</div>
+            <div className="text-sm">Interested in Pro?</div>
+            <div className="text-xs opacity-75">Learn what's planned for next</div>
           </>
         )}
       </button>
@@ -109,19 +90,19 @@ export default function UsageProgressMeter({ messagesUsed, limit }: UsageProgres
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-8 shadow-2xl">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white">Upgrade to Pro</h2>
+              <h2 className="text-2xl font-bold text-white">Pro Launch Coming</h2>
               <p className="mt-2 text-sm text-slate-400">
-                Unlock unlimited message generations and premium features.
+                We're preparing the next tier with advanced features. Join the waitlist to get notified when it's ready.
               </p>
             </div>
 
             {/* Features */}
             <div className="mb-8 space-y-3">
               {[
-                "1000 messages per day",
-                "3 reply variations",
+                "More reply profiles",
+                "Stronger rewrite options",
                 "Advanced analysis & insights",
-                "Priority support",
+                "Priority access when Pro launches",
               ].map((feature) => (
                 <div key={feature} className="flex items-center gap-3">
                   <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -138,19 +119,18 @@ export default function UsageProgressMeter({ messagesUsed, limit }: UsageProgres
 
             {/* Price */}
             <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 text-center">
-              <div className="text-3xl font-bold text-white">€5.50</div>
-              <div className="text-xs text-slate-400">per month, billed monthly</div>
+              <div className="text-xl font-bold text-white">Not purchasable yet</div>
+              <div className="text-xs text-slate-400">Checkout stays disabled until the Pro release is ready</div>
             </div>
 
             {/* Actions */}
             <div className="space-y-3">
-              <button
-                onClick={handleStartProTrial}
-                disabled={isUpgrading}
-                className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-center font-semibold text-white transition-all hover:from-orange-600 hover:to-orange-700 disabled:opacity-60"
+              <Link
+                href={PRO_WAITLIST_HREF}
+                className="flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-center font-semibold text-white transition-all hover:from-orange-600 hover:to-orange-700"
               >
-                {isUpgrading ? "Starting..." : "Start Pro Trial"}
-              </button>
+                Join Waitlist
+              </Link>
               <button
                 onClick={() => setIsUpgradeModalOpen(false)}
                 className="w-full rounded-lg border border-slate-600 px-4 py-3 font-medium text-slate-300 transition-all hover:border-slate-500 hover:text-slate-200"

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { ensureUserProfile } from "@/lib/supabase";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 import AccountClient from "./account-client";
 
 export default async function AccountPage() {
@@ -9,9 +9,8 @@ export default async function AccountPage() {
     redirect("/login");
   }
 
-  // Ensure profile exists
   try {
-    await ensureUserProfile(user);
+    await bootstrapUserProfile(user, { source: "account-page" });
   } catch (error) {
     console.error("Account page profile error:", error);
   }

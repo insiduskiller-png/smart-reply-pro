@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
-import { getUserProfile } from "@/lib/supabase";
 import { powerScoreAnalysis } from "@/lib/openai";
 import { sanitizeText } from "@/lib/security";
+import { hasProAccess } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 export async function POST(request: Request) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const profile = await getUserProfile(user.id);
-  if (profile?.subscription_status !== "pro") {
-    return NextResponse.json({ error: "Pro required" }, { status: 403 });
+  const { profile } = await bootstrapUserProfile(user, { source: "api-power-score" });
+  if (!hasProAccess(profile?.subscription_status)) {
+    return NextResponse.json({ error: "Power score analysis is available with Pro." }, { status: 403 });
   }
 
   // APPLY RATE LIMITING (Pro: 30/min)

@@ -10,6 +10,7 @@ import {
 } from "@/lib/username-style";
 import { useAuth } from "@/components/auth-provider";
 import AnimatedUsername from "@/components/animated-username";
+import { hasProAccess, PRO_ENABLED, PRO_WAITLIST_HREF } from "@/lib/billing";
 
 interface User {
   id: string;
@@ -49,7 +50,7 @@ export default function AccountClient() {
   const subscriptionStatus = typeof profile?.subscription_status === "string"
     ? profile.subscription_status
     : "free";
-  const isPro = subscriptionStatus.toLowerCase() === "pro";
+  const isPro = hasProAccess(subscriptionStatus);
 
   const displayName =
     profile?.username?.trim() || user?.email?.split("@")[0] || "Member";
@@ -272,7 +273,7 @@ export default function AccountClient() {
   if (loading) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
-        <div className="card p-4 text-sm text-slate-300 md:p-6">Loading account...</div>
+        <div className="card p-4 text-sm text-slate-300 md:p-6">Setting up your account...</div>
       </main>
     );
   }
@@ -288,7 +289,7 @@ export default function AccountClient() {
         {error ? <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</p> : null}
         {success ? <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{success}</p> : null}
 
-        <section className="card space-y-4 p-5 md:p-6">
+        <section id="account-overview" className="card space-y-4 p-5 md:p-6">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Profile Identity</h2>
           <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-[0_0_24px_rgba(56,189,248,0.12)]">
             <AnimatedUsername
@@ -315,7 +316,7 @@ export default function AccountClient() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Account Actions</h2>
 
           <div className="space-y-3">
-            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+            <div id="change-username" className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 scroll-mt-24">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
                   <p className="font-medium text-slate-100">Change Username</p>
@@ -350,7 +351,7 @@ export default function AccountClient() {
               ) : null}
             </div>
 
-            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+            <div id="change-email" className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 scroll-mt-24">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
                   <p className="font-medium text-slate-100">Change Email</p>
@@ -385,7 +386,7 @@ export default function AccountClient() {
               ) : null}
             </div>
 
-            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+            <div id="change-password" className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 scroll-mt-24">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
                   <p className="font-medium text-slate-100">Change Password</p>
@@ -457,10 +458,28 @@ export default function AccountClient() {
           </section>
         ) : null}
 
-        <section className="card space-y-3 p-5 md:p-6">
+        <section id="plan-status" className="card space-y-3 p-5 md:p-6 scroll-mt-24">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Subscription</h2>
-          <p className="text-base text-slate-100">Current Plan: {isPro ? "Pro" : "Free"}</p>
-          {!isPro ? (
+          <p className="text-base text-slate-100">Current Plan: {isPro ? "Pro" : PRO_ENABLED ? "Free" : "Free Public Launch"}</p>
+          {!PRO_ENABLED ? (
+            <>
+              <p className="text-sm text-slate-300">Pro is intentionally disabled during the public free launch and will be released later.</p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href={PRO_WAITLIST_HREF}
+                  className="inline-flex h-10 items-center rounded-md bg-sky-400 px-4 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
+                >
+                  Join Waitlist
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="inline-flex h-10 items-center rounded-md border border-slate-600 px-4 text-sm font-medium text-slate-200 transition hover:scale-[1.01] hover:bg-slate-800"
+                >
+                  See Launch Details
+                </Link>
+              </div>
+            </>
+          ) : !isPro ? (
             <Link
               href="/pricing"
               className="inline-flex h-10 items-center rounded-md border border-slate-600 px-4 text-sm font-medium text-slate-200 transition hover:scale-[1.01] hover:bg-slate-800"

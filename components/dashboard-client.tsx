@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
 import ProFeaturePreview from "@/components/pro-feature-preview";
 import TemplateSelector, { type TemplateType } from "@/components/template-selector";
+import { hasProAccess, PRO_ENABLED, PRO_WAITLIST_HREF } from "@/lib/billing";
 
-const freeTones = ["Neutral", "Direct", "Polite", "Friendly"];
+const freeTones = ["Neutral", "Direct", "Polite", "Friendly", "Confident"];
 const preTones = ["Tactical Control", "Precision Authority", "Psychological Edge"];
 
 type Profile = {
@@ -55,11 +57,11 @@ type ReplyAnalysis = {
 };
 
 type RewriteMode = "Lawyer Mode" | "Negotiator Mode" | "Manager Mode";
-type QuickRewriteMode = "Shorter" | "More Direct" | "More Polite" | "More Assertive";
+type QuickRewriteMode = "Shorter" | "More Direct" | "More Polite" | "More Assertive" | "More Confident";
 type StyleKey = "calm" | "assertive" | "strategic";
 
 const rewriteModes: RewriteMode[] = ["Lawyer Mode", "Negotiator Mode", "Manager Mode"];
-const quickRewriteModes: QuickRewriteMode[] = ["Shorter", "More Direct", "More Polite", "More Assertive"];
+const quickRewriteModes: QuickRewriteMode[] = ["Shorter", "More Direct", "More Polite", "More Assertive", "More Confident"];
 const relationshipTypeOptions = ["Dating", "Work", "Client", "Family", "Friend", "Conflict", "Other"] as const;
 const maxStyleRegenerations = 2;
 
@@ -117,7 +119,8 @@ export default function DashboardClient({
   const [lastSubmittedInput, setLastSubmittedInput] = useState("");
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isPro = profile.subscription_status === "pro";
+  const isPro = hasProAccess(profile.subscription_status);
+  const isProAvailable = PRO_ENABLED;
   const isPremiumStyle = preTones.includes(tone);
 
   async function fetchProfiles(preferredProfileId?: string) {
@@ -215,7 +218,7 @@ export default function DashboardClient({
       });
 
       if (!response.ok) {
-        if (data?.upgrade_required) {
+        if (data?.upgrade_required || data?.coming_soon || response.status === 403) {
           setUpgradeReason("profiles");
           setShowUpgradeModal(true);
         }
@@ -371,7 +374,8 @@ export default function DashboardClient({
 
   function handleUpgrade() {
     if (isPro) return;
-    window.location.href = "/pricing";
+    setUpgradeReason("rewrite");
+    setShowUpgradeModal(true);
   }
 
   async function toggleFavorite(replyId: string, currentFavorite: boolean) {
@@ -486,8 +490,7 @@ export default function DashboardClient({
 
   async function generate(modifier?: string) {
     if (!isPro && isPremiumStyle) {
-      setStyleWarning("This style requires Pro plan.");
-      return;
+        setStyleWarning(isProAvailable ? "This style requires Pro plan." : "Advanced styles will be available in Pro.");
     }
 
     if (!activeProfileId) {
@@ -754,9 +757,23 @@ export default function DashboardClient({
   return (
     <div className="space-y-6">
       {!isPro ? (
-        <div className="rounded-lg bg-gradient-to-r from-slate-900 to-slate-800 p-4">
+        <div className="rounded-lg border border-sky-500/30 bg-gradient-to-r from-sky-900/40 via-slate-900 to-slate-900 p-4 shadow-md">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-0">
-            <p className="text-sm font-medium text-slate-300 md:text-sm">Pro version coming soon. More features arriving soon.</p>
+            <div>
+              <p className="text-sm font-semibold text-sky-300">
+                ✨ Free Smart Reply Pro is ready to use
+              </p>
+              <p className="mt-1 text-xs text-slate-300">
+                {isProAvailable
+                  ? "Get specialized replies with quick refinement tools. Upgrade for advanced rewrite modes and more profiles."
+                  : "Get specialized replies with quick refinement tools."}
+              </p>
+            </div>
+            {!isProAvailable ? (
+              <Link href={PRO_WAITLIST_HREF} className="whitespace-nowrap text-xs font-semibold text-sky-300 hover:text-sky-200 md:text-sm">
+                Join Waitlist →
+              </Link>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -829,6 +846,12 @@ export default function DashboardClient({
               </button>
             </div>
           </div>
+
+          {!isProAvailable ? (
+            <p className="mt-3 text-xs text-slate-400">
+              Free launch currently supports 1 Reply Profile. More profile slots are planned for the Pro release.
+            </p>
+          ) : null}
 
           <div className="mt-3">
             <label className="mb-1 block text-xs text-slate-400">Active Contact</label>
@@ -937,142 +960,146 @@ export default function DashboardClient({
         </div>
 
         {outputs.length ? (
-          <div className="mt-6 grid gap-4 md:gap-3">
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-100">Your Replies</h2>
+              <p className="text-xs text-slate-500">3 refined perspectives</p>
+            </div>
+            <div className="grid gap-4">
             {outputs.map((output, index) => (
-              <article key={index} className="card p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-semibold md:text-sm">{["Calm", "Assertive", "Strategic"][index] || "Reply"}</h2>
-                    {recommendedIndex === index ? (
-                      <span className="rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
-                        ⭐ Recommended
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="flex gap-3 md:gap-2">
-                    <button className="h-11 text-xs text-sky-400 hover:text-sky-300 md:h-auto" onClick={() => navigator.clipboard.writeText(output)}>Copy</button>
-                    <button className="h-11 text-xs text-sky-400 hover:text-sky-300 md:h-auto" onClick={() => shareReply(output)}>Share</button>
-                    <button className="hidden h-11 text-xs text-sky-400 hover:text-sky-300 md:inline-block md:h-auto" onClick={() => exportAsImage(output, tone)}>Export</button>
-                  </div>
-                </div>
-
-                {generationAnalyses[index] ? (
-                  <div className="mb-3 rounded-md border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300">
-                    <p className="text-sm font-semibold text-sky-300">Reply Score: {generationAnalyses[index].reply_score}</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <p><span className="text-slate-500">Clarity:</span> {generationAnalyses[index].clarity}</p>
-                      <p><span className="text-slate-500">Influence:</span> {generationAnalyses[index].influence}</p>
-                      <p><span className="text-slate-500">Pressure:</span> {generationAnalyses[index].pressure_level}</p>
-                      <p><span className="text-slate-500">Tone:</span> {generationAnalyses[index].tone_detected}</p>
+              <article key={index} className="card overflow-hidden border border-slate-600 bg-gradient-to-br from-slate-900/80 to-slate-950 shadow-lg">
+                <div className="border-b border-slate-700 bg-slate-900/40 p-3 md:p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sky-500/20 text-sky-400">
+                        {index === 0 && "😊"}
+                        {index === 1 && "💪"}
+                        {index === 2 && "🎯"}
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-semibold text-slate-100">{["Calm", "Assertive", "Strategic"][index] || "Reply"}</h2>
+                        <p className="text-xs text-slate-400">
+                          {index === 0 && "Steady and composed"}
+                          {index === 1 && "Direct and confident"}
+                          {index === 2 && "Persuasive and strategic"}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-2">
-                      <span className="text-slate-500">Manipulation Risk:</span>{" "}
-                      <span
-                        className={
-                          generationAnalyses[index].manipulation_risk === "High" || generationAnalyses[index].manipulation_risk === "Medium"
-                            ? "font-semibold text-rose-400"
-                            : "text-green-400"
-                        }
-                      >
-                        {generationAnalyses[index].manipulation_risk}
-                      </span>
-                    </p>
-                  </div>
-                ) : null}
-                
-                {/* Template Badge */}
-                {selectedTemplate && index === 0 && (
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-xs">
-                    <span className="text-sky-400">Template:</span>
-                    <span className="font-medium text-sky-300">
-                      {selectedTemplate === "work" && "Work"}
-                      {selectedTemplate === "dating" && "Dating"}
-                      {selectedTemplate === "negotiation" && "Negotiation"}
-                      {selectedTemplate === "conflict" && "Conflict"}
-                      {selectedTemplate === "decline" && "Polite Decline"}
-                      {selectedTemplate === "customer_service" && "Customer Service"}
-                    </span>
-                  </div>
-                )}
-                
-                <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-200 md:text-sm md:leading-normal">{output}</p>
-
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300"
-                    onClick={() => navigator.clipboard.writeText(output)}
-                  >
-                    Copy Reply
-                  </button>
-                </div>
-
-                {index < 3 ? (
-                  <div className="mt-3 min-h-[56px] rounded-md border border-slate-700 bg-slate-900/40 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs text-slate-400">Refine this mode</p>
-                      {canRegenerateStyle(getStyleKey(index)) ? (
-                        <button
-                          type="button"
-                          className="rounded-md border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
-                          onClick={() => regenerateStyle(getStyleKey(index))}
-                          disabled={styleRegenerating !== null}
-                        >
-                          {styleRegenerating === getStyleKey(index)
-                            ? "Regenerating..."
-                            : `Regenerate (${maxStyleRegenerations - rewriteCounts[getStyleKey(index)]} left)`}
-                        </button>
+                    <div className="flex items-center gap-2">
+                      {recommendedIndex === index ? (
+                        <span className="rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+                          ⭐ Best Match
+                        </span>
                       ) : null}
                     </div>
-                    {!canRegenerateStyle(getStyleKey(index)) ? (
-                      <p className="mt-2 text-[11px] text-slate-500">Maximum refinements reached.</p>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-3 md:p-3">
-                  <h3 className="text-sm font-semibold text-slate-100">Quick Rewrite</h3>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {quickRewriteModes.map((mode) => {
-                      const isLoadingMode = quickRewriteLoading?.index === index && quickRewriteLoading?.mode === mode;
-                      const isBusy = quickRewriteLoading?.index === index;
-                      return (
-                        <button
-                          key={mode}
-                          type="button"
-                          className="inline-flex h-11 items-center gap-2 rounded-md border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:border-sky-500 hover:text-sky-300 disabled:opacity-60 md:h-auto md:px-3 md:text-xs"
-                          onClick={() => quickRewriteOutput(index, mode)}
-                          disabled={isBusy}
-                        >
-                          {isLoadingMode ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" /> : null}
-                          {isLoadingMode ? "Rewriting..." : mode}
-                        </button>
-                      );
-                    })}
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/40 p-3 md:p-3">
-                  <h3 className="text-sm font-semibold text-slate-100">Advanced Rewrite Modes (Pro)</h3>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {rewriteModes.map((mode) => {
-                      const isLoadingMode = rewriteLoading?.index === index && rewriteLoading?.mode === mode;
-                      return (
-                        <button
-                          key={mode}
-                          type="button"
-                          className={`h-11 rounded-md border px-4 py-2 text-sm md:h-auto md:px-3 md:text-xs ${isPro ? "border-slate-600 text-slate-200 hover:border-sky-500 hover:text-sky-300" : "border-slate-700 text-slate-400"}`}
-                          onClick={() => rewriteOutput(index, mode)}
-                          disabled={isLoadingMode}
-                        >
-                          {isLoadingMode ? "Rewriting..." : isPro ? mode : `${mode} • 🔒`}
-                        </button>
-                      );
-                    })}
+                <div className="p-4 md:p-4">
+                  {generationAnalyses[index] ? (
+                    <div className="mb-4 rounded-md border border-slate-700/50 bg-slate-950/40 p-3 text-xs text-slate-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-semibold text-sky-400">Quality Metrics</p>
+                        <p className="text-sm font-bold text-sky-300">Score: {generationAnalyses[index].reply_score}/100</p>
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+                        <p><span className="text-slate-500">Clarity:</span> <span className="text-slate-300">{generationAnalyses[index].clarity}</span></p>
+                        <p><span className="text-slate-500">Influence:</span> <span className="text-slate-300">{generationAnalyses[index].influence}</span></p>
+                        <p><span className="text-slate-500">Pressure:</span> <span className="text-slate-300">{generationAnalyses[index].pressure_level}</span></p>
+                        <p><span className="text-slate-500">Detected:</span> <span className="text-slate-300">{generationAnalyses[index].tone_detected}</span></p>
+                      </div>
+                    </div>
+                  ) : null}
+                
+                  {/* Template Badge */}
+                  {selectedTemplate && index === 0 && (
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-xs">
+                      <span className="text-sky-400">Template:</span>
+                      <span className="font-medium text-sky-300">
+                        {selectedTemplate === "work" && "Work"}
+                        {selectedTemplate === "dating" && "Dating"}
+                        {selectedTemplate === "negotiation" && "Negotiation"}
+                        {selectedTemplate === "conflict" && "Conflict"}
+                        {selectedTemplate === "decline" && "Polite Decline"}
+                        {selectedTemplate === "customer_service" && "Customer Service"}
+                      </span>
+                    </div>
+                  )}
+                  
+                  <p className="mb-4 whitespace-pre-wrap text-base leading-relaxed text-slate-100 md:text-sm md:leading-normal">{output}</p>
+
+                  {/* Copy/Share Actions */}
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <button 
+                      onClick={() => navigator.clipboard.writeText(output)}
+                      className="flex items-center gap-2 rounded-md bg-sky-500/20 px-3 py-2 text-xs font-medium text-sky-300 hover:bg-sky-500/30 transition-colors"
+                    >
+                      📋 Copy Reply
+                    </button>
+                    <button 
+                      onClick={() => shareReply(output)}
+                      className="flex items-center gap-2 rounded-md border border-slate-600 px-3 py-2 text-xs font-medium text-slate-300 hover:border-slate-500 hover:text-slate-200 transition-colors"
+                    >
+                      📤 Share
+                    </button>
+                    <button 
+                      onClick={() => exportAsImage(output, tone)}
+                      className="hidden flex-items-center gap-2 rounded-md border border-slate-600 px-3 py-2 text-xs font-medium text-slate-300 hover:border-slate-500 hover:text-slate-200 transition-colors md:flex"
+                    >
+                      🖼️ Export
+                    </button>
+                  </div>
+
+                    <div className="space-y-3">
+                    <div className="rounded-md border border-slate-600 bg-slate-900/60 p-3 shadow-sm">
+                      <h3 className="text-sm font-semibold text-sky-300">✨ Refine This Reply</h3>
+                      <p className="mt-1 text-xs text-slate-400">Adjust tone and length in seconds</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {quickRewriteModes.map((mode) => {
+                          const isLoadingMode = quickRewriteLoading?.index === index && quickRewriteLoading?.mode === mode;
+                          const isBusy = quickRewriteLoading?.index === index;
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              className="inline-flex h-10 items-center gap-2 rounded-md border border-sky-600/40 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-300 hover:border-sky-500 hover:bg-sky-500/20 hover:text-sky-200 disabled:opacity-50 transition-all"
+                              onClick={() => quickRewriteOutput(index, mode)}
+                              disabled={isBusy}
+                            >
+                              {isLoadingMode ? <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-sky-300 border-t-transparent" /> : null}
+                              {isLoadingMode ? "Rewriting..." : mode}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-slate-700 bg-slate-900/40 p-3">
+                      <h3 className="text-sm font-semibold text-slate-100">
+                        {isProAvailable ? "Advanced Rewrite Modes (Pro)" : "Advanced Modes (Pro Launch)"}
+                      </h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {rewriteModes.map((mode) => {
+                          const isLoadingMode = rewriteLoading?.index === index && rewriteLoading?.mode === mode;
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              className={`h-11 rounded-md border px-4 py-2 text-sm md:h-auto md:px-3 md:text-xs ${isPro ? "border-slate-600 text-slate-200 hover:border-sky-500 hover:text-sky-300" : "border-slate-700 text-slate-400"}`}
+                              onClick={() => rewriteOutput(index, mode)}
+                              disabled={isLoadingMode}
+                            >
+                              {isLoadingMode ? "Rewriting..." : isPro ? mode : `${mode} • ${isProAvailable ? "🔒" : "Soon"}`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </article>
             ))}
+            </div>
           </div>
         ) : null}
 
@@ -1327,23 +1354,44 @@ export default function DashboardClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
           <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5">
             <h2 className="text-lg font-semibold text-slate-100">
-              {upgradeReason === "profiles" ? "Unlock More Reply Profiles" : "Pro Coming Soon"}
+              {upgradeReason === "profiles"
+                ? isProAvailable
+                  ? "Unlock More Reply Profiles"
+                  : "More Reply Profiles in Pro"
+                : isProAvailable
+                  ? "Upgrade to Pro"
+                  : "Pro Launch Coming"}
             </h2>
             <p className="mt-2 text-sm text-slate-300">
               {upgradeReason === "profiles"
-                ? "Free plan includes 1 Reply Profile. Upgrade to Pro to save up to 3 profiles."
-                : "Advanced rewrite modes will be available in the Pro version. Stay tuned!"}
+                ? isProAvailable
+                  ? "Free plan includes 1 Reply Profile. Upgrade to Pro to save up to 3 profiles."
+                  : "Free launch includes 1 Reply Profile. Additional profile capacity is planned for the upcoming Pro release."
+                : isProAvailable
+                  ? "Advanced rewrite modes are available with Pro access."
+                  : "Advanced rewrite modes will arrive with the upcoming Pro release. Join the waitlist to get notified."}
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              {upgradeReason === "profiles" ? (
-                <button
-                  type="button"
+              {isProAvailable ? (
+                <Link
+                  href="/pricing"
                   className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950"
-                  onClick={handleUpgrade}
                 >
                   Upgrade
-                </button>
-              ) : null}
+                </Link>
+              ) : (
+                <>
+                  <span className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300">
+                    Pro Launch
+                  </span>
+                  <Link
+                    href={PRO_WAITLIST_HREF}
+                    className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950"
+                  >
+                    Join Waitlist
+                  </Link>
+                </>
+              )}
               <button
                 type="button"
                 className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"

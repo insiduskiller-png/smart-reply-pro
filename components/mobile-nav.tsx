@@ -4,17 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import AnimatedUsername from "@/components/animated-username";
-import { logoutUser } from "@/lib/client-auth";
+import { hasProAccess, PRO_ENABLED } from "@/lib/billing";
 
 export default function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, loading } = useAuth();
-  const displayName = profile?.username?.trim() || "User";
+  const { user, profile, loading, authStatus, logout } = useAuth();
+  const displayName = profile?.username?.trim() || user?.email?.split("@")[0] || "Account";
   const usernameColor = profile?.username_color || "#ffffff";
-  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
+  const isPro = hasProAccess(profile?.subscription_status);
+  const planLabel = isPro ? "Pro" : PRO_ENABLED ? "Free" : "Free Public Launch";
 
   async function handleLogout() {
-    await logoutUser("/");
+    await logout("/");
   }
 
   return (
@@ -27,7 +28,7 @@ export default function MobileNav() {
           </Link>
           
           <div className="flex items-center gap-3">
-            {!loading && user ? (
+            {authStatus === "authenticated" && user ? (
               <AnimatedUsername
                 text={displayName}
                 isPro={isPro}
@@ -83,7 +84,7 @@ export default function MobileNav() {
               </div>
 
               {/* User welcome block */}
-              {!loading && user && (
+              {authStatus === "authenticated" && user && (
                 <div className="border-b border-slate-800 px-4 py-4">
                   <AnimatedUsername
                     text={displayName}
@@ -91,13 +92,18 @@ export default function MobileNav() {
                     colorPreset={usernameColor}
                     className="text-base font-semibold"
                   />
+                  <p className="mt-1 text-sm text-slate-400">{user.email}</p>
+                  <div className="mt-3 flex items-center justify-between text-xs">
+                    <span className="text-slate-500">Plan status</span>
+                    <span className="rounded-full border border-slate-700 px-2 py-0.5 text-slate-200">{planLabel}</span>
+                  </div>
                 </div>
               )}
 
               {/* Navigation Links */}
               <nav className="flex-1 overflow-y-auto px-2 py-4">
                 <div className="space-y-1">
-                  {loading ? (
+                  {loading && authStatus === "loading" ? (
                     /* Skeleton while auth state loads */
                     <>
                       <div className="h-11 rounded-md bg-slate-800/50 animate-pulse" />
@@ -118,7 +124,28 @@ export default function MobileNav() {
                         className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
                         onClick={() => setIsOpen(false)}
                       >
-                        Account Settings
+                        Account
+                      </Link>
+                      <Link
+                        href="/account#change-username"
+                        className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Change Username
+                      </Link>
+                      <Link
+                        href="/account#change-email"
+                        className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Change Email
+                      </Link>
+                      <Link
+                        href="/account#change-password"
+                        className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Change Password
                       </Link>
                       <Link
                         href="/pricing"
@@ -130,7 +157,7 @@ export default function MobileNav() {
                       <button
                         onClick={() => {
                           setIsOpen(false);
-                          handleLogout();
+                          void handleLogout();
                         }}
                         className="flex h-11 w-full items-center rounded-md px-3 text-left text-sm text-rose-400 hover:bg-slate-800"
                       >

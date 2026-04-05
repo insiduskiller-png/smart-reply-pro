@@ -3,15 +3,16 @@ import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
 import { sanitizeText } from "@/lib/security";
 import { rewriteReplyWithInstruction } from "@/lib/openai";
-import { getUserProfile } from "@/lib/supabase";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
-type QuickRewriteMode = "Shorter" | "More Direct" | "More Polite" | "More Assertive";
+type QuickRewriteMode = "Shorter" | "More Direct" | "More Polite" | "More Assertive" | "More Confident";
 
 const QUICK_REWRITE_INSTRUCTIONS: Record<QuickRewriteMode, string> = {
   Shorter: "Rewrite the reply in fewer words without losing meaning.",
   "More Direct": "Rewrite the reply to be more direct and assertive.",
   "More Polite": "Rewrite the reply to sound warmer and polite.",
   "More Assertive": "Rewrite the reply to increase authority and confidence.",
+  "More Confident": "Rewrite the reply to sound more self-assured and conviction-filled. Use strong language and confident phrasing. Remove hedging words like maybe, possibly, or might. Sound like you know what you're talking about.",
 };
 
 function isQuickRewriteMode(value: string): value is QuickRewriteMode {
@@ -19,7 +20,8 @@ function isQuickRewriteMode(value: string): value is QuickRewriteMode {
     value === "Shorter" ||
     value === "More Direct" ||
     value === "More Polite" ||
-    value === "More Assertive"
+    value === "More Assertive" ||
+    value === "More Confident"
   );
 }
 
@@ -30,10 +32,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const profile = await getUserProfile(user.id);
-    if (!profile) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 400 });
-    }
+    const { profile } = await bootstrapUserProfile(user, { source: "api-quick-rewrite" });
 
     const isPro = profile.subscription_status === "pro";
 

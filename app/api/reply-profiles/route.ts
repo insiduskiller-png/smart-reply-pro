@@ -8,9 +8,10 @@ import {
   getReplyProfileById,
   getReplyProfilesByUser,
   insertProfileMessage,
-  getUserProfile,
   updateReplyProfileDetails,
 } from "@/lib/supabase";
+import { hasProAccess, PRO_ENABLED } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 const categoryOptions = new Set([
   "Dating",
@@ -70,9 +71,9 @@ export async function POST(request: Request) {
   try {
     console.info("[reply-profiles][POST] create requested", { userId: user.id });
 
-    const profile = await getUserProfile(user.id);
+    const { profile } = await bootstrapUserProfile(user, { source: "api-reply-profiles" });
     const subscriptionStatus = String(profile?.subscription_status ?? "free").toLowerCase();
-    const isPro = subscriptionStatus === "pro";
+    const isPro = hasProAccess(subscriptionStatus);
     const maxProfiles = isPro ? 3 : 1;
 
     const profileCount = await getReplyProfileCountByUser(user.id);
@@ -89,10 +90,13 @@ export async function POST(request: Request) {
         {
           error: isPro
             ? "You have reached your profile limit (3)."
-            : "Free plan allows 1 Reply Profile. Upgrade to create more.",
+            : PRO_ENABLED
+              ? "Free plan allows 1 Reply Profile. Upgrade to create more."
+              : "Free launch includes 1 Reply Profile. Additional slots will be available in Pro.",
           limit: maxProfiles,
           used: profileCount,
-          upgrade_required: !isPro,
+          upgrade_required: !isPro && PRO_ENABLED,
+          coming_soon: !isPro && !PRO_ENABLED,
         },
         { status: 403 },
       );

@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 
 export default function DesktopNavCenter() {
-  const { user, loading } = useAuth();
+  const { user, loading, authStatus } = useAuth();
 
-  if (loading) {
+  if (loading && authStatus === "loading") {
     return <div className="h-5 w-40" />;
   }
 

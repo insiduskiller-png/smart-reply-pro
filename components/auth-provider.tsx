@@ -20,10 +20,19 @@ import {
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 type AuthProfile = {
+  id?: string;
   username?: string | null;
   subscription_status?: string | null;
   username_color?: string | null;
   username_style?: string | null;
+};
+
+type AuthStatus = "loading" | "authenticated" | "unauthenticated";
+
+type SessionBootstrapPayload = {
+  user?: User | null;
+  profile?: AuthProfile | null;
+  bootstrapDeferred?: boolean;
 };
 
 type AuthContextValue = {
@@ -31,8 +40,16 @@ type AuthContextValue = {
   user: User | null;
   profile: AuthProfile | null;
   loading: boolean;
+  authStatus: AuthStatus;
   refreshProfile: () => Promise<void>;
   setProfileState: (nextProfile: AuthProfile | null) => void;
+  establishAuthenticatedSession: (params: {
+    user: User;
+    profile?: AuthProfile | null;
+    sessionToken?: string;
+    refreshToken?: string;
+  }) => Promise<void>;
+  logout: (redirectPath?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -44,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
 
   const normalizeProfile = useCallback((nextProfile: AuthProfile | null) => {
     if (!nextProfile) {
@@ -64,35 +82,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     console.info("profile fetch started", { userId });
 
-    try {
-      const response = await fetch("/api/user/profile", {
-        method: "GET",
-        cache: "no-store",
-      });
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const response = await fetch("/api/user/profile", {
+          method: "GET",
+          cache: "no-store",
+        });
 
-      if (!response.ok) {
-        setProfileState(null);
-        console.info("profile fetch completed", { userId, ok: false, source: "api" });
-        return;
+        if (!response.ok) {
+          console.info("profile fetch attempt failed", { userId, attempt, status: response.status });
+        } else {
+          const payload = await response.json().catch(() => null) as {
+            profile?: AuthProfile & { id?: string };
+          } | null;
+
+          const nextProfile = payload?.profile;
+          if (nextProfile?.id && nextProfile.id !== userId) {
+            console.info("profile fetch completed", { userId, ok: false, source: "api", reason: "profile-id-mismatch", attempt });
+            break;
+          }
+
+          if (nextProfile) {
+            setProfileState(nextProfile);
+            console.info("profile fetch completed", { userId, ok: true, source: "api", attempt });
+            return nextProfile;
+          }
+        }
+      } catch {
+        console.info("profile fetch attempt threw", { userId, attempt, source: "api" });
       }
 
-      const payload = await response.json().catch(() => null) as {
-        profile?: AuthProfile & { id?: string };
-      } | null;
-
-      const nextProfile = payload?.profile;
-      if (nextProfile?.id && nextProfile.id !== userId) {
-        setProfileState(null);
-        console.info("profile fetch completed", { userId, ok: false, source: "api", reason: "profile-id-mismatch" });
-        return;
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
       }
-
-      setProfileState(nextProfile ?? null);
-      console.info("profile fetch completed", { userId, ok: true, source: "api" });
-    } catch {
-      setProfileState(null);
-      console.info("profile fetch completed", { userId, ok: false, source: "api" });
     }
+
+    setProfileState(null);
+    console.info("profile fetch completed", { userId, ok: false, source: "api", exhausted: true });
+    return null;
   }, [setProfileState]);
 
   const refreshProfile = useCallback(async () => {
@@ -100,23 +127,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetchProfile(user.id);
   }, [fetchProfile, user]);
 
+  const getServerUser = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/me", { cache: "no-store" });
+      if (!response.ok) {
+        return null;
+      }
+
+      const payload = await response.json().catch(() => null) as { user?: User | null } | null;
+      return payload?.user ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const syncServerSession = useCallback(async (accessToken?: string) => {
     if (!accessToken) {
       await fetch("/api/auth/session", { method: "DELETE" });
-      return;
+      return null;
     }
 
-    await fetch("/api/auth/session", {
+    const response = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accessToken }),
     });
+
+    if (!response.ok) {
+      console.info("auth session sync failed", { status: response.status });
+      return null;
+    }
+
+    return await response.json().catch(() => null) as SessionBootstrapPayload | null;
   }, []);
+
+  const establishAuthenticatedSession = useCallback(async (params: {
+    user: User;
+    profile?: AuthProfile | null;
+    sessionToken?: string;
+    refreshToken?: string;
+  }) => {
+    setAuthStatus("authenticated");
+    setUser(params.user);
+    setProfileState(params.profile ?? null);
+
+    if (params.sessionToken && params.refreshToken) {
+      const result = await supabaseBrowser.auth.setSession({
+        access_token: params.sessionToken,
+        refresh_token: params.refreshToken,
+      }).catch(() => null);
+
+      if (result?.data?.session) {
+        setSession(result.data.session);
+        setUser(result.data.session.user);
+      }
+    }
+
+    setLoading(false);
+  }, [setProfileState]);
+
+  const logout = useCallback(async (redirectPath = "/") => {
+    setSession(null);
+    setUser(null);
+    setProfileState(null);
+    setAuthStatus("unauthenticated");
+    setLoading(false);
+
+    try {
+      await clearBrowserSession();
+    } finally {
+      if (typeof window !== "undefined") {
+        window.location.assign(redirectPath);
+      }
+    }
+  }, [setProfileState]);
 
   const expireTemporarySession = useCallback(async () => {
     setSession(null);
     setUser(null);
     setProfileState(null);
+    setAuthStatus("unauthenticated");
     await clearBrowserSession();
 
     if (typeof window === "undefined" || window.location.pathname.startsWith("/login")) {
@@ -130,9 +220,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     async function initializeSession() {
+      setLoading(true);
+      setAuthStatus("loading");
+
+      const [serverUser, browserSessionResult] = await Promise.all([
+        getServerUser(),
+        supabaseBrowser.auth.getSession().catch(() => ({ data: { session: null } })),
+      ]);
+
       const {
         data: { session: currentSession },
-      } = await supabaseBrowser.auth.getSession();
+      } = browserSessionResult;
 
       if (!mounted) return;
 
@@ -146,18 +244,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setSession(currentSession ?? null);
-      setUser(currentSession?.user ?? null);
 
       if (currentSession?.user?.id) {
+        setUser(currentSession.user);
+        setAuthStatus("authenticated");
         if (getStoredSessionMode() === "temporary") {
           touchTemporarySessionActivity();
         }
 
-        void syncServerSession(currentSession.access_token);
-        await fetchProfile(currentSession.user.id);
+        const bootstrap = await syncServerSession(currentSession.access_token);
+        if (bootstrap?.profile) {
+          setProfileState(bootstrap.profile);
+        } else {
+          await fetchProfile(currentSession.user.id);
+        }
+      } else if (serverUser?.id) {
+        setUser(serverUser);
+        setAuthStatus("authenticated");
+        await fetchProfile(serverUser.id);
       } else {
-        void syncServerSession();
+        setUser(null);
         setProfileState(null);
+        setAuthStatus("unauthenticated");
+        void syncServerSession();
       }
 
       setLoading(false);
@@ -168,7 +277,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabaseBrowser.auth.onAuthStateChange(async (event, nextSession) => {
-      setLoading(true);
+      setLoading(Boolean(nextSession?.user));
+      setAuthStatus(nextSession?.user ? "authenticated" : "loading");
 
       if (nextSession?.user && isTemporarySessionExpired()) {
         await expireTemporarySession();
@@ -183,12 +293,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user?.id) {
+        setAuthStatus("authenticated");
         if (getStoredSessionMode() === "temporary") {
           touchTemporarySessionActivity();
         }
 
-        void syncServerSession(nextSession.access_token);
-        await fetchProfile(nextSession.user.id);
+        const bootstrap = await syncServerSession(nextSession.access_token);
+        if (bootstrap?.profile) {
+          setProfileState(bootstrap.profile);
+        } else {
+          await fetchProfile(nextSession.user.id);
+        }
       } else {
         if (event === "SIGNED_OUT") {
           clearSessionPersistenceState();
@@ -196,6 +311,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         void syncServerSession();
         setProfileState(null);
+        setAuthStatus("unauthenticated");
+        setLoading(false);
       }
 
       if (mounted) {
@@ -252,8 +369,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [expireTemporarySession, user]);
 
   const value = useMemo(
-    () => ({ session, user, profile, loading, refreshProfile, setProfileState }),
-    [session, user, profile, loading, refreshProfile, setProfileState],
+    () => ({
+      session,
+      user,
+      profile,
+      loading,
+      authStatus,
+      refreshProfile,
+      setProfileState,
+      establishAuthenticatedSession,
+      logout,
+    }),
+    [session, user, profile, loading, authStatus, refreshProfile, setProfileState, establishAuthenticatedSession, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

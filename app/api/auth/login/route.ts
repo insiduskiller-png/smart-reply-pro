@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabase, ensureUserProfile } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 export async function POST(req: Request) {
   try {
@@ -36,13 +37,23 @@ export async function POST(req: Request) {
     console.info("login api: supabase auth success", { userId: data.user?.id ?? null });
     console.info("login api: session received", { hasAccessToken: Boolean(data.session.access_token) });
 
-    // Ensure profile exists for user (non-blocking, do not delay login redirect)
-    console.info("profile fetch started", { userId: data.user?.id ?? null });
-    void ensureUserProfile(data.user).catch((profileErr) => {
-      console.error("Profile creation error:", profileErr);
-    }).finally(() => {
-      console.info("profile fetch completed", { userId: data.user?.id ?? null });
-    });
+    let bootstrapStatus: "ready" | "deferred" = "ready";
+    let bootstrappedProfile = null;
+    try {
+      const bootstrap = await bootstrapUserProfile(data.user, { source: "auth-login" });
+      bootstrappedProfile = bootstrap.profile;
+      console.info("login api: profile bootstrap complete", {
+        userId: data.user.id,
+        created: bootstrap.created,
+        repaired: bootstrap.repaired,
+      });
+    } catch (profileErr) {
+      bootstrapStatus = "deferred";
+      console.error("login api: profile bootstrap failed", {
+        userId: data.user.id,
+        message: profileErr instanceof Error ? profileErr.message : "Unknown bootstrap failure",
+      });
+    }
 
     const response = NextResponse.json({
       success: true,
@@ -51,6 +62,8 @@ export async function POST(req: Request) {
       refreshToken: data.session.refresh_token,
       expiresAt: data.session.expires_at,
       expiresIn: data.session.expires_in,
+      profile: bootstrappedProfile,
+      bootstrapStatus,
     });
 
     // Set session cookie for middleware

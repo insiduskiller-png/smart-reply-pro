@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import DashboardClient from "@/components/dashboard-client";
 import { requireUser } from "@/lib/auth";
-import { getUserProfile, ensureUserProfile } from "@/lib/supabase";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 import { templates } from "@/lib/templates";
 
 export default async function DashboardPage({
@@ -27,11 +27,8 @@ export default async function DashboardPage({
 
   let profile = defaultProfile;
   try {
-    // Ensure profile exists first
-    await ensureUserProfile(user);
-    
-    // Then fetch it
-    const profileData = await getUserProfile(user.id);
+    const bootstrap = await bootstrapUserProfile(user, { source: "dashboard-page" });
+    const profileData = bootstrap.profile;
     if (profileData) {
       profile = {
         ...defaultProfile,

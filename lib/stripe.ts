@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { getStripeEnv } from "./env";
+import { PRO_PLAN_ACTIVE } from "./billing";
 
 function stripeHeaders(secretKey: string) {
   return {
@@ -13,6 +14,10 @@ export async function createCheckoutSession(params: {
   userId: string;
   baseUrl: string;
 }) {
+  if (!PRO_PLAN_ACTIVE) {
+    throw new Error("Pro tier checkout will be available when the Pro release launches.");
+  }
+
   const { stripeSecretKey, stripePriceId } = getStripeEnv();
 
   const body = new URLSearchParams({

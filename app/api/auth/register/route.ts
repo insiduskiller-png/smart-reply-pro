@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabase, ensureUserProfile } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: Request) {
@@ -57,10 +58,18 @@ export async function POST(req: Request) {
 
     // Ensure profile exists for user
     try {
-      await ensureUserProfile(data.user);
+      const bootstrap = await bootstrapUserProfile(data.user, { source: "auth-register" });
+      console.info("register api: profile bootstrap complete", {
+        userId: data.user.id,
+        created: bootstrap.created,
+        repaired: bootstrap.repaired,
+      });
     } catch (profileErr) {
-      console.error("Profile creation error:", profileErr);
-      // Don't fail signup if profile creation fails
+      console.error("register api: profile bootstrap failed", {
+        userId: data.user.id,
+        message: profileErr instanceof Error ? profileErr.message : "Unknown bootstrap failure",
+      });
+      // Do not fail signup; login/session bootstrap can recover later.
     }
 
     // Track account creation

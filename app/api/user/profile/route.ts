@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
-import { supabaseService, ensureUserProfile } from "@/lib/supabase";
+import { bootstrapUserProfile, updateBootstrappedUserProfile } from "@/lib/profile-service";
 import { requireUser } from "@/lib/auth";
 import { sanitizeText } from "@/lib/security";
-
-function withProfileCustomizationFallback<T extends Record<string, unknown> | null>(profile: T) {
-  return {
-    ...(profile ?? {}),
-    username_color: (profile?.username_color as string | null | undefined) || "#ffffff",
-    username_style: (profile?.username_style as string | null | undefined) || "gradient",
-  };
-}
 
 export async function GET() {
   try {
@@ -17,39 +9,13 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // Ensure profile exists
     try {
-      await ensureUserProfile(user);
+      const bootstrap = await bootstrapUserProfile(user, { source: "api-user-profile:get" });
+      return NextResponse.json({ profile: bootstrap.profile });
     } catch (error) {
-      console.error("Profile creation error:", error);
+      console.error("Profile fetch bootstrap error:", error);
+      return NextResponse.json({ error: "Unable to load profile" }, { status: 503 });
     }
-
-    const { data, error } = await supabaseService
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (error?.code === "42703") {
-      const fallback = await supabaseService
-        .from("profiles")
-        .select("id, username, subscription_status, created_at, email")
-        .eq("id", user.id)
-        .single();
-
-      if (fallback.error) {
-        return NextResponse.json({ error: fallback.error.message }, { status: 400 });
-      }
-
-      return NextResponse.json({ profile: withProfileCustomizationFallback(fallback.data) });
-    }
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json({ profile: withProfileCustomizationFallback(data) });
   } catch (err) {
     console.error("Profile fetch error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -86,51 +52,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No profile updates provided" }, { status: 400 });
     }
 
-    const { data, error } = await supabaseService
-      .from("profiles")
-      .update(updates)
-      .eq("id", user.id)
-      .select()
-      .single();
-
-    if (error?.code === "42703") {
-      const fallbackUpdates = { ...updates };
-      delete fallbackUpdates.username_color;
-      delete fallbackUpdates.username_style;
-
-      if (Object.keys(fallbackUpdates).length > 0) {
-        const fallbackUpdate = await supabaseService
-          .from("profiles")
-          .update(fallbackUpdates)
-          .eq("id", user.id)
-          .select()
-          .single();
-
-        if (fallbackUpdate.error) {
-          return NextResponse.json({ error: fallbackUpdate.error.message }, { status: 400 });
-        }
-
-        return NextResponse.json({ profile: withProfileCustomizationFallback(fallbackUpdate.data) });
-      }
-
-      const currentProfile = await supabaseService
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (currentProfile.error) {
-        return NextResponse.json({ error: currentProfile.error.message }, { status: 400 });
-      }
-
-      return NextResponse.json({ profile: withProfileCustomizationFallback(currentProfile.data) });
-    }
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json({ profile: withProfileCustomizationFallback(data) });
+    const profile = await updateBootstrappedUserProfile(user, updates, { source: "api-user-profile:post" });
+    return NextResponse.json({ profile });
   } catch (err) {
     console.error("Profile update error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

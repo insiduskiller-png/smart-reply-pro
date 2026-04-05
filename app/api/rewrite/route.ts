@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
-import { getUserProfile } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
 import { rewriteReplyWithInstruction } from "@/lib/openai";
+import { hasProAccess } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 type RewriteMode = "Lawyer Mode" | "Negotiator Mode" | "Manager Mode";
 
@@ -27,12 +28,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const profile = await getUserProfile(user.id);
-    if (!profile) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 400 });
-    }
+    const { profile } = await bootstrapUserProfile(user, { source: "api-rewrite" });
 
-    const isPro = (profile.subscription_status ?? "free").toLowerCase() === "pro";
+    const isPro = hasProAccess(profile.subscription_status);
 
     // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
     const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);
@@ -65,6 +63,13 @@ export async function POST(request: Request) {
 
     if (!reply || !mode || !isRewriteMode(mode)) {
       return NextResponse.json({ error: "Valid reply and mode are required" }, { status: 400 });
+    }
+
+    if (!isPro) {
+      return NextResponse.json(
+        { error: "Advanced rewrite modes are available with Pro access." },
+        { status: 403 },
+      );
     }
 
     const rewritten = await rewriteReplyWithInstruction(reply, MODE_INSTRUCTIONS[mode]);

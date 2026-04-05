@@ -1,5 +1,7 @@
 "use client";
 
+import { PRO_ENABLED } from "@/lib/billing";
+
 export type TemplateType = "work" | "dating" | "negotiation" | "conflict" | "decline" | "customer_service" | null;
 
 interface Template {
@@ -117,7 +119,7 @@ export default function TemplateSelector({
               <div className="mb-1 flex w-full items-center justify-between">
                 <span className="text-lg">{template.icon}</span>
                 {isLocked && (
-                  <span className="text-xs text-amber-400">🔒 Pro</span>
+                  <span className="text-xs text-amber-400">{PRO_ENABLED ? "🔒 Pro" : "🔒 Pro Launch"}</span>
                 )}
               </div>
               <span className="text-sm font-medium text-slate-100">{template.name}</span>
@@ -148,7 +150,7 @@ export default function TemplateSelector({
               <div className="mb-1 flex w-full items-center justify-between">
                 <span className="text-xl">{template.icon}</span>
                 {isLocked && (
-                  <span className="text-[10px] text-amber-400">🔒</span>
+                  <span className="text-[10px] text-amber-400">{PRO_ENABLED ? "🔒" : "Soon"}</span>
                 )}
               </div>
               <span className="text-sm font-medium text-slate-100">{template.name}</span>

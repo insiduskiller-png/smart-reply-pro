@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
-import { getUserProfile } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
 import { generateStrategicInsight } from "@/lib/openai";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 function maxTwoSentences(value: string) {
   const cleaned = sanitizeText(value, 280);
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const profile = await getUserProfile(user.id);
+  const { profile } = await bootstrapUserProfile(user, { source: "api-strategic-insight" });
   const isPro = profile?.subscription_status === "pro";
 
   // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)

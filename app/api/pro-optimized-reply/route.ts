@@ -2,15 +2,20 @@ import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { generateReply } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
-import { getUserProfile } from "@/lib/supabase";
 import { sanitizeText } from "@/lib/security";
+import { hasProAccess } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 export async function POST(request: Request) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const profile = await getUserProfile(user.id);
-  const isPro = profile?.subscription_status === "pro";
+  const { profile } = await bootstrapUserProfile(user, { source: "api-pro-optimized-reply" });
+  const isPro = hasProAccess(profile?.subscription_status);
+
+  if (!isPro) {
+    return NextResponse.json({ error: "Pro optimized replies are available with Pro access." }, { status: 403 });
+  }
 
   // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
   const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);

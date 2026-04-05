@@ -1,3 +1,5 @@
+import { PRO_ENABLED } from "./billing";
+
 function readRequired(keys: string[]) {
   const missing = keys.filter((key) => !process.env[key]);
   if (missing.length) {
@@ -47,5 +49,7 @@ export function getStripeEnv() {
 export function validateProductionEnv() {
   getSupabaseEnv();
   getOpenAiEnv();
-  getStripeEnv();
+  if (PRO_ENABLED) {
+    getStripeEnv();
+  }
 }

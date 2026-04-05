@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { suggestTone } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
-import { getUserProfile } from "@/lib/supabase";
+import { hasProAccess } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,8 +12,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const profile = await getUserProfile(user.id);
-    const isPro = profile?.subscription_status === "pro";
+    const { profile } = await bootstrapUserProfile(user, { source: "api-suggest-tone" });
+    const isPro = hasProAccess(profile?.subscription_status);
 
     // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
     const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);

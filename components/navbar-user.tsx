@@ -4,20 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import AnimatedUsername from "@/components/animated-username";
-import { logoutUser } from "@/lib/client-auth";
+import { hasProAccess, PRO_ENABLED } from "@/lib/billing";
 
 export default function NavbarUser() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, authStatus, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-  const displayName = profile?.username?.trim() || "User";
+  const displayName = profile?.username?.trim() || user?.email?.split("@")[0] || "Account";
   const usernameColor = profile?.username_color || "#ffffff";
+  const planLabel = hasProAccess(profile?.subscription_status) ? "Pro" : PRO_ENABLED ? "Free" : "Free Public Launch";
 
   async function handleLogout() {
-    await logoutUser("/");
+    setIsOpen(false);
+    await logout("/");
   }
 
-  const isPro = (profile?.subscription_status ?? "free").toLowerCase() === "pro";
+  const isPro = hasProAccess(profile?.subscription_status);
 
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
@@ -42,7 +44,7 @@ export default function NavbarUser() {
     };
   }, []);
 
-  if (loading) {
+  if (loading && authStatus === "loading") {
     return <div className="h-9 w-28" />;
   }
 
@@ -90,7 +92,15 @@ export default function NavbarUser() {
       </div>
 
       {isOpen ? (
-        <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-slate-700 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur">
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-700 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur">
+          <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-3">
+            <p className="text-sm font-semibold text-slate-100">{displayName}</p>
+            <p className="mt-1 text-xs text-slate-400">{user.email}</p>
+            <div className="mt-3 flex items-center justify-between text-xs">
+              <span className="text-slate-500">Plan status</span>
+              <span className="rounded-full border border-slate-700 px-2 py-0.5 text-slate-200">{planLabel}</span>
+            </div>
+          </div>
           <Link
             href="/dashboard"
             className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
@@ -103,7 +113,28 @@ export default function NavbarUser() {
             className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
             onClick={() => setIsOpen(false)}
           >
-            Account Settings
+            Account
+          </Link>
+          <Link
+            href="/account#change-username"
+            className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            onClick={() => setIsOpen(false)}
+          >
+            Change Username
+          </Link>
+          <Link
+            href="/account#change-email"
+            className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            onClick={() => setIsOpen(false)}
+          >
+            Change Email
+          </Link>
+          <Link
+            href="/account#change-password"
+            className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            onClick={() => setIsOpen(false)}
+          >
+            Change Password
           </Link>
           <div className="my-1 h-px bg-slate-700" />
           <button
