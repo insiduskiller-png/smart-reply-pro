@@ -33,6 +33,7 @@ export default async function DashboardPage({
       profile = {
         ...defaultProfile,
         ...profileData,
+        subscription_status: profileData.subscription_status ?? "free",
       };
     }
   } catch (error) {
