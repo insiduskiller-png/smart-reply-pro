@@ -847,7 +847,7 @@ export default function DashboardClient({
             </div>
           </div>
 
-          {!isProAvailable ? (
+          {!isPro && !isProAvailable ? (
             <p className="mt-3 text-xs text-slate-400">
               Free launch currently supports 1 Reply Profile. More profile slots are planned for the Pro release.
             </p>

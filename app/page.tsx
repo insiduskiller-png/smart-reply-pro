@@ -1,45 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProWaitlistForm from "@/components/pro-waitlist-form";
 import { trackHomepageVisit } from "@/lib/analytics";
 import { useAuth } from "@/components/auth-provider";
 
-function analyzeMessage(message: string) {
-  const text = message.toLowerCase();
-
-  const toneDetected = text.includes("!") || text.includes("now") || text.includes("immediately")
-    ? "Urgent"
-    : text.includes("sorry") || text.includes("please") || text.includes("thank")
-      ? "Soft / Diplomatic"
-      : text.includes("why") || text.includes("never") || text.includes("always")
-        ? "Defensive"
-        : "Neutral";
-
-  const pressureLevel =
-    text.includes("deadline") || text.includes("today") || text.includes("asap") || text.includes("now")
-      ? "High"
-      : text.includes("soon") || text.includes("quick")
-        ? "Medium"
-        : "Low";
-
-  const hiddenIntent = text.includes("just") || text.includes("simple") || text.includes("quick")
-    ? "Minimizing effort while asking for commitment"
-    : text.includes("everyone") || text.includes("team") || text.includes("others")
-      ? "Social pressure framing"
-      : text.includes("if you") || text.includes("unless")
-        ? "Conditional pressure or leverage framing"
-        : "Mostly direct on the surface";
-
-  return { toneDetected, pressureLevel, hiddenIntent };
-}
-
 export default function Home() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [incomingMessage, setIncomingMessage] = useState("");
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
@@ -48,10 +18,10 @@ export default function Home() {
     });
   }, []);
 
-  const sampleMessage = incomingMessage.trim() || "Need an answer tonight. If you are serious, stop avoiding this and tell me where we stand.";
-  const analysis = useMemo(() => analyzeMessage(sampleMessage), [sampleMessage]);
   const primaryCtaLabel = user ? "Open Dashboard" : redirecting ? "Redirecting..." : "Try Smart Reply Pro Free";
-  const primaryCtaSubtext = user ? "/dashboard" : "Free signup · strategic reply generation in seconds";
+  const primaryCtaSubtext = user
+    ? "Go straight to your workspace and keep building better replies."
+    : "Free signup · strategic reply generation in seconds";
 
   function handlePrimaryAction() {
     if (loading || redirecting) {
@@ -67,19 +37,21 @@ export default function Home() {
       <div className="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(14,165,233,0.12),transparent_35%),linear-gradient(180deg,rgba(15,23,42,0.35),rgba(2,6,23,0))]" />
 
       <section className="mx-auto max-w-6xl px-4 pb-14 pt-12 sm:px-6 md:pb-20 md:pt-20">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
-          <div>
+        <div className="relative overflow-hidden rounded-[2.2rem] border border-slate-800 bg-[linear-gradient(180deg,rgba(15,23,42,0.85),rgba(15,23,42,0.62))] p-6 shadow-2xl shadow-slate-950/40 sm:p-8 md:p-10">
+          <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-sky-400/12 blur-3xl" />
+          <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-indigo-400/10 blur-3xl" />
+
+          <div className="relative max-w-4xl">
             <div className="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-sky-200">
               Strategic AI for replies
             </div>
 
-            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
+            <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
               Write replies that stay calm, sharp, and in control.
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Smart Reply Pro helps people handle high-stakes messages with strategic replies that protect tone,
-              leverage, and clarity. It is built specifically for reply strategy, not generic AI chat.
+            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
+              Smart Reply Pro is purpose-built for reply strategy. It reads tone, emotional pressure, and social context to help you respond with clarity, confidence, and leverage.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -101,80 +73,20 @@ export default function Home() {
             </div>
 
             <p className="mt-3 text-sm text-slate-400">{primaryCtaSubtext}</p>
-
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                <p className="text-sm font-semibold text-white">Built for strategic communication</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">Reply with intent, not impulse, in dating, work, and personal conversations.</p>
-              </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                <p className="text-sm font-semibold text-white">Sharper than generic AI</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">Focused models produce replies that feel socially aware, usable, and fast.</p>
-              </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                <p className="text-sm font-semibold text-white">Fast path to action</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">Paste the message, choose the goal, and get refined reply options in seconds.</p>
-              </div>
-            </div>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-sky-400/10 blur-3xl" />
-            <div className="rounded-[2rem] border border-slate-800 bg-slate-900/85 p-5 shadow-2xl shadow-slate-950/40 backdrop-blur sm:p-6">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                <div>
-                  <p className="text-sm font-semibold text-white">Reply strategy preview</p>
-                  <p className="mt-1 text-sm text-slate-400">See how the AI reads tone, pressure, and intent before it writes.</p>
-                </div>
-                <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
-                  Specialized AI
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-5">
-                <div>
-                  <label htmlFor="message-preview" className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-                    Paste the message
-                  </label>
-                  <textarea
-                    id="message-preview"
-                    className="mt-2 min-h-[122px] w-full rounded-2xl border border-slate-700 bg-slate-950/90 p-4 text-sm leading-6 text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
-                    placeholder="Paste the message you received..."
-                    value={incomingMessage}
-                    onChange={(event) => setIncomingMessage(event.target.value)}
-                  />
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Tone</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{analysis.toneDetected}</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Pressure</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{analysis.pressureLevel}</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Intent</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{analysis.hiddenIntent}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-white">Suggested reply direction</p>
-                    <span className="text-xs font-medium text-sky-300">Confident · clear · measured</span>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
-                    “I’m open to a direct conversation, but not to pressure. If you want clarity, ask clearly and I’ll answer clearly.”
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
-                    <span className="rounded-full border border-slate-700 px-2.5 py-1">Tone-aware</span>
-                    <span className="rounded-full border border-slate-700 px-2.5 py-1">Pressure-resistant</span>
-                    <span className="rounded-full border border-slate-700 px-2.5 py-1">Keeps leverage</span>
-                  </div>
-                </div>
-              </div>
+          <div className="relative mt-10 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+              <p className="text-sm font-semibold text-white">Built for strategic communication</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">Built for high-stakes replies across dating, work, and personal conversations.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+              <p className="text-sm font-semibold text-white">Specialized beyond general AI</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">Purpose-trained for tone reading, emotional intelligence, and socially aware wording.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+              <p className="text-sm font-semibold text-white">Fast path to action</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">Paste a message, choose your goal, and get refined reply options in seconds.</p>
             </div>
           </div>
         </div>

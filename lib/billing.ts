@@ -15,5 +15,5 @@ export const PRO_WAITLIST_BODY = "Please notify me when Smart Reply Pro Pro is a
 export const PRO_WAITLIST_HREF = "/pricing#pro-waitlist";
 
 export function hasProAccess(subscriptionStatus?: string | null) {
-	return PRO_ENABLED && String(subscriptionStatus ?? "free").toLowerCase() === "pro";
+	return String(subscriptionStatus ?? "free").toLowerCase() === "pro";
 }

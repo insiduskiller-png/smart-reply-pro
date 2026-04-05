@@ -3,6 +3,7 @@ import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
 import { sanitizeText } from "@/lib/security";
 import { rewriteReplyWithInstruction } from "@/lib/openai";
+import { hasProAccess } from "@/lib/billing";
 import { bootstrapUserProfile } from "@/lib/profile-service";
 
 type QuickRewriteMode = "Shorter" | "More Direct" | "More Polite" | "More Assertive" | "More Confident";
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
   try {
     const { profile } = await bootstrapUserProfile(user, { source: "api-quick-rewrite" });
 
-    const isPro = profile.subscription_status === "pro";
+    const isPro = hasProAccess(profile.subscription_status);
 
     // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
     const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);

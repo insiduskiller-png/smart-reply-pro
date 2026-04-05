@@ -54,7 +54,7 @@ export default function AccountClient() {
 
   const displayName =
     profile?.username?.trim() || user?.email?.split("@")[0] || "Member";
-  const resolvedColor = profile?.username_color || "#ffffff";
+  const resolvedColor = normalizeUsernamePreset(profile?.username_color);
 
   useEffect(() => {
     async function load() {
@@ -405,63 +405,61 @@ export default function AccountClient() {
           </div>
         </section>
 
-        {isPro ? (
-          <section className="card space-y-4 p-5 md:p-6">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Profile Customization</h2>
-              <p className="mt-1 text-sm text-slate-300">Customize how your identity appears across the platform</p>
+        <section className="card space-y-4 p-5 md:p-6">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Profile Customization</h2>
+            <p className="mt-1 text-sm text-slate-300">Customize how your identity appears across the platform</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+            <label className="mb-2 block text-sm font-medium text-slate-200" htmlFor="username-color">
+              Username color
+            </label>
+            <select
+              id="username-color"
+              className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100"
+              value={usernameColor}
+              onChange={(event) => setUsernameColor(event.target.value as UsernameColorPreset)}
+              disabled={savingUsernameColor || isUsernameTransitioning}
+            >
+              {USERNAME_COLOR_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-5">
+              <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">Live preview</p>
+              <AnimatedUsername
+                text={displayName}
+                isPro
+                colorPreset={resolvedColor}
+                className="text-3xl font-bold"
+                durationMs={USERNAME_TRANSITION_DURATION_MS}
+                previousTheme={transitionPreviousTheme}
+                nextTheme={transitionNextTheme || resolvedColor}
+                isTransitioning={awaitingSavedTransition && isUsernameTransitioning}
+                onTransitionStateChange={handleSavedUsernameTransitionStateChange}
+                onTransitionComplete={handleSavedUsernameTransitionComplete}
+              />
             </div>
 
-            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-200" htmlFor="username-color">
-                Username color
-              </label>
-              <select
-                id="username-color"
-                className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100"
-                value={usernameColor}
-                onChange={(event) => setUsernameColor(event.target.value as UsernameColorPreset)}
-                disabled={savingUsernameColor || isUsernameTransitioning}
-              >
-                {USERNAME_COLOR_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-5">
-                <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">Live preview</p>
-                <AnimatedUsername
-                  text={displayName}
-                  isPro
-                  colorPreset={resolvedColor}
-                  className="text-3xl font-bold"
-                  durationMs={USERNAME_TRANSITION_DURATION_MS}
-                  previousTheme={transitionPreviousTheme}
-                  nextTheme={transitionNextTheme || resolvedColor}
-                  isTransitioning={awaitingSavedTransition && isUsernameTransitioning}
-                  onTransitionStateChange={handleSavedUsernameTransitionStateChange}
-                  onTransitionComplete={handleSavedUsernameTransitionComplete}
-                />
-              </div>
-
-              <button
-                type="button"
-                className="mt-4 inline-flex h-11 min-w-[12.5rem] items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
-                onClick={handleUsernameColorSave}
-                disabled={savingUsernameColor || isUsernameTransitioning}
-              >
-                {savingUsernameColor || isUsernameTransitioning ? "Applying..." : "Save Customization"}
-              </button>
-            </div>
-          </section>
-        ) : null}
+            <button
+              type="button"
+              className="mt-4 inline-flex h-11 min-w-[12.5rem] items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
+              onClick={handleUsernameColorSave}
+              disabled={savingUsernameColor || isUsernameTransitioning}
+            >
+              {savingUsernameColor || isUsernameTransitioning ? "Applying..." : "Save Customization"}
+            </button>
+          </div>
+        </section>
 
         <section id="plan-status" className="card space-y-3 p-5 md:p-6 scroll-mt-24">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Subscription</h2>
           <p className="text-base text-slate-100">Current Plan: {isPro ? "Pro" : PRO_ENABLED ? "Free" : "Free Public Launch"}</p>
-          {!PRO_ENABLED ? (
+          {!PRO_ENABLED && !isPro ? (
             <>
               <p className="text-sm text-slate-300">Pro is intentionally disabled during the public free launch and will be released later.</p>
               <div className="flex flex-wrap gap-3">

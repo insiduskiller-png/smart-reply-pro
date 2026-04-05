@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
+import { hasProAccess } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 export async function GET() {
   try {
@@ -8,6 +10,9 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const { profile } = await bootstrapUserProfile(user, { source: "api-usage:get" });
+    const isPro = hasProAccess(profile.subscription_status);
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -23,7 +28,8 @@ export async function GET() {
     }
 
     const count = data?.count ?? 0;
-    return NextResponse.json({ count, limit: 5 });
+    const limit = isPro ? 100 : 5;
+    return NextResponse.json({ count, limit, plan: isPro ? "pro" : "free" });
   } catch (err) {
     console.error("Usage fetch error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

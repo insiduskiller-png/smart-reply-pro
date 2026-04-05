@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { bootstrapUserProfile, updateBootstrappedUserProfile } from "@/lib/profile-service";
 import { requireUser } from "@/lib/auth";
 import { sanitizeText } from "@/lib/security";
+import { normalizeUsernamePreset } from "@/lib/username-style";
 
 export async function GET() {
   try {
@@ -38,7 +39,8 @@ export async function POST(request: Request) {
     }
 
     if (Object.prototype.hasOwnProperty.call(body, "username_color")) {
-      updates.username_color = sanitizeText(body.username_color, 80) || "#ffffff";
+      const sanitizedColor = sanitizeText(body.username_color, 80);
+      updates.username_color = normalizeUsernamePreset(sanitizedColor);
     }
 
     if (

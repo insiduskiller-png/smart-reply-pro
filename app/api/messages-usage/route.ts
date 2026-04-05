@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
+import { hasProAccess } from "@/lib/billing";
+import { bootstrapUserProfile } from "@/lib/profile-service";
 
 export async function GET() {
   try {
@@ -8,6 +10,9 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const { profile } = await bootstrapUserProfile(user, { source: "api-messages-usage" });
+    const isPro = hasProAccess(profile.subscription_status);
 
     // Calculate 24 hours ago
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -25,12 +30,13 @@ export async function GET() {
     }
 
     const messagesUsed = count ?? 0;
-    const limit = 5;
+    const limit = isPro ? 100 : 5;
 
     return NextResponse.json({
       messagesUsed,
       limit,
       remaining: Math.max(0, limit - messagesUsed),
+      plan: isPro ? "pro" : "free",
     });
   } catch (err) {
     console.error("Messages usage fetch error:", err);

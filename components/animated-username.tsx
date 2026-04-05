@@ -178,10 +178,6 @@ export default function AnimatedUsername({
 
   const staticGradient = `linear-gradient(120deg, ${nextStops[0]} 0%, ${nextStops[1]} 50%, ${nextStops[2]} 100%)`;
 
-  if (!isPro) {
-    return <span className={className}>{safeText}</span>;
-  }
-
   if (!resolvedTransitioning) {
     return (
       <span

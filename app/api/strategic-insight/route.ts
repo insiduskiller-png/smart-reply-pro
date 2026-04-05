@@ -3,6 +3,7 @@ import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/auth";
 import { sanitizeText } from "@/lib/security";
 import { generateStrategicInsight } from "@/lib/openai";
+import { hasProAccess } from "@/lib/billing";
 import { bootstrapUserProfile } from "@/lib/profile-service";
 
 function maxTwoSentences(value: string) {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
   }
 
   const { profile } = await bootstrapUserProfile(user, { source: "api-strategic-insight" });
-  const isPro = profile?.subscription_status === "pro";
+  const isPro = hasProAccess(profile?.subscription_status);
 
   // APPLY TIER-BASED RATE LIMITING (free: 10/min, pro: 30/min)
   const { limit: rateLimit, windowMs } = getTierRateLimit(isPro);
