@@ -188,7 +188,7 @@ export default function NavbarUser() {
               className="block rounded-md px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
               onClick={() => setIsOpen(false)}
             >
-              Account &amp; Settings
+              Account
             </Link>
             <Link
               href="/pricing"

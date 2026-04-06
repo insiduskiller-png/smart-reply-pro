@@ -127,32 +127,11 @@ export default function MobileNav() {
                         Account
                       </Link>
                       <Link
-                        href="/account#change-username"
-                        className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Change Username
-                      </Link>
-                      <Link
-                        href="/account#change-email"
-                        className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Change Email
-                      </Link>
-                      <Link
-                        href="/account#change-password"
-                        className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Change Password
-                      </Link>
-                      <Link
                         href="/pricing"
                         className="flex h-11 items-center rounded-md px-3 text-sm text-slate-200 hover:bg-slate-800"
                         onClick={() => setIsOpen(false)}
                       >
-                        Pricing
+                        {isPro ? "Manage Plan" : "View Pricing"}
                       </Link>
                       <button
                         onClick={() => {
