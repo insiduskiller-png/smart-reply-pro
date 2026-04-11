@@ -1,34 +1,11 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import ProWaitlistForm from "@/components/pro-waitlist-form";
 import { trackPricingView, trackUpgradeClick } from "@/lib/analytics";
-
-export const metadata: Metadata = {
-  title: "Pricing | Smart Reply Pro",
-  description: "Free now, Pro coming soon. Simple, honest pricing for strategic AI replies. Start free, upgrade when premium launches.",
-  metadataBase: new URL("https://www.smartreplypro.ai"),
-  alternates: {
-    canonical: "/pricing",
-  },
-  openGraph: {
-    url: "https://www.smartreplypro.ai/pricing",
-    type: "website",
-    title: "Pricing | Smart Reply Pro",
-    description: "Free now, Pro coming soon. Simple, honest pricing for strategic AI replies.",
-    siteName: "Smart Reply Pro",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Pricing | Smart Reply Pro",
-    description: "Free now, Pro coming soon. Simple, honest pricing for strategic AI replies.",
-  },
-};
-
-"use client";
-
-import { useEffect } from "react";
 
 function PricingPage() {
   const router = useRouter();
