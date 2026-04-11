@@ -8,7 +8,7 @@ export const PRO_ENABLED = parseBooleanFlag(
 );
 
 export const PRO_PLAN_ACTIVE = PRO_ENABLED;
-export const PRO_WAITLIST_EMAIL = "owner@smartreplypro.com";
+export const PRO_WAITLIST_EMAIL = "owner@smartreplypro.ai";
 export const PRO_WAITLIST_SUBJECT = "Smart Reply Pro Pro waitlist";
 export const PRO_WAITLIST_BODY = "Please notify me when Smart Reply Pro Pro is available.";
 

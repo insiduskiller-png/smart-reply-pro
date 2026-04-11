@@ -1,0 +1,3123 @@
+{
+  "runConfig": {
+    "targetCaseCount": 25,
+    "optionsPerCase": 2,
+    "repeats": 1,
+    "maxConcurrency": 3,
+    "seed": 20260406,
+    "useLlmJudge": false,
+    "judgeModel": "gpt-4o-mini",
+    "judgeTemperature": 0,
+    "strategyVersion": "current"
+  },
+  "summary": {
+    "totalCases": 25,
+    "totalOptions": 50,
+    "averageScore": 7.8,
+    "passRate": 92,
+    "generatedAt": "2026-04-06T17:02:46.739Z",
+    "averageDurationMs": 1,
+    "byDomain": [
+      {
+        "key": "dating_mixed_signals",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "work_professional_pressure",
+        "averageScore": 7.5,
+        "passRate": 66.7,
+        "sampleCount": 6
+      },
+      {
+        "key": "manipulative_messages",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "family_personal_conflict",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "status_power_dynamics",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "disrespect_passive_aggression",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 4
+      },
+      {
+        "key": "guilt_tripping",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 4
+      },
+      {
+        "key": "ambiguity_plausible_deniability",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 4
+      },
+      {
+        "key": "urgency_pressure",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 4
+      },
+      {
+        "key": "apology_repair",
+        "averageScore": 7.2,
+        "passRate": 50,
+        "sampleCount": 4
+      }
+    ],
+    "byPressure": [
+      {
+        "key": "high",
+        "averageScore": 7.8,
+        "passRate": 92.3,
+        "sampleCount": 26
+      },
+      {
+        "key": "extreme",
+        "averageScore": 7.7,
+        "passRate": 80,
+        "sampleCount": 10
+      },
+      {
+        "key": "medium",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 14
+      }
+    ],
+    "byIntent": [
+      {
+        "key": "clarify",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "escalate",
+        "averageScore": 7.8,
+        "passRate": 83.3,
+        "sampleCount": 12
+      },
+      {
+        "key": "control",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 14
+      },
+      {
+        "key": "test",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "extract",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 8
+      },
+      {
+        "key": "repair",
+        "averageScore": 7.2,
+        "passRate": 50,
+        "sampleCount": 4
+      }
+    ],
+    "weakestMessageTypes": [
+      {
+        "key": "apology_repair:repair after missed commitment",
+        "averageScore": 7.2,
+        "passRate": 50,
+        "sampleCount": 4
+      },
+      {
+        "key": "work_professional_pressure:deadline escalation",
+        "averageScore": 7.5,
+        "passRate": 66.7,
+        "sampleCount": 6
+      },
+      {
+        "key": "status_power_dynamics:executive pressure",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "disrespect_passive_aggression:snarky subtext",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 4
+      },
+      {
+        "key": "guilt_tripping:emotional debt demand",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 4
+      }
+    ],
+    "strongestMessageTypes": [
+      {
+        "key": "urgency_pressure:false urgency",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 4
+      },
+      {
+        "key": "family_personal_conflict:family blame loop",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "manipulative_messages:guilt leverage",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "dating_mixed_signals:late-night mixed signals",
+        "averageScore": 8,
+        "passRate": 100,
+        "sampleCount": 6
+      },
+      {
+        "key": "ambiguity_plausible_deniability:vague accountability",
+        "averageScore": 7.9,
+        "passRate": 100,
+        "sampleCount": 4
+      }
+    ],
+    "commonFailures": [
+      {
+        "code": "corporate_in_casual_context",
+        "count": 18
+      },
+      {
+        "code": "robotic",
+        "count": 2
+      },
+      {
+        "code": "option_similarity",
+        "count": 2
+      }
+    ]
+  },
+  "results": [
+    {
+      "caseId": "dating_mixed_01__r1__n1",
+      "baseId": "dating_mixed_01",
+      "domain": "dating_mixed_signals",
+      "contextLabel": "late-night mixed signals",
+      "pressureLabel": "high",
+      "intentLabel": "clarify",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "dating_mixed_01__r1__n1__o1",
+            "tone": "Friendly",
+            "variant": "Calm",
+            "reply": "I get where you're coming from, and I appreciate you bringing this up. I do miss you, but my schedule has been hectic lately. Let's keep this constructive—I'm here, and I want to make sure we’re on the same page moving forward."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "dating_mixed_01__r1__n1__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I get where you're coming from, and I appreciate your honesty. I do miss you, but I also need space to manage my own priorities right now. Let’s keep this constructive; I’m here for the connection, but I can’t always be available immediately."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "dating_mixed_01__r1__n1__o2",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "work_pressure_01__r1__n2",
+      "baseId": "work_pressure_01",
+      "domain": "work_professional_pressure",
+      "contextLabel": "deadline escalation",
+      "pressureLabel": "extreme",
+      "intentLabel": "escalate",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "work_pressure_01__r1__n2__o1",
+            "tone": "Direct",
+            "variant": "Calm",
+            "reply": "I’m on it and will have this wrapped up in the next 15 minutes. I appreciate your urgency and will ensure it meets leadership's expectations. Thank you for your patience."
+          },
+          "heuristic": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply sounds robotic or templated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "robotic",
+                "severity": "critical",
+                "message": "Reply sounds robotic or templated."
+              }
+            ]
+          },
+          "final": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply sounds robotic or templated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "robotic",
+                "severity": "critical",
+                "message": "Reply sounds robotic or templated."
+              }
+            ]
+          },
+          "finalScore": 7.1,
+          "durationMs": 8
+        },
+        {
+          "option": {
+            "optionId": "work_pressure_01__r1__n2__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I understand the urgency. I’ll have this ready for you in the next 15 minutes. If anything changes, I’ll keep you updated."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.6,
+      "topOptionId": "work_pressure_01__r1__n2__o2",
+      "failedOptions": 1
+    },
+    {
+      "caseId": "manipulation_01__r1__n3",
+      "baseId": "manipulation_01",
+      "domain": "manipulative_messages",
+      "contextLabel": "guilt leverage",
+      "pressureLabel": "high",
+      "intentLabel": "control",
+      "powerDynamicLabel": "unclear",
+      "options": [
+        {
+          "option": {
+            "optionId": "manipulation_01__r1__n3__o1",
+            "tone": "Psychological Edge",
+            "variant": "Calm",
+            "reply": "I hear your concerns, but I won’t be pressured into making decisions based on guilt. My priorities are important to me, just as yours are to you. Let’s take a moment to discuss this when we’re both in a better headspace."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "manipulation_01__r1__n3__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I understand your feelings, but framing this as a measure of care isn't fair. My priorities are clear to me, and I won’t be rushed into a decision. Let's discuss this when we can both approach it calmly."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8,
+      "topOptionId": "manipulation_01__r1__n3__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "family_conflict_01__r1__n4",
+      "baseId": "family_conflict_01",
+      "domain": "family_personal_conflict",
+      "contextLabel": "family blame loop",
+      "pressureLabel": "medium",
+      "intentLabel": "escalate",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "family_conflict_01__r1__n4__o1",
+            "tone": "Polite",
+            "variant": "Calm",
+            "reply": "I see how my actions have led to this perception, and I appreciate you bringing it up. I want to ensure we’re aligned moving forward. Let’s set a time to discuss how we can improve our collaboration and address any concerns directly."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "family_conflict_01__r1__n4__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I appreciate you bringing this up. I understand how it might seem that my involvement is selective, and I want to clarify my commitment to our team. Let’s discuss how we can better align our efforts moving forward. How about setting up a time to talk this week?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.9,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "family_conflict_01__r1__n4__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "status_power_01__r1__n5",
+      "baseId": "status_power_01",
+      "domain": "status_power_dynamics",
+      "contextLabel": "executive pressure",
+      "pressureLabel": "high",
+      "intentLabel": "test",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "status_power_01__r1__n5__o1",
+            "tone": "Precision Authority",
+            "variant": "Calm",
+            "reply": "I appreciate your need for clarity. I can handle this level, but I need to ensure we’re aligned on expectations moving forward. Let’s discuss what that looks like."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.8,
+          "durationMs": 1
+        },
+        {
+          "option": {
+            "optionId": "status_power_01__r1__n5__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I can handle this level. My answer is yes, but let's ensure we approach this constructively moving forward. Clear communication is key for both of us."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.8,
+      "topOptionId": "status_power_01__r1__n5__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "passive_aggression_01__r1__n6",
+      "baseId": "passive_aggression_01",
+      "domain": "disrespect_passive_aggression",
+      "contextLabel": "snarky subtext",
+      "pressureLabel": "medium",
+      "intentLabel": "control",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "passive_aggression_01__r1__n6__o1",
+            "tone": "Psychological Edge",
+            "variant": "Calm",
+            "reply": "I appreciate your commitment to fixing this, but I want to clarify that I’m fully on board with keeping this constructive. Let’s ensure we’re both aligned on our responsibilities moving forward. I’ll get back to you soon with my thoughts."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "passive_aggression_01__r1__n6__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I appreciate your willingness to step in, but I want to clarify that this is a shared responsibility. Let’s keep our focus on constructive solutions rather than past issues. I’ll get back to you shortly with my thoughts."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "passive_aggression_01__r1__n6__o2",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "guilt_trip_01__r1__n7",
+      "baseId": "guilt_trip_01",
+      "domain": "guilt_tripping",
+      "contextLabel": "emotional debt demand",
+      "pressureLabel": "high",
+      "intentLabel": "extract",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "guilt_trip_01__r1__n7__o1",
+            "tone": "Neutral",
+            "variant": "Calm",
+            "reply": "I appreciate everything you've done, but I can't meet your request. I value our relationship, and I believe it's important to approach it without any sense of obligation or pressure. Let's take a step back and communicate without this urgency."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.9
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.9
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.1,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "guilt_trip_01__r1__n7__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I appreciate everything you've done, but I can't engage in this kind of pressure. It's important for me to make decisions based on my own values, not out of guilt. I hope you can understand that."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.9
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.9
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.1,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8.1,
+      "topOptionId": "guilt_trip_01__r1__n7__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "ambiguity_01__r1__n8",
+      "baseId": "ambiguity_01",
+      "domain": "ambiguity_plausible_deniability",
+      "contextLabel": "vague accountability",
+      "pressureLabel": "medium",
+      "intentLabel": "control",
+      "powerDynamicLabel": "unclear",
+      "options": [
+        {
+          "option": {
+            "optionId": "ambiguity_01__r1__n8__o1",
+            "tone": "Tactical Control",
+            "variant": "Calm",
+            "reply": "I hear your urgency, but I need to clarify what you're expecting from me. Can we outline the specific next steps you want? That way, we can both be on the same page moving forward."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "ambiguity_01__r1__n8__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I appreciate your perspective, but I need clarity on what you expect from me right now. Let's define the next step together so we can move forward effectively. What specifically do you need me to do?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 8,
+      "topOptionId": "ambiguity_01__r1__n8__o2",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "urgency_01__r1__n9",
+      "baseId": "urgency_01",
+      "domain": "urgency_pressure",
+      "contextLabel": "false urgency",
+      "pressureLabel": "extreme",
+      "intentLabel": "extract",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "urgency_01__r1__n9__o1",
+            "tone": "Precision Authority",
+            "variant": "Calm",
+            "reply": "I need more time to review this properly. Can you clarify the key details and implications of the deal? I want to ensure we’re making the best decision."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.1,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "urgency_01__r1__n9__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I need more context before signing anything. What are the specific terms and implications of this deal? Let's ensure we have everything clear before moving forward."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8.1,
+      "topOptionId": "urgency_01__r1__n9__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "apology_repair_01__r1__n10",
+      "baseId": "apology_repair_01",
+      "domain": "apology_repair",
+      "contextLabel": "repair after missed commitment",
+      "pressureLabel": "high",
+      "intentLabel": "repair",
+      "powerDynamicLabel": "receiver_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "apology_repair_01__r1__n10__o1",
+            "tone": "Polite",
+            "variant": "Calm",
+            "reply": "I understand why you're feeling this way, and I take full responsibility for not following through. To rebuild your trust, I’d like to set a specific time to discuss how we can move forward together. Your priorities matter to me, and I want to make sure I’m aligned with them moving ahead."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "apology_repair_01__r1__n10__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I understand your frustration, and I take full responsibility for missing my commitment. To rebuild your trust, I’ll make it a priority to communicate more effectively moving forward. Let’s set a time to discuss how I can better support our work together."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "apology_repair_01__r1__n10__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "dating_mixed_01__r1__n11",
+      "baseId": "dating_mixed_01",
+      "domain": "dating_mixed_signals",
+      "contextLabel": "late-night mixed signals",
+      "pressureLabel": "high",
+      "intentLabel": "clarify",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "dating_mixed_01__r1__n11__o1",
+            "tone": "Friendly",
+            "variant": "Calm",
+            "reply": "I get where you're coming from, and I appreciate your honesty. I do miss you, but I also need some space to balance everything. Let’s keep things clear and take it one step at a time."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.1,
+          "durationMs": 1
+        },
+        {
+          "option": {
+            "optionId": "dating_mixed_01__r1__n11__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I get that my mixed signals are frustrating, and I appreciate your honesty. I’m not in a position to engage deeply right now, but I want to be clear that I value our connection. Let’s take a step back and find a better time to talk about this."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.6
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.1,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8.1,
+      "topOptionId": "dating_mixed_01__r1__n11__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "work_pressure_01__r1__n12",
+      "baseId": "work_pressure_01",
+      "domain": "work_professional_pressure",
+      "contextLabel": "deadline escalation",
+      "pressureLabel": "extreme",
+      "intentLabel": "escalate",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "work_pressure_01__r1__n12__o1",
+            "tone": "Direct",
+            "variant": "Calm",
+            "reply": "I’m on it and will have it ready in 15 minutes. I appreciate your urgency, and I’ll ensure it meets leadership's expectations. Thank you for your patience."
+          },
+          "heuristic": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 4.5
+            },
+            "rationale": "Reply has strategic or tonal issues that reduce sendability.",
+            "weaknesses": [
+              "Reply sounds robotic or templated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "robotic",
+                "severity": "critical",
+                "message": "Reply sounds robotic or templated."
+              }
+            ]
+          },
+          "final": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 4.5
+            },
+            "rationale": "Reply has strategic or tonal issues that reduce sendability.",
+            "weaknesses": [
+              "Reply sounds robotic or templated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "robotic",
+                "severity": "critical",
+                "message": "Reply sounds robotic or templated."
+              }
+            ]
+          },
+          "finalScore": 6.8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "work_pressure_01__r1__n12__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I’m on it and will have this completed in the next 15 minutes. I appreciate your urgency, and I’ll ensure it meets leadership's expectations."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 4.5
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 4.5
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 7.7,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 7.3,
+      "topOptionId": "work_pressure_01__r1__n12__o2",
+      "failedOptions": 1
+    },
+    {
+      "caseId": "manipulation_01__r1__n13",
+      "baseId": "manipulation_01",
+      "domain": "manipulative_messages",
+      "contextLabel": "guilt leverage",
+      "pressureLabel": "high",
+      "intentLabel": "control",
+      "powerDynamicLabel": "unclear",
+      "options": [
+        {
+          "option": {
+            "optionId": "manipulation_01__r1__n13__o1",
+            "tone": "Psychological Edge",
+            "variant": "Calm",
+            "reply": "I hear your frustration, but I won’t be pressured into a decision. Let’s focus on finding a constructive path forward that works for both of us. I’m open to discussing this further when we can approach it calmly."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.5
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.5
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.1,
+          "durationMs": 1
+        },
+        {
+          "option": {
+            "optionId": "manipulation_01__r1__n13__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I understand you're feeling strongly about this, but I won't engage with guilt as a motivator. Let's focus on constructive solutions instead. I'm open to discussing how we can move forward together."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.5
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.5
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.1,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8.1,
+      "topOptionId": "manipulation_01__r1__n13__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "family_conflict_01__r1__n14",
+      "baseId": "family_conflict_01",
+      "domain": "family_personal_conflict",
+      "contextLabel": "family blame loop",
+      "pressureLabel": "medium",
+      "intentLabel": "escalate",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "family_conflict_01__r1__n14__o1",
+            "tone": "Polite",
+            "variant": "Calm",
+            "reply": "I hear your frustration, and I understand why you feel that way. It’s important to me that we address this. Let’s find a time to talk about how we can better support each other moving forward."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 8.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 8.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "family_conflict_01__r1__n14__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I see how my actions might have come across as self-serving, and I appreciate you bringing it up. I want to be more present and supportive. Let’s find a time to reconnect and discuss how we can move forward together."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 8.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 8.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8.2,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8.1,
+      "topOptionId": "family_conflict_01__r1__n14__o2",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "status_power_01__r1__n15",
+      "baseId": "status_power_01",
+      "domain": "status_power_dynamics",
+      "contextLabel": "executive pressure",
+      "pressureLabel": "high",
+      "intentLabel": "test",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "status_power_01__r1__n15__o1",
+            "tone": "Precision Authority",
+            "variant": "Calm",
+            "reply": "I appreciate your urgency. I can handle this level, and I’m committed to ensuring clarity moving forward. Let’s discuss the specifics when you have a moment."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "status_power_01__r1__n15__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I can handle this level. I understand the importance of clarity and priorities. I’ll ensure my focus aligns with what’s needed moving forward. Expect my full commitment."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.9,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "status_power_01__r1__n15__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "passive_aggression_01__r1__n16",
+      "baseId": "passive_aggression_01",
+      "domain": "disrespect_passive_aggression",
+      "contextLabel": "snarky subtext",
+      "pressureLabel": "medium",
+      "intentLabel": "control",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "passive_aggression_01__r1__n16__o1",
+            "tone": "Psychological Edge",
+            "variant": "Calm",
+            "reply": "I see there's some tension here, and I want to clarify that I’m not trying to create any misunderstandings. Let’s approach this as a team rather than placing blame. I appreciate your willingness to handle things, but I also need to be clear about my part in this. How about we discuss what needs to happen next together?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 1
+        },
+        {
+          "option": {
+            "optionId": "passive_aggression_01__r1__n16__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I appreciate your willingness to handle this, but let’s be clear: I’m not comfortable with the implication that I won’t take responsibility. I’m here to work together, and I expect us both to contribute without the pressure of blame. Let’s focus on what we can do next to move forward."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8,
+      "topOptionId": "passive_aggression_01__r1__n16__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "guilt_trip_01__r1__n17",
+      "baseId": "guilt_trip_01",
+      "domain": "guilt_tripping",
+      "contextLabel": "emotional debt demand",
+      "pressureLabel": "high",
+      "intentLabel": "extract",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "guilt_trip_01__r1__n17__o1",
+            "tone": "Neutral",
+            "variant": "Calm",
+            "reply": "I appreciate everything you've done, but I can't engage in this kind of exchange. It's important to me that our relationship remains respectful and not transactional. Let's focus on moving forward positively."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 5.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 5.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.7,
+          "durationMs": 1
+        },
+        {
+          "option": {
+            "optionId": "guilt_trip_01__r1__n17__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I appreciate what you've done, but I won't engage in guilt over our relationship. My priorities are my own, and I need you to respect that. Let's focus on moving forward positively."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 5.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 5.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.7,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 7.7,
+      "topOptionId": "guilt_trip_01__r1__n17__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "ambiguity_01__r1__n18",
+      "baseId": "ambiguity_01",
+      "domain": "ambiguity_plausible_deniability",
+      "contextLabel": "vague accountability",
+      "pressureLabel": "medium",
+      "intentLabel": "control",
+      "powerDynamicLabel": "unclear",
+      "options": [
+        {
+          "option": {
+            "optionId": "ambiguity_01__r1__n18__o1",
+            "tone": "Tactical Control",
+            "variant": "Calm",
+            "reply": "I appreciate your concern about clarity. Let's focus on defining what you need from me moving forward. Can you specify the next step you have in mind? That way, we can ensure we're on the same page."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "ambiguity_01__r1__n18__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "Let’s clarify what you mean by “what happens next.” I want to ensure we’re on the same page before moving forward. What specific actions or decisions are you looking for from me?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.9,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "ambiguity_01__r1__n18__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "urgency_01__r1__n19",
+      "baseId": "urgency_01",
+      "domain": "urgency_pressure",
+      "contextLabel": "false urgency",
+      "pressureLabel": "extreme",
+      "intentLabel": "extract",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "urgency_01__r1__n19__o1",
+            "tone": "Precision Authority",
+            "variant": "Calm",
+            "reply": "I need more time to review this properly. Rushing into a decision doesn’t align with my priorities. Can you provide more details about the implications if I don’t sign right now?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 1
+        },
+        {
+          "option": {
+            "optionId": "urgency_01__r1__n19__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I need more time to review this properly. Let's not rush into a decision that could have long-term implications. Can you clarify the key points that are time-sensitive?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.8
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 8,
+      "topOptionId": "urgency_01__r1__n19__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "apology_repair_01__r1__n20",
+      "baseId": "apology_repair_01",
+      "domain": "apology_repair",
+      "contextLabel": "repair after missed commitment",
+      "pressureLabel": "high",
+      "intentLabel": "repair",
+      "powerDynamicLabel": "receiver_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "apology_repair_01__r1__n20__o1",
+            "tone": "Polite",
+            "variant": "Calm",
+            "reply": "I understand why you're upset, and I take full responsibility for not being there. To rebuild your trust, I’d like to make it up to you by planning a time to meet this week. Let me know what works for you."
+          },
+          "heuristic": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 2.1
+            },
+            "rationale": "Reply has strategic or tonal issues that reduce sendability.",
+            "weaknesses": [
+              "Generated options are too similar and not meaningfully differentiated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "option_similarity",
+                "severity": "critical",
+                "message": "Generated options are too similar and not meaningfully differentiated."
+              }
+            ]
+          },
+          "final": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 2.1
+            },
+            "rationale": "Reply has strategic or tonal issues that reduce sendability.",
+            "weaknesses": [
+              "Generated options are too similar and not meaningfully differentiated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "option_similarity",
+                "severity": "critical",
+                "message": "Generated options are too similar and not meaningfully differentiated."
+              }
+            ]
+          },
+          "finalScore": 6.5,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "apology_repair_01__r1__n20__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I understand your frustration, and I take full responsibility for not being there. To rebuild your trust, I’d like to make it up to you by planning a specific time to meet this week. Let’s discuss what works for you."
+          },
+          "heuristic": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 2.1
+            },
+            "rationale": "Reply has strategic or tonal issues that reduce sendability.",
+            "weaknesses": [
+              "Generated options are too similar and not meaningfully differentiated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "option_similarity",
+                "severity": "critical",
+                "message": "Generated options are too similar and not meaningfully differentiated."
+              }
+            ]
+          },
+          "final": {
+            "pass": false,
+            "scores": {
+              "strategicAccuracy": 5,
+              "toneControl": 7,
+              "leveragePreservation": 7,
+              "humanRealism": 7,
+              "sendability": 7,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 2.1
+            },
+            "rationale": "Reply has strategic or tonal issues that reduce sendability.",
+            "weaknesses": [
+              "Generated options are too similar and not meaningfully differentiated."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "option_similarity",
+                "severity": "critical",
+                "message": "Generated options are too similar and not meaningfully differentiated."
+              }
+            ]
+          },
+          "finalScore": 6.5,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 6.5,
+      "topOptionId": "apology_repair_01__r1__n20__o1",
+      "failedOptions": 2
+    },
+    {
+      "caseId": "dating_mixed_01__r1__n21",
+      "baseId": "dating_mixed_01",
+      "domain": "dating_mixed_signals",
+      "contextLabel": "late-night mixed signals",
+      "pressureLabel": "high",
+      "intentLabel": "clarify",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "dating_mixed_01__r1__n21__o1",
+            "tone": "Friendly",
+            "variant": "Calm",
+            "reply": "I appreciate you sharing how you feel. I want to be clear that I value our connection, but my availability can vary. Let’s keep the lines open and find a pace that works for both of us."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "dating_mixed_01__r1__n21__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I appreciate your honesty. I miss you too, but I also need to be clear that I can't always be available. Let's keep the communication open, but I want to make sure we're on the same page about our priorities. What do you think?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 8,
+      "topOptionId": "dating_mixed_01__r1__n21__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "work_pressure_01__r1__n22",
+      "baseId": "work_pressure_01",
+      "domain": "work_professional_pressure",
+      "contextLabel": "deadline escalation",
+      "pressureLabel": "extreme",
+      "intentLabel": "escalate",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "work_pressure_01__r1__n22__o1",
+            "tone": "Direct",
+            "variant": "Calm",
+            "reply": "I understand the urgency. I’ll have this completed and sent to you in the next 20 minutes. After that, let’s discuss how we can streamline this process moving forward to avoid similar situations."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "work_pressure_01__r1__n22__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I understand the urgency, and I’m on it. You can expect the completed work in 20 minutes. Let's ensure we stay aligned moving forward."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 7,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.2
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [
+              "Reply uses corporate language in personal/casual context."
+            ],
+            "revisionDirection": "Tighten to 2-4 sentences, remove reactive language, and restate a clear boundary or next step.",
+            "hardFailures": [
+              {
+                "code": "corporate_in_casual_context",
+                "severity": "warning",
+                "message": "Reply uses corporate language in personal/casual context."
+              }
+            ]
+          },
+          "finalScore": 7.8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.8,
+      "topOptionId": "work_pressure_01__r1__n22__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "manipulation_01__r1__n23",
+      "baseId": "manipulation_01",
+      "domain": "manipulative_messages",
+      "contextLabel": "guilt leverage",
+      "pressureLabel": "high",
+      "intentLabel": "control",
+      "powerDynamicLabel": "unclear",
+      "options": [
+        {
+          "option": {
+            "optionId": "manipulation_01__r1__n23__o1",
+            "tone": "Psychological Edge",
+            "variant": "Calm",
+            "reply": "I appreciate your perspective, but I won't be making decisions based on guilt. Let's focus on constructive solutions that align with our priorities. I'm open to discussing how we can move forward effectively."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "manipulation_01__r1__n23__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I understand your perspective, but I won’t be swayed by guilt. My priorities are clear, and I believe we can find a constructive way forward without placing blame. Let’s focus on what we can achieve together from here."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 7.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 8,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 8,
+      "topOptionId": "manipulation_01__r1__n23__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "family_conflict_01__r1__n24",
+      "baseId": "family_conflict_01",
+      "domain": "family_personal_conflict",
+      "contextLabel": "family blame loop",
+      "pressureLabel": "medium",
+      "intentLabel": "escalate",
+      "powerDynamicLabel": "balanced",
+      "options": [
+        {
+          "option": {
+            "optionId": "family_conflict_01__r1__n24__o1",
+            "tone": "Polite",
+            "variant": "Calm",
+            "reply": "I hear what you’re saying, and I understand the frustration. It’s important to me that we address this. How about we set a time to talk this through? I want to find a way forward that works for both of us."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        },
+        {
+          "option": {
+            "optionId": "family_conflict_01__r1__n24__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I hear your frustration, and I want to address it. It’s important to me that we find a way to communicate that feels fair to both of us. Let’s discuss how we can move forward together, so we don’t end up in this cycle again. When are you free to talk?"
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.3
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 7.9,
+          "durationMs": 1
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "family_conflict_01__r1__n24__o1",
+      "failedOptions": 0
+    },
+    {
+      "caseId": "status_power_01__r1__n25",
+      "baseId": "status_power_01",
+      "domain": "status_power_dynamics",
+      "contextLabel": "executive pressure",
+      "pressureLabel": "high",
+      "intentLabel": "test",
+      "powerDynamicLabel": "sender_advantaged",
+      "options": [
+        {
+          "option": {
+            "optionId": "status_power_01__r1__n25__o1",
+            "tone": "Precision Authority",
+            "variant": "Calm",
+            "reply": "I can handle this level, but I need to assess the specifics before committing. Let’s discuss the details so we can align effectively."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.4
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.4
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 7.9,
+          "durationMs": 1
+        },
+        {
+          "option": {
+            "optionId": "status_power_01__r1__n25__o2",
+            "tone": "Direct",
+            "variant": "Assertive",
+            "reply": "I can handle this level. Let’s discuss the specifics so we can move forward effectively. I’ll get back to you shortly with a clear plan."
+          },
+          "heuristic": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.4
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "final": {
+            "pass": true,
+            "scores": {
+              "strategicAccuracy": 8,
+              "toneControl": 8,
+              "leveragePreservation": 8,
+              "humanRealism": 8,
+              "sendability": 8,
+              "brevityDiscipline": 9,
+              "contextFit": 8,
+              "optionDifferentiation": 6.4
+            },
+            "rationale": "Strategically usable with controlled tone and acceptable realism.",
+            "weaknesses": [],
+            "revisionDirection": "Keep this structure and sharpen one line for stronger leverage.",
+            "hardFailures": []
+          },
+          "finalScore": 7.9,
+          "durationMs": 0
+        }
+      ],
+      "averageOptionScore": 7.9,
+      "topOptionId": "status_power_01__r1__n25__o1",
+      "failedOptions": 0
+    }
+  ]
+}

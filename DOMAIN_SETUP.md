@@ -11,7 +11,7 @@
 
 1. In Vercel project, open **Settings**
 2. Open **Domains**
-3. Add your domain (example: `smartreplypro.com`)
+3. Add your domain (example: `smartreplypro.ai`)
 
 ## DNS setup
 

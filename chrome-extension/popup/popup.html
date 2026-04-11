@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Reply Pro</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    <header class="header">
+      <div class="header-brand">
+        <svg class="header-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect width="20" height="20" rx="5" fill="#3b82f6"/>
+          <path d="M5.5 7C5.5 5.895 6.395 5 7.5 5H12C13.105 5 14 5.895 14 7C14 8.105 13.105 9 12 9H8C6.895 9 6 9.895 6 11C6 12.105 6.895 13 8 13H12.5C13.605 13 14.5 12.105 14.5 11"
+                stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span class="header-title">Smart Reply Pro</span>
+      </div>
+      <div class="header-actions" id="header-actions">
+        <!-- Populated by JS when authenticated -->
+      </div>
+    </header>
+
+    <!-- ── State: Loading ──────────────────────────────────────────────────── -->
+    <div id="state-loading" class="state active">
+      <div class="center-container">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- ── State: Sign In ──────────────────────────────────────────────────── -->
+    <div id="state-auth" class="state">
+      <div class="auth-container">
+        <p class="auth-tagline">Strategic replies in your personal voice — powered by your real Smart Reply Pro profile history.</p>
+
+        <form id="login-form" class="login-form" novalidate>
+          <div class="field-group">
+            <label class="field-label" for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              class="field-input"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              class="field-input"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <p class="form-error hidden" id="login-error"></p>
+
+          <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+            Sign In
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <span class="muted-text">No account?</span>
+          <button class="link-btn" id="btn-register">Create one →</button>
+        </div>
+
+        <p class="consent-note">
+          We only process selected text and limited nearby context when you click Generate.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── State: Auth/Profile refresh failure ─────────────────────────────── -->
+    <div id="state-failure" class="state">
+      <div class="center-container padded">
+        <div class="upgrade-icon">⚠️</div>
+        <h2 class="upgrade-title">Session Needs Attention</h2>
+        <p class="upgrade-body" id="failure-message">
+          We couldn't refresh your session or profile data. Try again, or sign in again.
+        </p>
+        <button id="btn-failure-retry" class="btn btn-primary btn-full">
+          Retry
+        </button>
+        <button id="btn-failure-signout" class="btn btn-ghost btn-full mt-8">
+          Sign out
+        </button>
+      </div>
+    </div>
+
+    <!-- ── State: Upgrade (not Pro) ────────────────────────────────────────── -->
+    <div id="state-not-pro" class="state">
+      <div class="center-container padded">
+        <div class="upgrade-icon">🔒</div>
+        <h2 class="upgrade-title">Pro Required</h2>
+        <p class="upgrade-body">
+          The Smart Reply Pro browser extension is a Pro feature. Upgrade on the
+          website — the extension unlocks automatically once your account is Pro.
+        </p>
+        <button id="btn-upgrade" class="btn btn-primary btn-full">
+          View Pro Plans →
+        </button>
+        <button id="btn-logout-upgrade" class="btn btn-ghost btn-full mt-8">
+          Sign out
+        </button>
+      </div>
+    </div>
+
+    <!-- ── State: No Profiles ──────────────────────────────────────────────── -->
+    <div id="state-no-profiles" class="state">
+      <div class="center-container padded">
+        <div class="upgrade-icon">📋</div>
+        <h2 class="upgrade-title">No Profiles Yet</h2>
+        <p class="upgrade-body">
+          Create your first Reply Profile on Smart Reply Pro from imported real chats,
+          then come back. Profiles capture your personal reply identity — not generic tones.
+        </p>
+        <button id="btn-go-dashboard" class="btn btn-primary btn-full">
+          Open Smart Reply Pro →
+        </button>
+        <button id="btn-logout-no-profiles" class="btn btn-ghost btn-full mt-8">
+          Sign out
+        </button>
+      </div>
+    </div>
+
+    <!-- ── State: Main ─────────────────────────────────────────────────────── -->
+    <div id="state-main" class="state">
+
+      <!-- User bar -->
+      <div class="user-bar">
+        <div class="user-info">
+          <span class="user-email" id="user-email"></span>
+          <span class="pro-badge">PRO</span>
+        </div>
+        <button id="btn-logout" class="icon-btn" title="Sign out" aria-label="Sign out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Profile selector -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-label">Reply Profile</span>
+          <button id="btn-refresh-profiles" class="icon-btn" title="Refresh profiles" aria-label="Refresh profiles">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </button>
+        </div>
+        <div class="select-wrapper">
+          <select id="profile-select" class="field-select" aria-label="Select reply profile">
+            <option value="">Select a profile…</option>
+          </select>
+        </div>
+        <div class="profile-meta" id="profile-meta"></div>
+        <div class="profile-identity" id="profile-identity"></div>
+      </div>
+
+      <!-- Selected text preview -->
+      <div class="section" id="selection-section">
+        <div class="section-header">
+          <span class="section-label">Selected Text</span>
+          <button id="btn-refresh-selection" class="link-btn small">refresh selection</button>
+        </div>
+        <div class="selection-box" id="selection-box">
+          <span class="muted-text" id="selection-placeholder">
+            Select text on any page to generate a reply.
+          </span>
+        </div>
+        <div class="selection-meta" id="selection-meta"></div>
+      </div>
+
+      <div class="section" id="no-selection-state">
+        <p class="muted-text">
+          No selected text found in this tab yet. Highlight a message first, then come back and generate.
+        </p>
+      </div>
+
+      <!-- Generate button -->
+      <div class="section">
+        <button id="btn-generate" class="btn btn-primary btn-full" disabled>
+          Generate Reply
+        </button>
+      </div>
+
+      <!-- Reply section (hidden until generated) -->
+      <div id="reply-section" class="section hidden">
+        <div class="section-header">
+          <span class="section-label">Reply</span>
+          <button id="btn-regenerate" class="link-btn small">regenerate</button>
+        </div>
+        <div class="reply-box" id="reply-box"></div>
+        <div class="reply-actions">
+          <button id="btn-copy" class="btn btn-secondary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+          </button>
+          <button id="btn-insert" class="btn btn-secondary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+            Insert
+          </button>
+          <button id="btn-open-srp" class="btn btn-ghost">Open in SRP →</button>
+        </div>
+      </div>
+
+      <!-- Generating overlay (shown inside main state) -->
+      <div id="generating-overlay" class="generating-overlay hidden">
+        <div class="generating-inner">
+          <div class="pulse-dot"></div>
+          <span class="generating-text">Generating reply…</span>
+        </div>
+      </div>
+
+    </div><!-- /state-main -->
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Reply Pro",
+  "version": "1.0.0",
+  "description": "Bring your saved Smart Reply Pro profiles to any website. Generate strategic, on-brand replies anywhere.",
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "permissions": ["storage", "activeTab", "scripting"],
+
+  "host_permissions": [
+    "https://www.smartreplypro.ai/*",
+    "https://smartreplypro.ai/*"
+  ],
+
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Smart Reply Pro",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["onboarding/onboarding.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src 'self' https://www.smartreplypro.ai https://smartreplypro.ai; style-src 'self' 'unsafe-inline';"
+  }
+}

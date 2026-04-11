@@ -11,6 +11,21 @@ import { AuthProvider } from "@/components/auth-provider";
 export const metadata: Metadata = {
   title: "Smart Reply Pro",
   description: "Strategic AI communication workspace",
+  metadataBase: new URL("https://www.smartreplypro.ai"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    url: "https://www.smartreplypro.ai",
+    siteName: "Smart Reply Pro",
+    title: "Smart Reply Pro",
+    description: "Strategic AI communication workspace",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Smart Reply Pro",
+    description: "Strategic AI communication workspace",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

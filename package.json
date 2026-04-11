@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "eval:run": "tsx evaluation/run.ts",
+    "eval:quick": "tsx evaluation/run.ts --target=25 --options=2 --concurrency=3 --no-llm-judge",
+    "eval:compare": "tsx evaluation/compare.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.97.0",
@@ -20,9 +23,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

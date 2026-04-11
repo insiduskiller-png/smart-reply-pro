@@ -38,12 +38,12 @@ export default function Footer() {
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Questions?</p>
             <div className="space-y-2">
               <a
-                href="mailto:owner@smartreplypro.com?subject=Smart Reply Pro Support"
+                href="mailto:support@smartreplypro.ai?subject=Smart Reply Pro Support"
                 className="block text-sm font-medium text-sky-300 transition hover:text-sky-200"
               >
                 Contact Us
               </a>
-              <p className="text-xs text-slate-500">owner@smartreplypro.com</p>
+              <p className="text-xs text-slate-500">support@smartreplypro.ai</p>
             </div>
           </div>
         </div>

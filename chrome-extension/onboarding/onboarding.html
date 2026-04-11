@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to Smart Reply Pro</title>
+    <link rel="stylesheet" href="onboarding.css" />
+  </head>
+  <body>
+
+    <!-- Background glow -->
+    <div class="bg-glow"></div>
+
+    <main class="page">
+
+      <!-- Logo -->
+      <div class="logo-wrap">
+        <svg class="logo-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="12" fill="#3b82f6"/>
+          <path d="M13 18C13 15.239 15.239 13 18 13H28C30.761 13 33 15.239 33 18C33 20.761 30.761 23 28 23H20C17.239 23 15 25.239 15 28C15 30.761 17.239 33 20 33H30C32.761 33 35 30.761 35 28"
+                stroke="white" stroke-width="3.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="headline">Smart Reply Pro</h1>
+      <p class="sub-headline">Your strategic reply engine, everywhere.</p>
+
+      <!-- Value prop cards -->
+      <div class="cards">
+
+        <div class="card">
+          <div class="card-icon">🎯</div>
+          <div class="card-body">
+            <h3>Your profiles, not generic presets</h3>
+            <p>
+              Reply Profiles are built from your real conversations inside Smart Reply Pro.
+              They capture how <em>you</em> naturally sound — not a generic AI persona.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <div class="card-body">
+            <h3>One best reply, not a menu</h3>
+            <p>
+              Select any text on a page, pick your profile, and get one sharp strategic reply
+              in seconds. No options to scroll through, no prompts to write.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🌐</div>
+          <div class="card-body">
+            <h3>Works everywhere you communicate</h3>
+            <p>
+              Gmail, LinkedIn, iMessage web, dating apps, Slack, any website with a text field.
+              Copy the reply or insert it directly into the active field.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Permissions section -->
+      <div class="permissions">
+        <h2 class="permissions-title">What this extension uses &amp; why</h2>
+        <ul class="perm-list">
+          <li class="perm-item">
+            <span class="perm-label">Selected text on the current page</span>
+            <span class="perm-desc">The message you want to reply to. Never read passively — only when you click Generate.</span>
+          </li>
+          <li class="perm-item">
+            <span class="perm-label">Limited surrounding context</span>
+            <span class="perm-desc">A short nearby snippet (not full-page scanning) to keep the reply accurate. Same tab, same moment.</span>
+          </li>
+          <li class="perm-item">
+            <span class="perm-label">Page hostname and title</span>
+            <span class="perm-desc">Used only as light context (for example, work app vs social app) when you trigger generation.</span>
+          </li>
+          <li class="perm-item">
+            <span class="perm-label">Your saved Smart Reply Pro profiles</span>
+            <span class="perm-desc">Fetched from your account and cached locally. Used only to style the reply as you requested.</span>
+          </li>
+          <li class="perm-item">
+            <span class="perm-label">Storage (local, on-device)</span>
+            <span class="perm-desc">Stores your login token and cached profiles on your device only. Nothing is shared with third parties.</span>
+          </li>
+        </ul>
+        <p class="perm-footer">
+          Data use is action-based: nothing is sent until you click Generate in the popup.
+          You can sign out at any time from the extension popup to clear stored auth/profile data.
+          Smart Reply Pro does not sell your data or share it with advertisers.
+        </p>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-group">
+        <button id="btn-signin" class="btn btn-primary btn-full">
+          Sign In to Smart Reply Pro →
+        </button>
+        <button id="btn-create" class="btn btn-ghost btn-full">
+          Create a free account
+        </button>
+      </div>
+
+      <p class="footnote">
+        The extension requires a <strong>Pro subscription</strong>.
+        Once you subscribe on the website, the extension unlocks automatically
+        on your next sign-in — no separate purchase needed.
+      </p>
+
+    </main>
+
+    <script src="onboarding.js"></script>
+  </body>
+</html>

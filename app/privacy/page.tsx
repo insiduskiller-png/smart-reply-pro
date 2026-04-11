@@ -89,7 +89,7 @@ export default function PrivacyPolicy() {
               <li className="ml-4 list-disc">Right to withdraw consent</li>
             </ul>
             <p className="mt-4 text-slate-300">
-              To exercise any of these rights, contact us at <a href="mailto:owner@smartreplypro.com" className="text-sky-400 hover:text-sky-300">owner@smartreplypro.com</a>.
+              To exercise any of these rights, contact us at <a href="mailto:support@smartreplypro.ai" className="text-sky-400 hover:text-sky-300">support@smartreplypro.ai</a>.
             </p>
           </div>
 
@@ -99,7 +99,7 @@ export default function PrivacyPolicy() {
               If you have questions about this Privacy Policy, please contact us at:
             </p>
             <p className="mt-3 text-slate-300">
-              Email: <a href="mailto:owner@smartreplypro.com" className="text-sky-400 hover:text-sky-300">owner@smartreplypro.com</a>
+              Email: <a href="mailto:support@smartreplypro.ai" className="text-sky-400 hover:text-sky-300">support@smartreplypro.ai</a>
             </p>
           </div>
         </section>
