@@ -10,6 +10,18 @@ import {
   updateProWaitlistNotificationStatus,
 } from "@/lib/pro-waitlist";
 
+type WaitlistApiResponse = {
+  success: boolean;
+  saved: boolean;
+  duplicate: boolean;
+  message: string;
+  errorCode?: string;
+};
+
+function jsonResponse(payload: WaitlistApiResponse, status: number) {
+  return NextResponse.json(payload, { status });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
@@ -32,15 +44,42 @@ export async function POST(request: Request) {
     }
 
     if (!email) {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 });
+      return jsonResponse(
+        {
+          success: false,
+          saved: false,
+          duplicate: false,
+          message: "Email is required.",
+          errorCode: "INVALID_EMAIL_EMPTY",
+        },
+        400,
+      );
     }
 
     if (!isValidWaitlistEmail(email)) {
-      return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+      return jsonResponse(
+        {
+          success: false,
+          saved: false,
+          duplicate: false,
+          message: "Enter a valid email address.",
+          errorCode: "INVALID_EMAIL_FORMAT",
+        },
+        400,
+      );
     }
 
     if (note.length > 1000) {
-      return NextResponse.json({ error: "Note must be 1000 characters or fewer." }, { status: 400 });
+      return jsonResponse(
+        {
+          success: false,
+          saved: false,
+          duplicate: false,
+          message: "Note must be 1000 characters or fewer.",
+          errorCode: "INVALID_NOTE_LENGTH",
+        },
+        400,
+      );
     }
 
     const result = await createProWaitlistEntry({
@@ -86,20 +125,21 @@ export async function POST(request: Request) {
             saved: true,
             duplicate: false,
             message: "You’re on the Pro waitlist. We saved your request, but internal notification is delayed.",
+            errorCode: "NOTIFICATION_DEFERRED",
           },
           { status: 202 },
         );
       }
     }
 
-    return NextResponse.json(
+    return jsonResponse(
       {
         success: true,
         saved: true,
         duplicate: result.duplicate,
         message: result.message,
       },
-      { status: result.duplicate ? 200 : 201 },
+      result.duplicate ? 200 : 201,
     );
   } catch (error) {
     if (error instanceof ProWaitlistError) {
@@ -110,18 +150,41 @@ export async function POST(request: Request) {
       });
 
       if (error.code === "WAITLIST_TABLE_MISSING") {
-        return NextResponse.json(
-          { error: "Waitlist storage is not ready yet. Please try again shortly." },
-          { status: 503 },
+        return jsonResponse(
+          {
+            success: false,
+            saved: false,
+            duplicate: false,
+            message: "Waitlist storage is not ready yet. Please try again shortly.",
+            errorCode: "WAITLIST_TABLE_MISSING",
+          },
+          503,
         );
       }
+
+      return jsonResponse(
+        {
+          success: false,
+          saved: false,
+          duplicate: false,
+          message: "We couldn’t save your waitlist request right now. Please try again.",
+          errorCode: error.code,
+        },
+        500,
+      );
     } else {
       console.error("Pro waitlist API error:", error);
     }
 
-    return NextResponse.json(
-      { error: "We couldn’t save your waitlist request right now. Please try again." },
-      { status: 500 },
+    return jsonResponse(
+      {
+        success: false,
+        saved: false,
+        duplicate: false,
+        message: "We couldn’t save your waitlist request right now. Please try again.",
+        errorCode: "WAITLIST_UNKNOWN_ERROR",
+      },
+      500,
     );
   }
 }

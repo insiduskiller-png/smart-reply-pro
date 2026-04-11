@@ -78,11 +78,11 @@ export default function ProWaitlistForm({
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { success?: boolean; saved?: boolean; duplicate?: boolean; message?: string; error?: string }
+        | { success?: boolean; saved?: boolean; duplicate?: boolean; message?: string; errorCode?: string }
         | null;
 
       if (!response.ok) {
-        throw new Error(payload?.error || payload?.message || "Unable to join the waitlist right now.");
+        throw new Error(payload?.message || "Unable to join the waitlist right now.");
       }
 
       if (payload?.saved && payload.success === false) {
@@ -95,7 +95,7 @@ export default function ProWaitlistForm({
       }
 
       if (!payload?.success) {
-        throw new Error(payload?.error || payload?.message || "Unable to join the waitlist right now.");
+        throw new Error(payload?.message || "Unable to join the waitlist right now.");
       }
 
       const duplicate = Boolean(payload.duplicate);

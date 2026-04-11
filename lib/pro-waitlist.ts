@@ -170,7 +170,15 @@ export async function createProWaitlistEntry(input: CreateProWaitlistEntryInput)
       } satisfies ProWaitlistEntryResult;
     }
 
-    console.error("pro waitlist insert failed:", insert.error);
+    console.error("pro waitlist insert failed:", {
+      code: insert.error.code,
+      message: insert.error.message,
+      details: insert.error.details,
+      hint: insert.error.hint,
+      attemptedColumns: Object.keys(insertPayload),
+      sourcePage,
+      hasUserId: Boolean(userId),
+    });
     throw new ProWaitlistError(
       insert.error.code === "42P01" ? "WAITLIST_TABLE_MISSING" : "WAITLIST_INSERT_FAILED",
       "Could not save waitlist entry",
