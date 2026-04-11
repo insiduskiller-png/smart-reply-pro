@@ -1,0 +1,30 @@
+# Smart Reply Pro robots.txt
+# Allow all crawlers to index public pages, disallow auth and internal paths
+
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /account
+Disallow: /templates
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+Disallow: /*?*page=
+
+# Allow Google to crawl
+User-agent: Googlebot
+Allow: /
+
+# Allow Bing to crawl
+User-agent: Bingbot
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.smartreplypro.ai/sitemap.xml
+
+# Crawl delay to be respectful
+Crawl-delay: 1

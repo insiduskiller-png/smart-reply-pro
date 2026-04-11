@@ -458,10 +458,10 @@ export default function AccountClient() {
 
         <section id="plan-status" className="card space-y-3 p-5 md:p-6 scroll-mt-24">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Subscription</h2>
-          <p className="text-base text-slate-100">Current Plan: {isPro ? "Pro" : PRO_ENABLED ? "Free" : "Free Public Launch"}</p>
+          <p className="text-base text-slate-100">Current Plan: {isPro ? "Pro" : "Free"}</p>
           {!PRO_ENABLED && !isPro ? (
             <>
-              <p className="text-sm text-slate-300">Pro is intentionally disabled during the public free launch and will be released later.</p>
+              <p className="text-sm text-slate-300">Pro is coming soon. Sign up for the waitlist to be notified at launch.</p>
               <div className="flex flex-wrap gap-3">
                 <Link
                   href={PRO_WAITLIST_HREF}

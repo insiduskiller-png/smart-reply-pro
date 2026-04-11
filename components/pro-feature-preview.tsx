@@ -128,7 +128,7 @@ export default function ProFeaturePreview({ isPro, onUpgradeClick }: ProFeatureP
             <p className="mt-4 text-sm text-slate-300">
               {isProAvailable
                 ? "This feature is available with Pro access."
-                : "This feature is part of the upcoming Pro release and is not active during the free public launch."}
+                : "This feature is part of Pro, coming soon."}
             </p>
             <div className="mt-5 flex justify-end gap-3">
               {!isProAvailable ? (

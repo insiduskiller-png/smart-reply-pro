@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -96,13 +98,18 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Account created. Please confirm your email from the link we sent.");
+      setSuccess("Account created. Redirecting to sign in...");
       setLoading(false);
 
       setUsername("");
       setEmail("");
       setPassword("");
       setConfirmPassword("");
+
+      // Auto-redirect to login after 1 second
+      setTimeout(() => {
+        router.push("/login");
+      }, 1000);
     } catch (e) {
       console.error("Register error:", e);
       setError("Network error. Please try again.");
@@ -133,8 +140,12 @@ export default function RegisterPage() {
           ) : null}
 
           {success ? (
-            <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
-              {success}
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3">
+              <span className="text-lg">✓</span>
+              <div>
+                <p className="text-sm font-medium text-emerald-200">{success}</p>
+                <p className="mt-1 text-xs text-emerald-300/70">Redirecting...</p>
+              </div>
             </div>
           ) : null}
 

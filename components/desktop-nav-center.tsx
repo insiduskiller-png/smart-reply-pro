@@ -17,7 +17,7 @@ export default function DesktopNavCenter() {
   return (
     <div className="flex items-center gap-6 text-sm text-slate-300">
       <Link href="/pricing" className="transition hover:text-sky-300">Pricing</Link>
-      <Link href="/dashboard" className="transition hover:text-sky-300">Dashboard</Link>
+      <Link href="/login" className="transition hover:text-sky-300">Sign In</Link>
     </div>
   );
 }

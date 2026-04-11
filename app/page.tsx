@@ -18,10 +18,10 @@ export default function Home() {
     });
   }, []);
 
-  const primaryCtaLabel = user ? "Open Dashboard" : redirecting ? "Redirecting..." : "Try Smart Reply Pro Free";
+  const primaryCtaLabel = user ? "Open Dashboard" : redirecting ? "Redirecting..." : "Start Free Now";
   const primaryCtaSubtext = user
     ? "Go straight to your workspace and keep building better replies."
-    : "Free signup · strategic reply generation in seconds";
+    : "";
 
   function handlePrimaryAction() {
     if (loading || redirecting) {
@@ -64,14 +64,16 @@ export default function Home() {
               </button>
 
               <Link
-                href="#how-it-works"
+                href="/pricing"
                 className="inline-flex items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 px-6 py-3.5 text-base font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900"
               >
-                See How It Works
+                View Pricing
               </Link>
             </div>
 
-            <p className="mt-3 text-sm text-slate-400">{primaryCtaSubtext}</p>
+            <p className="mt-3 text-sm text-slate-400">
+              {user ? primaryCtaSubtext : "Free is live now. Pro launches soon."}
+            </p>
           </div>
 
           <div className="relative">
@@ -203,12 +205,12 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 md:pb-24">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[2rem] border border-sky-400/20 bg-sky-400/10 px-6 py-8 md:px-10 md:py-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-200">Ready to try it?</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-200">Ready to start?</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-              Stop guessing. Get the reply strategy first.
+              Get your first strategic reply in 30 seconds.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-              Smart Reply Pro gives you focused, socially intelligent reply options in seconds so you can move faster with more control.
+              Paste an incoming message, choose your tone, and get multiple sharper reply options—no setup, no guessing.
             </p>
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <button
@@ -228,6 +230,9 @@ export default function Home() {
                 </Link>
               ) : null}
             </div>
+            {!user && (
+              <p className="mt-3 text-sm text-sky-100">Free is live now. Pro launches soon.</p>
+            )}
           </div>
 
           <ProWaitlistForm

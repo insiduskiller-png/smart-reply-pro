@@ -1,3 +1,25 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Use | Smart Reply Pro",
+  description: "Terms of Use for Smart Reply Pro. Review our terms before using the service.",
+  metadataBase: new URL("https://www.smartreplypro.ai"),
+  alternates: {
+    canonical: "/terms",
+  },
+  openGraph: {
+    url: "https://www.smartreplypro.ai/terms",
+    type: "website",
+    title: "Terms of Use | Smart Reply Pro",
+    description: "Review the terms and conditions for using Smart Reply Pro.",
+    siteName: "Smart Reply Pro",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
 export default function TermsOfUse() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 md:px-6 md:py-16">
@@ -7,138 +29,131 @@ export default function TermsOfUse() {
 
         <section className="mt-8 space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold text-white">0. What Smart Reply Pro Does</h2>
+            <h2 className="text-2xl font-semibold text-white">What This Service Does</h2>
             <p className="mt-3 text-slate-300">
-              Smart Reply Pro is a strategic AI communication workspace. We help you draft, review, and refine replies to incoming messages. Specifically:
+              Smart Reply Pro is a strategic AI communication workspace. Here's how it works:
             </p>
             <ul className="mt-3 space-y-2 text-slate-300">
-              <li className="ml-4 list-disc"><strong>You provide:</strong> Incoming messages and your writing style preferences</li>
-              <li className="ml-4 list-disc"><strong>We generate:</strong> AI-suggested replies based on your input</li>
-              <li className="ml-4 list-disc"><strong>You decide:</strong> Whether to use, edit, or discard any suggested reply</li>
-              <li className="ml-4 list-disc"><strong>We never:</strong> Send, post, or share messages on your behalf</li>
+              <li className="ml-4 list-disc"><strong>You input:</strong> An incoming message and your reply context</li>
+              <li className="ml-4 list-disc"><strong>We generate:</strong> AI-suggested replies based on tone, context, and strategy</li>
+              <li className="ml-4 list-disc"><strong>You review:</strong> All suggestions and decide what to send</li>
+              <li className="ml-4 list-disc"><strong>We never:</strong> Send, post, or share any message on your behalf</li>
             </ul>
             <p className="mt-4 text-slate-300">
-              Smart Reply Pro is not responsible for how you use the replies we generate. You are solely responsible for all messages you send.
+              <strong>Clear responsibility:</strong> You are responsible for all messages you send. Smart Reply Pro is a tool, not a decision-maker.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-white">1. Acceptance of Terms</h2>
+            <h2 className="text-2xl font-semibold text-white">Using This Service</h2>
             <p className="mt-3 text-slate-300">
-              By accessing and using Smart Reply Pro, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+              By creating an account and using Smart Reply Pro, you agree to these terms. If you disagree with anything here, do not use the service.
             </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-semibold text-white">2. Use License</h2>
             <p className="mt-3 text-slate-300">
-              Permission is granted to temporarily download one copy of the materials (information or software) on Smart Reply Pro for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
+              <strong>You must:</strong>
             </p>
             <ul className="mt-3 space-y-2 text-slate-300">
-              <li className="ml-4 list-disc">Modify or copying the materials</li>
-              <li className="ml-4 list-disc">Using the materials for any commercial purpose or for any public display (commercial or non-commercial)</li>
-              <li className="ml-4 list-disc">Attempting to decompile or reverse engineer any software contained on Smart Reply Pro</li>
-              <li className="ml-4 list-disc">Transferring the materials to another person or &quot;mirroring&quot; the materials on any other server</li>
-              <li className="ml-4 list-disc">Removing any copyright or other proprietary notations from the materials</li>
+              <li className="ml-4 list-disc">Be at least 13 years old</li>
+              <li className="ml-4 list-disc">Provide accurate account information</li>
+              <li className="ml-4 list-disc">Keep your password private</li>
+              <li className="ml-4 list-disc">Review all AI suggestions before sending them anywhere</li>
+              <li className="ml-4 list-disc">Use the service legally and respectfully</li>
+            </ul>
+            <p className="mt-3 text-slate-300">
+              <strong>You cannot:</strong>
+            </p>
+            <ul className="mt-3 space-y-2 text-slate-300">
+              <li className="ml-4 list-disc">Use Smart Reply Pro to harass, threaten, or defame anyone</li>
+              <li className="ml-4 list-disc">Attempt to reverse-engineer, hack, or abuse the service</li>
+              <li className="ml-4 list-disc">Bypass security measures or access unauthorized systems</li>
+              <li className="ml-4 list-disc">Resell or claim ownership of the service</li>
+              <li className="ml-4 list-disc">Violate anyone's rights or applicable laws</li>
             </ul>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-white">3. AI-Generated Content & User Responsibility</h2>
+            <h2 className="text-2xl font-semibold text-white">AI-Generated Content is Not Guaranteed</h2>
             <p className="mt-3 text-slate-300">
-              <strong>AI Output:</strong> All replies suggested by Smart Reply Pro are generated by artificial intelligence. These suggestions are not fact-checked, legally reviewed, or guaranteed to be accurate, appropriate, or suitable for your specific situation.
-            </p>
-            <p className="mt-3 text-slate-300">
-              <strong>Your Responsibility:</strong> You are responsible for:
+              Smart Reply Pro uses artificial intelligence to generate suggestions. Understand what this means:
             </p>
             <ul className="mt-3 space-y-2 text-slate-300">
-              <li className="ml-4 list-disc">Reviewing all AI-suggested replies before sending them</li>
-              <li className="ml-4 list-disc">Editing, discarding, or customizing suggestions to match your intent and voice</li>
-              <li className="ml-4 list-disc">Ensuring that any reply you send complies with all applicable laws and does not violate anyone&apos;s rights</li>
-              <li className="ml-4 list-disc">Using the service in good faith and not to harass, defame, threaten, or mislead anyone</li>
+              <li className="ml-4 list-disc"><strong>AI is not infallible:</strong> Suggestions may be inaccurate, inappropriate, or unsuitable for your situation</li>
+              <li className="ml-4 list-disc"><strong>No fact-checking:</strong> We do not verify that suggestions are factually correct</li>
+              <li className="ml-4 list-disc"><strong>No legal review:</strong> Suggestions are not reviewed by lawyers and may not comply with laws</li>
+              <li className="ml-4 list-disc"><strong>No guarantees:</strong> We do not guarantee that suggestions will achieve your intended outcome</li>
             </ul>
             <p className="mt-4 text-slate-300">
-              Smart Reply Pro makes no warranty that generated replies will achieve your intended outcome. The AI understands context, tone, and strategy, but it is not a substitute for your own judgment.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-semibold text-white">4. Disclaimer</h2>
-            <p className="mt-3 text-slate-300">
-              The materials on Smart Reply Pro are provided on an &apos;as is&apos; basis. Smart Reply Pro makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
-            </p>
-            <p className="mt-3 text-slate-300">
-              <strong>Specifically:</strong> Smart Reply Pro does not warrant that any AI-suggested reply will be appropriate, effective, legally compliant, or suitable for any particular purpose. Use the service at your own risk.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-semibold text-white">5. Limitations</h2>
-            <p className="mt-3 text-slate-300">
-              In no event shall Smart Reply Pro or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption,) arising out of the use or inability to use the materials on Smart Reply Pro, even if Smart Reply Pro or an authorized representative has been notified orally or in writing of the possibility of such damage.
-            </p>
-            <p className="mt-3 text-slate-300">
-              <strong>Specifically:</strong> Smart Reply Pro is not liable for any negative outcomes, relationship damage, professional consequences, or legal issues resulting from your use of AI-generated replies, even if we have been advised of the possibility of such harm.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-semibold text-white">6. Accuracy of Materials</h2>
-            <p className="mt-3 text-slate-300">
-              The materials appearing on Smart Reply Pro could include technical, typographical, or photographic errors. Smart Reply Pro does not warrant that any of the materials on its website are accurate, complete, or current. Smart Reply Pro may make changes to the materials contained on its website at any time without notice.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-semibold text-white">7. User Responsibilities</h2>
-            <p className="mt-3 text-slate-300">
-              You are responsible for:
+              <strong>You are responsible for:</strong>
             </p>
             <ul className="mt-3 space-y-2 text-slate-300">
-              <li className="ml-4 list-disc">Maintaining the confidentiality of your account credentials</li>
-              <li className="ml-4 list-disc">All activities that occur under your account</li>
-              <li className="ml-4 list-disc">Ensuring that content you generate complies with all applicable laws</li>
-              <li className="ml-4 list-disc">Not using the service to harass, defame, or threaten others</li>
-              <li className="ml-4 list-disc">Reviewing and editing all AI suggestions before sending them anywhere</li>
-              <li className="ml-4 list-disc">Understanding that you, not Smart Reply Pro, are the author and sender of any message you compose</li>
+              <li className="ml-4 list-disc">Reviewing all suggestions carefully before using them</li>
+              <li className="ml-4 list-disc">Editing or discarding suggestions that do not match your intent</li>
+              <li className="ml-4 list-disc">Ensuring any message you send complies with laws and respects others</li>
+              <li className="ml-4 list-disc">Understanding that you, not Smart Reply Pro, are the author and sender</li>
             </ul>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-white">8. Limitation of Liability</h2>
+            <h2 className="text-2xl font-semibold text-white">Limitations and Disclaimers</h2>
             <p className="mt-3 text-slate-300">
-              Smart Reply Pro shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service, even if we have been advised of the possibility of such damages.
+              Smart Reply Pro is provided as-is. We do not warrant that:
+            </p>
+            <ul className="mt-3 space-y-2 text-slate-300">
+              <li className="ml-4 list-disc">The service will be uninterrupted or error-free</li>
+              <li className="ml-4 list-disc">AI suggestions will be appropriate or suitable for any purpose</li>
+              <li className="ml-4 list-disc">Suggestions will be legally compliant or factually accurate</li>
+              <li className="ml-4 list-disc">The service will remain available or unchanged</li>
+            </ul>
+            <p className="mt-4 text-slate-300">
+              <strong>We are not responsible for:</strong> Relationship damage, professional consequences, legal issues, or any other harm resulting from your use of AI-generated suggestions, even if we were notified that such harm was possible.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-white">9. Modifications to Service</h2>
+            <h2 className="text-2xl font-semibold text-white">Intellectual Property</h2>
             <p className="mt-3 text-slate-300">
-              Smart Reply Pro reserves the right to modify or discontinue the service (or any part or content thereof) without notice at any time. We shall not be liable to you or to any third party for any modification, price change, suspension, or discontinuance of the service.
+              Smart Reply Pro and its content are protected by intellectual property laws. You may use the service for personal, non-commercial purposes only. You may not copy, modify, distribute, or resell the service or its underlying technology.
+            </p>
+            <p className="mt-3 text-slate-300">
+              <strong>Your content:</strong> You own the messages you send to Smart Reply Pro. AI-generated suggestions are provided for your use; you decide what to send and how to use them.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-white">10. Termination</h2>
+            <h2 className="text-2xl font-semibold text-white">Account Termination</h2>
             <p className="mt-3 text-slate-300">
-              Smart Reply Pro may terminate or suspend your account and access to the service immediately, without prior notice or liability, if you breach any of these Terms of Use.
+              We may suspend or terminate your account if you:
+            </p>
+            <ul className="mt-3 space-y-2 text-slate-300">
+              <li className="ml-4 list-disc">Violate these Terms of Use</li>
+              <li className="ml-4 list-disc">Misuse the service to harm others</li>
+              <li className="ml-4 list-disc">Attempt to bypass security or access unauthorized systems</li>
+              <li className="ml-4 list-disc">Engage in illegal activity</li>
+            </ul>
+            <p className="mt-3 text-slate-300">
+              Termination is immediate and without liability. You may delete your account anytime.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-white">11. Governing Law</h2>
+            <h2 className="text-2xl font-semibold text-white">Changes to These Terms</h2>
             <p className="mt-3 text-slate-300">
-              These terms and conditions are governed by and construed in accordance with the laws of the jurisdiction in which Smart Reply Pro operates, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.
+              We may update these terms from time to time. We will notify you of material changes via email or by posting an update here. Continued use of Smart Reply Pro after changes means you accept the new terms.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-white">12. Contact</h2>
+            <h2 className="text-2xl font-semibold text-white">Jurisdiction</h2>
             <p className="mt-3 text-slate-300">
-              If you have any questions about these Terms of Use, please contact us at:
+              {/* LEGAL REVIEW NEEDED: Confirm the jurisdiction in which Smart Reply Pro is incorporated and has primary operations. Update this to reflect your actual legal jurisdiction. */}
+              These terms are governed by the laws of the jurisdiction in which Smart Reply Pro is registered. <strong>Founder note: This requires legal review—please specify the correct jurisdiction (e.g., Ireland for GDPR compliance, or your home jurisdiction).</strong>
             </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-semibold text-white">Contact</h2>
             <p className="mt-3 text-slate-300">
-              Email: <a href="mailto:support@smartreplypro.ai" className="text-sky-400 hover:text-sky-300">support@smartreplypro.ai</a>
+              Questions about these terms? Email us at <a href="mailto:support@smartreplypro.ai" className="text-sky-400 hover:text-sky-300">support@smartreplypro.ai</a> and we will get back to you promptly.
             </p>
           </div>
         </section>

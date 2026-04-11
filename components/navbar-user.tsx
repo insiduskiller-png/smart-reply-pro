@@ -17,7 +17,7 @@ export default function NavbarUser() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const displayName = profile?.username?.trim() || user?.email?.split("@")[0] || "Account";
   const usernameColor = profile?.username_color || "#ffffff";
-  const planLabel = hasProAccess(profile?.subscription_status) ? "Pro" : PRO_ENABLED ? "Free" : "Free Public Launch";
+  const planLabel = hasProAccess(profile?.subscription_status) ? "Pro" : "Free";
 
   async function handleLogout() {
     setIsOpen(false);

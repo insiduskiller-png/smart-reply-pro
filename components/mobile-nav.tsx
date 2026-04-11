@@ -12,7 +12,7 @@ export default function MobileNav() {
   const displayName = profile?.username?.trim() || user?.email?.split("@")[0] || "Account";
   const usernameColor = profile?.username_color || "#ffffff";
   const isPro = hasProAccess(profile?.subscription_status);
-  const planLabel = isPro ? "Pro" : PRO_ENABLED ? "Free" : "Free Public Launch";
+  const planLabel = isPro ? "Pro" : "Free";
 
   async function handleLogout() {
     await logout("/");

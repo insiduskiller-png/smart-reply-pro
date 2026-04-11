@@ -959,6 +959,43 @@ export default function DashboardClient({
           <button className="h-12 w-full rounded-md bg-sky-500 px-4 py-2 text-base font-medium text-slate-950 disabled:opacity-60 md:h-auto md:w-auto md:text-sm" onClick={() => generate()} disabled={loading}>{loading ? "Generating..." : "Generate Reply"}</button>
         </div>
 
+        {!outputs.length && !loading ? (
+          <div className="mt-8 rounded-lg border border-sky-500/20 bg-gradient-to-br from-sky-900/20 via-slate-900/40 to-slate-950 p-6 md:p-8">
+            <div className="max-w-2xl">
+              <h2 className="text-2xl font-semibold text-white">Ready to craft your first reply?</h2>
+              <p className="mt-3 text-base leading-relaxed text-slate-300">
+                Paste a message you received, add context about the conversation, and Smart Reply Pro will generate three personalized perspectives: calm, assertive, and strategic.
+              </p>
+              <div className="mt-6 space-y-3">
+                <div className="flex gap-3">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-sky-300">1</div>
+                  <div>
+                    <p className="font-medium text-slate-100">Paste the message you received</p>
+                    <p className="text-sm text-slate-400">Use the text box at the top to share the message you're replying to.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-sky-300">2</div>
+                  <div>
+                    <p className="font-medium text-slate-100">Add context (optional)</p>
+                    <p className="text-sm text-slate-400">Tell Smart Reply Pro about the relationship or situation for smarter replies.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-sky-300">3</div>
+                  <div>
+                    <p className="font-medium text-slate-100">Click "Generate Reply"</p>
+                    <p className="text-sm text-slate-400">Get three thoughtful perspectives tailored to your situation.</p>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-6 text-sm text-slate-400">
+                💡 <span className="font-medium text-slate-300">Pro Tip:</span> Use Reply Profiles to save your communication style and get even better replies over time.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
         {outputs.length ? (
           <div className="mt-8 space-y-4">
             <div className="flex items-center justify-between">
