@@ -36,6 +36,29 @@ export class ProWaitlistError extends Error {
   }
 }
 
+function classifySupabaseWaitlistError(error: {
+  code?: string | null;
+  message?: string | null;
+  details?: string | null;
+}) {
+  const code = String(error.code ?? "");
+  const combined = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+
+  if (code === "42P01" || combined.includes("relation") && combined.includes("does not exist")) {
+    return "WAITLIST_TABLE_MISSING";
+  }
+
+  if (code === "42501" || combined.includes("row-level security") || combined.includes("permission denied")) {
+    return "WAITLIST_PERMISSION_DENIED";
+  }
+
+  if (combined.includes("invalid api key") || combined.includes("invalid jwt") || combined.includes("apikey")) {
+    return "WAITLIST_SERVICE_AUTH_FAILED";
+  }
+
+  return "WAITLIST_INSERT_FAILED";
+}
+
 export function normalizeWaitlistEmail(email: string) {
   return email.trim().toLowerCase();
 }
@@ -87,7 +110,7 @@ export async function createProWaitlistEntry(input: CreateProWaitlistEntryInput)
   if (existing.error) {
     console.error("pro waitlist duplicate check failed:", existing.error);
     throw new ProWaitlistError(
-      existing.error.code === "42P01" ? "WAITLIST_TABLE_MISSING" : "WAITLIST_DUPLICATE_CHECK_FAILED",
+      classifySupabaseWaitlistError(existing.error),
       "Could not save waitlist entry",
       existing.error,
     );
@@ -180,7 +203,7 @@ export async function createProWaitlistEntry(input: CreateProWaitlistEntryInput)
       hasUserId: Boolean(userId),
     });
     throw new ProWaitlistError(
-      insert.error.code === "42P01" ? "WAITLIST_TABLE_MISSING" : "WAITLIST_INSERT_FAILED",
+      classifySupabaseWaitlistError(insert.error),
       "Could not save waitlist entry",
       insert.error,
     );
