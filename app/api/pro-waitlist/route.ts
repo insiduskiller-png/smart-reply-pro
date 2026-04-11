@@ -4,9 +4,10 @@ import { supabaseService } from "@/lib/supabase";
 import { sendProWaitlistEmailToSupport } from "@/lib/pro-waitlist-email";
 import {
   createProWaitlistEntry,
-  deleteProWaitlistEntryById,
   isValidWaitlistEmail,
   normalizeWaitlistEmail,
+  ProWaitlistError,
+  updateProWaitlistNotificationStatus,
 } from "@/lib/pro-waitlist";
 
 export async function POST(request: Request) {
@@ -62,14 +63,31 @@ export async function POST(request: Request) {
           note: result.note,
           waitlistEntryId: result.id,
         });
-      } catch (emailError) {
+
         if (result.id) {
-          await deleteProWaitlistEntryById(result.id);
+          await updateProWaitlistNotificationStatus({
+            id: result.id,
+            status: "sent",
+          });
         }
+      } catch (emailError) {
         console.error("Pro waitlist email notify error:", emailError);
+        if (result.id) {
+          await updateProWaitlistNotificationStatus({
+            id: result.id,
+            status: "failed",
+            errorMessage: emailError instanceof Error ? emailError.message : "Unknown email error",
+          });
+        }
+
         return NextResponse.json(
-          { error: "We couldn’t submit your waitlist request right now. Please try again." },
-          { status: 502 },
+          {
+            success: false,
+            saved: true,
+            duplicate: false,
+            message: "You’re on the Pro waitlist. We saved your request, but internal notification is delayed.",
+          },
+          { status: 202 },
         );
       }
     }
@@ -77,13 +95,30 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
+        saved: true,
         duplicate: result.duplicate,
         message: result.message,
       },
       { status: result.duplicate ? 200 : 201 },
     );
   } catch (error) {
-    console.error("Pro waitlist API error:", error);
+    if (error instanceof ProWaitlistError) {
+      console.error("Pro waitlist API structured error:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+
+      if (error.code === "WAITLIST_TABLE_MISSING") {
+        return NextResponse.json(
+          { error: "Waitlist storage is not ready yet. Please try again shortly." },
+          { status: 503 },
+        );
+      }
+    } else {
+      console.error("Pro waitlist API error:", error);
+    }
+
     return NextResponse.json(
       { error: "We couldn’t save your waitlist request right now. Please try again." },
       { status: 500 },

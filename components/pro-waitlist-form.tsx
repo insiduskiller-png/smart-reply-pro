@@ -18,6 +18,7 @@ type SubmitState =
   | { status: "idle"; message?: undefined }
   | { status: "submitting"; message?: undefined }
   | { status: "success"; message: string; duplicate: boolean }
+  | { status: "warning"; message: string }
   | { status: "error"; message: string };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,6 +47,7 @@ export default function ProWaitlistForm({
   const emailIsValid = useMemo(() => EMAIL_REGEX.test(email.trim().toLowerCase()), [email]);
   const isSubmitting = submitState.status === "submitting";
   const hasSuccess = submitState.status === "success";
+  const hasWarning = submitState.status === "warning";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,10 +78,23 @@ export default function ProWaitlistForm({
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { success?: boolean; duplicate?: boolean; message?: string; error?: string }
+        | { success?: boolean; saved?: boolean; duplicate?: boolean; message?: string; error?: string }
         | null;
 
-      if (!response.ok || !payload?.success) {
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.message || "Unable to join the waitlist right now.");
+      }
+
+      if (payload?.saved && payload.success === false) {
+        setSubmitState({
+          status: "warning",
+          message: payload.message || "You’re on the Pro waitlist. We saved your request, but internal notification is delayed.",
+        });
+        setNote("");
+        return;
+      }
+
+      if (!payload?.success) {
         throw new Error(payload?.error || payload?.message || "Unable to join the waitlist right now.");
       }
 
@@ -116,6 +131,15 @@ export default function ProWaitlistForm({
           <p className="mt-3 max-w-xl text-sm leading-6 text-emerald-50/90">{submitState.message}</p>
           <p className="mt-2 text-sm text-slate-300">
             We’ll reach out at <span className="font-semibold text-white">{email.trim().toLowerCase()}</span> when Pro is ready.
+          </p>
+        </div>
+      ) : hasWarning ? (
+        <div className="rounded-[1.5rem] border border-amber-400/20 bg-amber-400/10 p-6 text-left">
+          <div className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-amber-400/15 text-lg text-amber-200">!</div>
+          <h3 className="mt-4 text-xl font-semibold text-white">Request saved</h3>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-amber-50/90">{submitState.message}</p>
+          <p className="mt-2 text-sm text-slate-300">
+            We saved your request for <span className="font-semibold text-white">{email.trim().toLowerCase()}</span>.
           </p>
         </div>
       ) : (
