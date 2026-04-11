@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getSupabaseEnv } from "@/lib/env";
 import { sendProWaitlistEmailToSupport } from "@/lib/pro-waitlist-email";
 import {
   createProWaitlistEntry,
@@ -42,14 +41,56 @@ function logWaitlistEvent(
 }
 
 function hasRequiredWaitlistEnv() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!supabaseUrl || !serviceKey) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(supabaseUrl);
+    return Boolean(parsed.protocol && parsed.host);
+  } catch {
+    return false;
+  }
+}
+
+function getSupabaseEnvDiagnostics() {
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
+  const hasSupabaseUrl = Boolean(rawUrl);
+  const hasServiceRoleKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+
+  let hostname = "invalid";
+  if (rawUrl) {
+    try {
+      hostname = new URL(rawUrl).hostname;
+    } catch {
+      hostname = "invalid";
+    }
+  }
+
+  const looksPlaceholder =
+    hostname === "example.supabase.co" ||
+    hostname.endsWith(".example.com") ||
+    hostname === "invalid";
+
+  return {
+    hasSupabaseUrl,
+    hasServiceRoleKey,
+    supabaseHostname: hostname,
+    looksPlaceholder,
+  };
 }
 
 function getRouteSupabaseService() {
-  const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing waitlist Supabase service environment");
+  }
+
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
@@ -65,14 +106,14 @@ export async function POST(request: Request) {
     crypto.randomUUID();
 
   try {
+    const envDiagnostics = getSupabaseEnvDiagnostics();
+    logWaitlistEvent(requestId, "supabase-env-diagnostics", envDiagnostics);
+
     if (!hasRequiredWaitlistEnv()) {
       logWaitlistEvent(
         requestId,
         "env-misconfigured",
-        {
-          hasSupabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()),
-          hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
-        },
+        envDiagnostics,
         "error",
       );
       return jsonResponse(
@@ -102,26 +143,49 @@ export async function POST(request: Request) {
       sourcePage,
     });
 
-    const user = await resolveAuthenticatedUser();
+    let user: Awaited<ReturnType<typeof resolveAuthenticatedUser>> | null = null;
+    try {
+      user = await resolveAuthenticatedUser();
+    } catch (authError) {
+      logWaitlistEvent(
+        requestId,
+        "auth-context-unavailable",
+        {
+          message: authError instanceof Error ? authError.message : "Unknown auth context error",
+        },
+        "warn",
+      );
+    }
 
     let subscriptionStatus: string | null = null;
     if (user?.id) {
-      const supabaseService = getRouteSupabaseService();
-      const profile = await supabaseService
-        .from("profiles")
-        .select("subscription_status")
-        .eq("id", user.id)
-        .maybeSingle();
+      try {
+        const supabaseService = getRouteSupabaseService();
+        const profile = await supabaseService
+          .from("profiles")
+          .select("subscription_status")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      if (!profile.error && profile.data?.subscription_status) {
-        subscriptionStatus = String(profile.data.subscription_status);
-      } else if (profile.error) {
+        if (!profile.error && profile.data?.subscription_status) {
+          subscriptionStatus = String(profile.data.subscription_status);
+        } else if (profile.error) {
+          logWaitlistEvent(
+            requestId,
+            "profile-fetch-warning",
+            {
+              code: profile.error.code,
+              message: profile.error.message,
+            },
+            "warn",
+          );
+        }
+      } catch (profileError) {
         logWaitlistEvent(
           requestId,
           "profile-fetch-warning",
           {
-            code: profile.error.code,
-            message: profile.error.message,
+            message: profileError instanceof Error ? profileError.message : "Unknown profile fetch error",
           },
           "warn",
         );
@@ -248,10 +312,10 @@ export async function POST(request: Request) {
 
         return NextResponse.json(
           {
-            success: false,
+            success: true,
             saved: true,
             duplicate: false,
-            message: "You’re on the Pro waitlist. We saved your request, but internal notification is delayed.",
+            message: "You’re on the Pro waitlist. We’ll notify you when access opens.",
             errorCode: "NOTIFICATION_DEFERRED",
           },
           { status: 202 },
@@ -323,6 +387,19 @@ export async function POST(request: Request) {
             duplicate: false,
             message: "Waitlist storage is currently unavailable. Please try again shortly.",
             errorCode: "WAITLIST_SERVICE_AUTH_FAILED",
+          },
+          503,
+        );
+      }
+
+      if (error.code === "WAITLIST_DB_UNAVAILABLE") {
+        return jsonResponse(
+          {
+            success: false,
+            saved: false,
+            duplicate: false,
+            message: "Waitlist storage is currently unavailable. Please try again shortly.",
+            errorCode: "WAITLIST_DB_UNAVAILABLE",
           },
           503,
         );

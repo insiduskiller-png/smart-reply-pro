@@ -52,6 +52,13 @@ export default function ProWaitlistForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    console.info("[pro-waitlist-ui]", {
+      stage: "submit-reached",
+      sourcePage: resolvedSourcePage,
+      hasEmail: Boolean(email.trim()),
+      noteLength: note.length,
+    });
+
     if (!email.trim()) {
       setSubmitState({ status: "error", message: "Enter your email to join the Pro waitlist." });
       return;
@@ -67,19 +74,35 @@ export default function ProWaitlistForm({
     try {
       trackUpgradeClick(`waitlist_form_${resolvedSourcePage}`).catch(() => undefined);
 
+      const requestPayload = {
+        email,
+        note,
+        sourcePage: resolvedSourcePage,
+      };
+
+      console.info("[pro-waitlist-ui]", {
+        stage: "submit-payload",
+        payload: {
+          ...requestPayload,
+          noteLength: note.length,
+        },
+      });
+
       const response = await fetch("/api/pro-waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          note,
-          sourcePage: resolvedSourcePage,
-        }),
+        body: JSON.stringify(requestPayload),
       });
 
       const payload = (await response.json().catch(() => null)) as
         | { success?: boolean; saved?: boolean; duplicate?: boolean; message?: string; errorCode?: string }
         | null;
+
+      console.info("[pro-waitlist-ui]", {
+        stage: "submit-response",
+        status: response.status,
+        payload,
+      });
 
       if (!response.ok) {
         throw new Error(payload?.message || "Unable to join the waitlist right now.");

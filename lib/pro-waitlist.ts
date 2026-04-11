@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { getSupabaseEnv } from "@/lib/env";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,7 +38,13 @@ export class ProWaitlistError extends Error {
 
 function getWaitlistSupabaseService() {
   try {
-    const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing environment variables: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY");
+    }
+
     return createClient(supabaseUrl, supabaseServiceKey);
   } catch (error) {
     throw new ProWaitlistError(
@@ -68,6 +73,15 @@ function classifySupabaseWaitlistError(error: {
 
   if (combined.includes("invalid api key") || combined.includes("invalid jwt") || combined.includes("apikey")) {
     return "WAITLIST_SERVICE_AUTH_FAILED";
+  }
+
+  if (
+    combined.includes("fetch failed") ||
+    combined.includes("enotfound") ||
+    combined.includes("econnrefused") ||
+    combined.includes("timeout")
+  ) {
+    return "WAITLIST_DB_UNAVAILABLE";
   }
 
   return "WAITLIST_INSERT_FAILED";
