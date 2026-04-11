@@ -1,4 +1,5 @@
-import { supabaseService } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabaseEnv } from "@/lib/env";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,6 +34,19 @@ export class ProWaitlistError extends Error {
     this.name = "ProWaitlistError";
     this.code = code;
     this.details = details;
+  }
+}
+
+function getWaitlistSupabaseService() {
+  try {
+    const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+    return createClient(supabaseUrl, supabaseServiceKey);
+  } catch (error) {
+    throw new ProWaitlistError(
+      "WAITLIST_ENV_MISSING",
+      "Supabase environment is not configured for waitlist operations",
+      error instanceof Error ? { message: error.message } : error,
+    );
   }
 }
 
@@ -94,6 +108,7 @@ function sanitizeSubscriptionStatus(value?: string | null) {
 }
 
 export async function createProWaitlistEntry(input: CreateProWaitlistEntryInput) {
+  const supabaseService = getWaitlistSupabaseService();
   const email = normalizeWaitlistEmail(input.email);
   const note = sanitizeNote(input.note);
   const sourcePage = sanitizeSourcePage(input.sourcePage);
@@ -229,6 +244,7 @@ export async function updateProWaitlistNotificationStatus(params: {
   status: "sent" | "failed";
   errorMessage?: string | null;
 }) {
+  const supabaseService = getWaitlistSupabaseService();
   if (!params.id) return;
 
   const payload = {

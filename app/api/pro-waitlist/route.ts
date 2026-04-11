@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
-import { supabaseService } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabaseEnv } from "@/lib/env";
 import { sendProWaitlistEmailToSupport } from "@/lib/pro-waitlist-email";
 import {
   createProWaitlistEntry,
@@ -19,6 +19,11 @@ type WaitlistApiResponse = {
 };
 
 function jsonResponse(payload: WaitlistApiResponse, status: number) {
+  console.info("[pro-waitlist]", {
+    stage: "response",
+    status,
+    payload,
+  });
   return NextResponse.json(payload, { status });
 }
 
@@ -41,6 +46,16 @@ function hasRequiredWaitlistEnv() {
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
   );
+}
+
+function getRouteSupabaseService() {
+  const { supabaseUrl, supabaseServiceKey } = getSupabaseEnv();
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
+
+async function resolveAuthenticatedUser() {
+  const authModule = await import("@/lib/auth");
+  return authModule.requireUser();
 }
 
 export async function POST(request: Request) {
@@ -76,16 +91,22 @@ export async function POST(request: Request) {
     const email = typeof body.email === "string" ? normalizeWaitlistEmail(body.email) : "";
     const note = typeof body.note === "string" ? body.note : "";
     const sourcePage = typeof body.sourcePage === "string" ? body.sourcePage : "unknown";
+    logWaitlistEvent(requestId, "incoming-payload", {
+      email,
+      noteLength: note.length,
+      sourcePage,
+    });
     logWaitlistEvent(requestId, "request-received", {
       hasEmail: Boolean(email),
       noteLength: note.length,
       sourcePage,
     });
 
-    const user = await requireUser();
+    const user = await resolveAuthenticatedUser();
 
     let subscriptionStatus: string | null = null;
     if (user?.id) {
+      const supabaseService = getRouteSupabaseService();
       const profile = await supabaseService
         .from("profiles")
         .select("subscription_status")
@@ -146,12 +167,26 @@ export async function POST(request: Request) {
       );
     }
 
+    logWaitlistEvent(requestId, "db-insert-attempt", {
+      email,
+      sourcePage,
+      hasUserId: Boolean(user?.id),
+      subscriptionStatus,
+    });
+
     const result = await createProWaitlistEntry({
       email,
       note,
       sourcePage,
       userId: user?.id ?? null,
       subscriptionStatus,
+    });
+
+    logWaitlistEvent(requestId, "db-insert-result", {
+      id: result.id,
+      duplicate: result.duplicate,
+      createdAt: result.createdAt,
+      notificationStatus: result.notificationStatus,
     });
 
     logWaitlistEvent(requestId, "waitlist-saved", {
@@ -164,6 +199,12 @@ export async function POST(request: Request) {
 
     if (!result.duplicate) {
       try {
+        logWaitlistEvent(requestId, "email-send-attempt", {
+          destination: "support@smartreplypro.ai",
+          waitlistEntryId: result.id,
+          waitlistEmail: result.email,
+        });
+
         await sendProWaitlistEmailToSupport({
           timestampIso: result.createdAt,
           waitlistEmail: result.email,
@@ -181,16 +222,18 @@ export async function POST(request: Request) {
             status: "sent",
           });
         }
-        logWaitlistEvent(requestId, "notification-sent", {
+        logWaitlistEvent(requestId, "email-send-result", {
           id: result.id,
+          success: true,
           destination: "support@smartreplypro.ai",
         });
       } catch (emailError) {
         logWaitlistEvent(
           requestId,
-          "notification-failed",
+          "email-send-result",
           {
             id: result.id,
+            success: false,
             message: emailError instanceof Error ? emailError.message : "Unknown email error",
           },
           "error",
@@ -241,6 +284,19 @@ export async function POST(request: Request) {
             duplicate: false,
             message: "Waitlist storage is not ready yet. Please try again shortly.",
             errorCode: "WAITLIST_TABLE_MISSING",
+          },
+          503,
+        );
+      }
+
+      if (error.code === "WAITLIST_ENV_MISSING") {
+        return jsonResponse(
+          {
+            success: false,
+            saved: false,
+            duplicate: false,
+            message: "Waitlist storage is not ready yet. Please try again shortly.",
+            errorCode: "WAITLIST_ENV_MISSING",
           },
           503,
         );
