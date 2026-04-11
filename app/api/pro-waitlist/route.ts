@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { createProWaitlistEntry, isValidWaitlistEmail, normalizeWaitlistEmail } from "@/lib/pro-waitlist";
+import { requireUser } from "@/lib/auth";
+import { supabaseService } from "@/lib/supabase";
+import { sendProWaitlistEmailToSupport } from "@/lib/pro-waitlist-email";
+import {
+  createProWaitlistEntry,
+  deleteProWaitlistEntryById,
+  isValidWaitlistEmail,
+  normalizeWaitlistEmail,
+} from "@/lib/pro-waitlist";
 
 export async function POST(request: Request) {
   try {
@@ -7,6 +15,20 @@ export async function POST(request: Request) {
     const email = typeof body.email === "string" ? normalizeWaitlistEmail(body.email) : "";
     const note = typeof body.note === "string" ? body.note : "";
     const sourcePage = typeof body.sourcePage === "string" ? body.sourcePage : "unknown";
+    const user = await requireUser();
+
+    let subscriptionStatus: string | null = null;
+    if (user?.id) {
+      const profile = await supabaseService
+        .from("profiles")
+        .select("subscription_status")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!profile.error && profile.data?.subscription_status) {
+        subscriptionStatus = String(profile.data.subscription_status);
+      }
+    }
 
     if (!email) {
       return NextResponse.json({ error: "Email is required." }, { status: 400 });
@@ -24,7 +46,33 @@ export async function POST(request: Request) {
       email,
       note,
       sourcePage,
+      userId: user?.id ?? null,
+      subscriptionStatus,
     });
+
+    if (!result.duplicate) {
+      try {
+        await sendProWaitlistEmailToSupport({
+          timestampIso: result.createdAt,
+          waitlistEmail: result.email,
+          userId: result.userId,
+          accountEmail: user?.email ?? null,
+          subscriptionStatus: result.subscriptionStatus,
+          sourcePage: result.sourcePage,
+          note: result.note,
+          waitlistEntryId: result.id,
+        });
+      } catch (emailError) {
+        if (result.id) {
+          await deleteProWaitlistEntryById(result.id);
+        }
+        console.error("Pro waitlist email notify error:", emailError);
+        return NextResponse.json(
+          { error: "We couldn’t submit your waitlist request right now. Please try again." },
+          { status: 502 },
+        );
+      }
+    }
 
     return NextResponse.json(
       {

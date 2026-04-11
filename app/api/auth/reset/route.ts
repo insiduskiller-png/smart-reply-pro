@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendPasswordResetEmail } from "@/lib/supabase-auth";
 import { isValidEmail, normalizeEmail } from "@/lib/security";
-import { getStripeEnv } from "@/lib/env";
 
 export async function POST(request: Request) {
   try {
@@ -12,18 +11,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
     }
 
-    const { appUrl } = getStripeEnv();
-    const redirectUrl = `${appUrl}/reset-password`;
+    const requestOrigin = new URL(request.url).origin;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestOrigin;
+    const redirectUrl = new URL("/reset-password", appUrl).toString();
 
     try {
       await sendPasswordResetEmail(email, redirectUrl);
-      return NextResponse.json({ success: true, message: "Password reset email sent" });
+      return NextResponse.json({
+        success: true,
+        message: "If an account exists for that email, we sent a password reset link.",
+      });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unable to send reset email";
-      return NextResponse.json(
-        { error: errorMessage },
-        { status: 500 },
-      );
+      console.error("reset-password email error:", error);
+      return NextResponse.json({
+        success: true,
+        message: "If an account exists for that email, we sent a password reset link.",
+      });
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Server error";

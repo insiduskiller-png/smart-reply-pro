@@ -8,6 +8,8 @@ import { useAuth } from "@/components/auth-provider";
 import { isTemporarySessionExpired, setStoredSessionMode } from "@/lib/session-persistence";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
+const LOGIN_COOLDOWN_STORAGE_KEY = "srp_login_cooldown_until";
+
 export default function LoginPage() {
   const router = useRouter();
   const { establishAuthenticatedSession } = useAuth();
@@ -20,6 +22,11 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
+  const [showResetSuccessMessage, setShowResetSuccessMessage] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [cooldownSecondsLeft, setCooldownSecondsLeft] = useState(0);
+
+  const isCooldownActive = Boolean(cooldownUntil && cooldownUntil > Date.now());
 
   function resetFormErrors() {
     setError("");
@@ -73,7 +80,62 @@ export default function LoginPage() {
 
     const params = new URLSearchParams(window.location.search);
     setShowExpiredMessage(params.get("expired") === "1");
+    setShowResetSuccessMessage(params.get("reset") === "success");
+
+    const storedUntil = Number(window.sessionStorage.getItem(LOGIN_COOLDOWN_STORAGE_KEY) || "0");
+    if (storedUntil > Date.now()) {
+      setCooldownUntil(storedUntil);
+      setCooldownSecondsLeft(Math.ceil((storedUntil - Date.now()) / 1000));
+    } else {
+      window.sessionStorage.removeItem(LOGIN_COOLDOWN_STORAGE_KEY);
+    }
   }, []);
+
+  useEffect(() => {
+    if (!cooldownUntil) {
+      setCooldownSecondsLeft(0);
+      return;
+    }
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      setCooldownSecondsLeft(remaining);
+
+      if (remaining <= 0) {
+        setCooldownUntil(null);
+        setError("");
+        if (typeof window !== "undefined") {
+          window.sessionStorage.removeItem(LOGIN_COOLDOWN_STORAGE_KEY);
+        }
+      }
+    };
+
+    tick();
+    const intervalId = window.setInterval(tick, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [cooldownUntil]);
+
+  function startCooldown(seconds: number) {
+    const safeSeconds = Math.max(1, Math.min(300, Math.ceil(seconds)));
+    const until = Date.now() + safeSeconds * 1000;
+    setCooldownUntil(until);
+    setCooldownSecondsLeft(safeSeconds);
+    setStatusMessage("");
+    setError("");
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(LOGIN_COOLDOWN_STORAGE_KEY, String(until));
+    }
+  }
+
+  function clearCooldown() {
+    setCooldownUntil(null);
+    setCooldownSecondsLeft(0);
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(LOGIN_COOLDOWN_STORAGE_KEY);
+    }
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -137,7 +199,7 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
-    if (loading) {
+    if (loading || isCooldownActive) {
       return;
     }
 
@@ -171,11 +233,21 @@ export default function LoginPage() {
 
       if (!response.ok) {
         setStatusMessage("");
+
+        if (response.status === 429) {
+          const retryAfterHeader = Number(response.headers.get("Retry-After") || "0");
+          const retryAfterBody = Number((data as { retryAfter?: number } | null)?.retryAfter || 0);
+          const retryAfter = retryAfterHeader || retryAfterBody || 30;
+          startCooldown(retryAfter);
+          return;
+        }
+
         setError(resolveLoginError(data?.error, response.status));
         return;
       }
 
       if (data.success) {
+        clearCooldown();
         console.info("supabase auth success");
         setStatusMessage("Signed in. Redirecting to your workspace...");
         setStoredSessionMode(rememberMe ? "persistent" : "temporary");
@@ -242,7 +314,19 @@ export default function LoginPage() {
             </div>
           ) : null}
 
-          {error ? (
+          {showResetSuccessMessage && !error ? (
+            <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+              Password updated successfully. Sign in with your new password.
+            </div>
+          ) : null}
+
+          {isCooldownActive ? (
+            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+              Too many failed attempts. Try again in <span className="font-semibold text-amber-200">{cooldownSecondsLeft}s</span>.
+            </div>
+          ) : null}
+
+          {error && !isCooldownActive ? (
             <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
               {error}
             </div>
@@ -271,7 +355,7 @@ export default function LoginPage() {
                     setError("");
                   }
                 }}
-                disabled={loading}
+                disabled={loading || isCooldownActive}
                 aria-invalid={Boolean(emailError)}
                 aria-describedby={emailError ? "login-email-error" : undefined}
                 className={`h-12 w-full rounded-xl border bg-slate-950 px-4 text-base text-white placeholder:text-slate-500 transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -290,9 +374,14 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-200">
-                Password
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-medium text-slate-200">
+                  Password
+                </label>
+                <Link href="/forgot-password" className="text-xs font-medium text-sky-400 transition hover:text-sky-300">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 id="password"
                 type="password"
@@ -305,7 +394,7 @@ export default function LoginPage() {
                     setError("");
                   }
                 }}
-                disabled={loading}
+                disabled={loading || isCooldownActive}
                 aria-invalid={Boolean(passwordError)}
                 aria-describedby={passwordError ? "login-password-error" : undefined}
                 className={`h-12 w-full rounded-xl border bg-slate-950 px-4 text-base text-white placeholder:text-slate-500 transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -328,7 +417,7 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                disabled={loading}
+                disabled={loading || isCooldownActive}
                 className="h-4 w-4 rounded border-slate-600 bg-slate-950 text-sky-500 focus:ring-sky-500"
               />
               <span>Remember me</span>
@@ -336,7 +425,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isCooldownActive}
               className="flex h-12 w-full items-center justify-center rounded-xl bg-sky-400 px-4 text-base font-semibold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300"
             >
               {loading ? (
@@ -344,6 +433,8 @@ export default function LoginPage() {
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/40 border-t-slate-950" />
                   Signing in...
                 </span>
+              ) : isCooldownActive ? (
+                `Try again in ${cooldownSecondsLeft}s`
               ) : (
                 "Sign in"
               )}

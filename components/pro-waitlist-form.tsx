@@ -86,7 +86,9 @@ export default function ProWaitlistForm({
       const duplicate = Boolean(payload.duplicate);
       const message =
         payload.message ||
-        (duplicate ? "You’re already on the Pro waitlist." : "You’re on the Pro waitlist.");
+        (duplicate
+          ? "You’re already on the Pro waitlist. We’ll notify you when access opens."
+          : "You’re on the Pro waitlist. We’ll notify you when access opens.");
 
       setSubmitState({ status: "success", message, duplicate });
       setNote("");
@@ -109,7 +111,7 @@ export default function ProWaitlistForm({
         <div className="rounded-[1.5rem] border border-emerald-400/20 bg-emerald-400/10 p-6 text-left">
           <div className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-400/15 text-lg text-emerald-200">✓</div>
           <h3 className="mt-4 text-xl font-semibold text-white">
-            {submitState.duplicate ? "Already on the list" : "You’re on the list"}
+            {submitState.duplicate ? "Already on the Pro waitlist" : "You’re on the Pro waitlist"}
           </h3>
           <p className="mt-3 max-w-xl text-sm leading-6 text-emerald-50/90">{submitState.message}</p>
           <p className="mt-2 text-sm text-slate-300">
