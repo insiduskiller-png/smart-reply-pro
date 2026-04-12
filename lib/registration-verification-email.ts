@@ -66,13 +66,13 @@ function buildVerificationEmailHtml(params: {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Confirm your email</title>
   </head>
-  <body style="margin:0;padding:0;background:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e5e7eb;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:16px 10px;background:#111827;">
+  <body style="margin:0;padding:0;background:#131b2a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e5e7eb;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:18px 10px;background:#131b2a;">
       <tr>
         <td align="center">
-          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;border:1px solid #223047;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#0f172a 0%,#121d34 55%,#0f172a 100%);box-shadow:0 10px 28px rgba(2,6,23,0.36);">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;border:1px solid #2a364d;border-radius:16px;overflow:hidden;background:radial-gradient(120% 140% at 100% 100%,#212e4a 0%,#182238 40%,#111a2c 75%,#0f1726 100%);box-shadow:0 10px 28px rgba(2,6,23,0.36);">
             <tr>
-              <td style="padding:0;background:linear-gradient(90deg,#131d34 0%,#112642 52%,#14365f 100%);border-bottom:1px solid #2b3a58;">
+              <td style="padding:0;background:linear-gradient(90deg,#121c31 0%,#11243d 52%,#13365d 100%);border-bottom:1px solid #2b3a58;">
                 <div style="padding:14px 22px 12px;">
                   <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                     <tr>
@@ -101,15 +101,15 @@ function buildVerificationEmailHtml(params: {
               </td>
             </tr>
             <tr>
-              <td style="padding:22px 24px 20px;">
-                <h1 style="margin:0 0 12px;font-size:44px;line-height:1.12;font-weight:700;color:#f8fafc;letter-spacing:-0.02em;">${headingMarkup}</h1>
+              <td style="padding:24px 24px 20px;">
+                <h1 style="margin:0 0 14px;font-size:45px;line-height:1.12;font-weight:700;color:#f8fafc;letter-spacing:-0.02em;">${headingMarkup}</h1>
                 <p style="margin:0 0 10px;font-size:16px;line-height:1.45;color:#e2e8f0;font-weight:500;">${greetingName}</p>
                 <p style="margin:0 0 10px;font-size:16px;line-height:1.5;color:#d7e0ef;">Thank you for signing up for Smart Reply Pro. Please confirm your email address to activate your account and continue using the platform.</p>
                 <p style="margin:0 0 10px;font-size:16px;line-height:1.5;color:#d7e0ef;">Top Key Benefits of Smart Reply Pro are:</p>
-                <ul style="margin:0 0 16px 20px;padding:0;color:#d7e0ef;font-size:15px;line-height:1.52;">
+                <ul style="margin:0 0 16px 21px;padding:0;color:#d7e0ef;font-size:15px;line-height:1.54;">
                   <li style="margin:0 0 6px;"><strong style="color:#f8fafc;">Human-Like Replies</strong> — Generate natural, context-aware responses that sound real.</li>
                   <li style="margin:0 0 6px;"><strong style="color:#f8fafc;">Customizable Responses</strong> — Tailor your responses to fit your unique style and tone.</li>
-                  <li style="margin:0;"><strong style="color:#f8fafc;">Context-Aware Assistance</strong> — Keep your message intent clear and aligned.</li>
+                  <li style="margin:0;"><strong style="color:#f8fafc;">Advanced AI Technology</strong> — Powered by cutting-edge AI to provide accurate and context-aware suggestions.</li>
                 </ul>
                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 12px;">
                   <tr>
@@ -118,12 +118,14 @@ function buildVerificationEmailHtml(params: {
                     </td>
                   </tr>
                 </table>
-                <p style="margin:0;font-size:14px;line-height:1.5;color:#d7e0ef;">If you have any questions, reply to <a href="mailto:${TO_SUPPORT_EMAIL}" style="color:#8fc8ff;text-decoration:none;">${TO_SUPPORT_EMAIL}</a></p>
+                <p style="margin:0 0 8px;font-size:14px;line-height:1.5;color:#d7e0ef;">If you have any questions, reply to <a href="mailto:${TO_SUPPORT_EMAIL}" style="color:#8fc8ff;text-decoration:none;">${TO_SUPPORT_EMAIL}</a></p>
+                <p style="margin:0 0 6px;font-size:14px;line-height:1.5;color:#d7e0ef;">Happy replying!</p>
+                <p style="margin:0;font-size:14px;line-height:1.5;color:#8fc8ff;">The Smart Reply Pro Team</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:11px 18px;border-top:1px solid #2b3a58;background:rgba(8,13,24,0.35);text-align:center;">
-                <p style="margin:0;font-size:15px;color:#9fb2d3;">Smart Reply Pro</p>
+              <td style="padding:11px 18px;border-top:1px solid #2b3a58;background:rgba(8,13,24,0.45);text-align:center;">
+                <p style="margin:0;font-size:14px;color:#9fb2d3;">Smart Reply Pro</p>
               </td>
             </tr>
           </table>
@@ -151,12 +153,14 @@ function buildVerificationEmailText(params: {
     "Top Key Benefits of Smart Reply Pro are:",
     "- Human-Like Replies — Generate natural, context-aware responses that sound real.",
     "- Customizable Responses — Tailor your responses to fit your unique style and tone.",
-    "- Context-Aware Assistance — Keep your message intent clear and aligned.",
+    "- Advanced AI Technology — Powered by cutting-edge AI to provide accurate and context-aware suggestions.",
     "",
     "Confirm Email:",
     params.verificationUrl,
     "",
     "If you have any questions, reply to support@smartreplypro.ai",
+    "Happy replying!",
+    "The Smart Reply Pro Team",
     "",
     "Smart Reply Pro",
   ].join("\n");
