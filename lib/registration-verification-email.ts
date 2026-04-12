@@ -66,21 +66,21 @@ function buildVerificationEmailHtml(params: {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Confirm your email</title>
   </head>
-  <body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e5e7eb;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:14px 8px;background:#f3f4f6;">
+  <body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e5e7eb;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:22px 12px;background:#f4f4f5;">
       <tr>
         <td align="center">
-          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;border:1px solid #e5e7eb;border-radius:18px;background:#fafafa;box-shadow:0 8px 22px rgba(15,23,42,0.10);padding:18px;">
+          <table role="presentation" width="704" cellpadding="0" cellspacing="0" style="max-width:704px;width:100%;border:1px solid #dddfe4;border-radius:22px;background:#f8f8f8;box-shadow:0 10px 26px rgba(15,23,42,0.10);padding:14px;">
             <tr>
               <td>
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #d8dee8;border-radius:18px;overflow:hidden;background:radial-gradient(130% 120% at 90% 100%,#262f4d 0%,#1a2238 42%,#12192b 72%,#0f1523 100%);background-color:#111827;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #d9deea;border-radius:20px;overflow:hidden;background:#101827;background-image:radial-gradient(circle at 12% 8%,rgba(255,213,138,0.08),transparent 20%),radial-gradient(circle at 80% 88%,rgba(167,139,250,0.08),transparent 22%),radial-gradient(circle at 50% 60%,rgba(255,255,255,0.03),transparent 35%);">
                   <tr>
                     <td style="padding:0;background:linear-gradient(90deg,#121c31 0%,#11243d 52%,#13365d 100%);border-bottom:1px solid #2b3a58;">
-                      <div style="padding:15px 20px 13px;">
+                      <div style="padding:18px 22px 16px;">
                         <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                           <tr>
                             <td style="vertical-align:middle;">
-                              <svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Smart Reply Pro logo">
+                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Smart Reply Pro logo">
                                 <circle cx="20" cy="20" r="20" fill="#1E2A44"/>
                                 <path d="M7 22.5C7 15.6 12.6 10 19.5 10H21.5C28.4 10 34 15.6 34 22.5C34 29.4 28.4 35 21.5 35H19.5C12.6 35 7 29.4 7 22.5Z" fill="url(#srpLogoGlow)"/>
                                 <circle cx="14.2" cy="15.2" r="3.4" fill="#FFD08B"/>
@@ -94,46 +94,53 @@ function buildVerificationEmailHtml(params: {
                               </svg>
                             </td>
                             <td style="vertical-align:middle;padding-left:10px;font-size:0;line-height:1;">
-                              <span style="font-size:17px;line-height:1.1;font-weight:700;color:#F8FAFC;letter-spacing:-0.02em;">Smart Reply </span>
-                              <span style="font-size:17px;line-height:1.1;font-weight:700;color:#74C6FF;letter-spacing:-0.02em;">Pro</span>
+                              <span style="font-size:18px;line-height:1.1;font-weight:700;color:#F8FAFC;letter-spacing:-0.02em;">Smart Reply </span>
+                              <span style="font-size:18px;line-height:1.1;font-weight:700;color:#74C6FF;letter-spacing:-0.02em;">Pro</span>
                             </td>
                           </tr>
                         </table>
                       </div>
-                      <div style="height:3px;background:linear-gradient(90deg,#FFB26B 0%,#8577F4 52%,#56CBFF 100%);"></div>
+                      <div style="height:3px;background:linear-gradient(90deg,#ff9b54 0%,#8b7bff 52%,#54d1ff 100%);"></div>
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:24px 22px 18px;background-image:radial-gradient(circle at 20% 18%,rgba(255,255,255,0.04),transparent 20%),radial-gradient(circle at 78% 74%,rgba(255,255,255,0.03),transparent 22%);">
-                      <h1 style="margin:0 0 14px;font-size:22px;line-height:1.22;font-weight:700;color:#f8fafc;letter-spacing:-0.02em;">${headingMarkup}</h1>
-                      <p style="margin:0 0 14px;font-size:14px;line-height:1.45;color:#f1f5f9;font-weight:500;">${greetingName}</p>
-                      <p style="margin:0 0 12px;font-size:14px;line-height:1.55;color:#d7e0ef;max-width:500px;">Thank you for signing up for Smart Reply Pro. Please confirm your email address to activate your account and continue using the platform.</p>
-                      <p style="margin:0 0 9px;font-size:14px;line-height:1.55;color:#d7e0ef;max-width:500px;"><strong><em>Top Key Benefits of Smart Reply Pro are:</em></strong></p>
-                      <ul style="margin:0 0 16px 20px;padding:0;color:#d7e0ef;font-size:14px;line-height:1.55;max-width:530px;">
+                    <td style="padding:34px 28px 24px;background-image:radial-gradient(circle at 20% 18%,rgba(255,255,255,0.03),transparent 20%),radial-gradient(circle at 78% 74%,rgba(255,255,255,0.03),transparent 22%);">
+                      <h1 style="margin:0 0 20px;font-size:26px;line-height:1.24;font-weight:700;color:#f8fafc;letter-spacing:-0.02em;">${headingMarkup}</h1>
+                      <p style="margin:0 0 20px;font-size:15px;line-height:1.45;color:#f1f5f9;font-weight:500;">${greetingName}</p>
+                      <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#d7e0ef;max-width:530px;">Thank you for signing up for Smart Reply Pro! We’re excited to have you on board.</p>
+                      <p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#d7e0ef;max-width:530px;">Get ready to enhance your productivity and streamline your communications with our intelligent AI-powered reply generator.</p>
+                      <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#d7e0ef;max-width:530px;"><strong><em>Top Key Benefits of Smart Reply Pro are:</em></strong></p>
+                      <ul style="margin:0 0 20px 24px;padding:0;color:#d7e0ef;font-size:15px;line-height:1.62;max-width:560px;">
                         <li style="margin:0 0 6px;"><strong style="color:#f8fafc;">Human-Like Replies</strong> — Generate natural, context-aware responses that sound real.</li>
-                        <li style="margin:0 0 6px;"><strong style="color:#f8fafc;">Customizable Responses</strong> — Tailor your responses to fit your unique style and tone.</li>
-                        <li style="margin:0;"><strong style="color:#f8fafc;">Advanced AI Technology</strong> — Powered by cutting-edge AI to provide accurate and context-aware suggestions.</li>
+                        <li style="margin:0 0 6px;"><strong style="color:#f8fafc;">Customizable Responses</strong> Tailor your responses to fit your unique style and tone.</li>
+                        <li style="margin:0;"><strong style="color:#f8fafc;">Advanced AI Technology</strong> Powered by cutting-edge AI, Smart Reply Pro learns and adapts to your communication style to provide accurate and context-aware suggestions.</li>
                       </ul>
-                      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
                         <tr>
                           <td style="border-radius:8px;background:linear-gradient(90deg,#58b8d9 0%,#6f69df 100%);">
-                            <a href="${escapeHtml(params.verificationUrl)}" style="display:inline-block;padding:11px 28px;border-radius:8px;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;min-width:126px;text-align:center;">Confirm Email</a>
+                            <a href="${escapeHtml(params.verificationUrl)}" style="display:inline-block;padding:12px 34px;border-radius:8px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;min-width:120px;text-align:center;">Confirm Email</a>
                           </td>
                         </tr>
                       </table>
-                      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#d7e0ef;max-width:500px;">If you have any questions or need assistance, feel free to reach out to us.</p>
-                      <p style="margin:0 0 14px;font-size:14px;line-height:1.55;color:#d7e0ef;max-width:500px;">Happy replying!</p>
-                      <p style="margin:0;font-size:14px;line-height:1.55;color:#8fc8ff;max-width:500px;">The Smart Reply Pro Team</p>
+                      <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#d7e0ef;max-width:530px;">If you have any questions or need assistance, feel free to reach out to us.</p>
+                      <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#d7e0ef;max-width:530px;">Happy replying!</p>
+                      <p style="margin:0;font-size:15px;line-height:1.6;color:#8fc8ff;max-width:530px;">The Smart Reply Pro Team</p>
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:12px 16px;border-top:1px solid #2b3a58;background:rgba(8,13,24,0.42);text-align:center;">
-                      <p style="margin:0;font-size:13px;line-height:1.5;color:#d7e0ef;">Need help? Contact us at <a href="mailto:${TO_SUPPORT_EMAIL}" style="color:#8fc8ff;text-decoration:none;">${TO_SUPPORT_EMAIL}</a></p>
+                    <td style="padding:14px 16px;border-top:1px solid #2b3a58;background:rgba(8,13,24,0.42);text-align:center;">
+                      <p style="margin:0;font-size:13px;line-height:1.5;color:#d7e0ef;">Need help? Contact us at <a href="mailto:support@smartreplypro.ai" style="color:#8fc8ff;text-decoration:none;">support@smartreplypro.ai</a></p>
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-top:1px solid rgba(43,58,88,0.6);background:rgba(8,13,24,0.52);text-align:center;">
-                      <p style="margin:0;font-size:13px;color:#9fb2d3;">Smart Reply Pro</p>
+                    <td style="padding:14px 16px 10px;border-top:1px solid rgba(43,58,88,0.6);background:rgba(8,13,24,0.52);text-align:center;">
+                      <div style="margin:0 auto 16px;width:max-content;">
+                        <span style="display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:rgba(159,178,211,0.18);color:#9fb2d3;font-size:14px;margin:0 6px;">t</span>
+                        <span style="display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:rgba(159,178,211,0.18);color:#9fb2d3;font-size:14px;margin:0 6px;">f</span>
+                        <span style="display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:rgba(159,178,211,0.18);color:#9fb2d3;font-size:14px;margin:0 6px;">in</span>
+                      </div>
+                      <p style="margin:0 0 10px;font-size:13px;color:#b8c3d8;">&nbsp;</p>
+                      <p style="margin:0;font-size:11px;line-height:1.45;color:#8e9ab2;">Smart Reply Pro</p>
                     </td>
                   </tr>
                 </table>
@@ -159,17 +166,19 @@ function buildVerificationEmailText(params: {
     "",
     greeting,
     "",
-    "Thank you for signing up for Smart Reply Pro. Please confirm your email address to activate your account and continue using the platform.",
+    "Thank you for signing up for Smart Reply Pro! We’re excited to have you on board.",
+    "",
+    "Get ready to enhance your productivity and streamline your communications with our intelligent AI-powered reply generator.",
     "",
     "Top Key Benefits of Smart Reply Pro are:",
     "- Human-Like Replies — Generate natural, context-aware responses that sound real.",
-    "- Customizable Responses — Tailor your responses to fit your unique style and tone.",
-    "- Advanced AI Technology — Powered by cutting-edge AI to provide accurate and context-aware suggestions.",
+    "- Customizable Responses Tailor your responses to fit your unique style and tone.",
+    "- Advanced AI Technology Powered by cutting-edge AI, Smart Reply Pro learns and adapts to your communication style to provide accurate and context-aware suggestions.",
     "",
     "Confirm Email:",
     params.verificationUrl,
     "",
-    "If you have any questions, reply to support@smartreplypro.ai",
+    "Need help? Contact us at support@smartreplypro.ai",
     "Happy replying!",
     "The Smart Reply Pro Team",
     "",
