@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendProWaitlistEmailToSupport } from "@/lib/pro-waitlist-email";
+import { ResendEmailError, sendProWaitlistEmailToSupport } from "@/lib/pro-waitlist-email";
 import {
   createProWaitlistEntry,
   isValidWaitlistEmail,
@@ -263,13 +263,18 @@ export async function POST(request: Request) {
 
     if (!result.duplicate) {
       try {
+        const emailFromAddress =
+          process.env.WAITLIST_FROM_EMAIL?.trim() || "Smart Reply Pro <no-reply@smartreplypro.ai>";
         logWaitlistEvent(requestId, "email-send-attempt", {
+          provider: "resend",
           destination: "support@smartreplypro.ai",
+          fromAddress: emailFromAddress,
+          hasResendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
           waitlistEntryId: result.id,
           waitlistEmail: result.email,
         });
 
-        await sendProWaitlistEmailToSupport({
+        const emailResult = await sendProWaitlistEmailToSupport({
           timestampIso: result.createdAt,
           waitlistEmail: result.email,
           userId: result.userId,
@@ -286,19 +291,24 @@ export async function POST(request: Request) {
             status: "sent",
           });
         }
-        logWaitlistEvent(requestId, "email-send-result", {
-          id: result.id,
-          success: true,
+        logWaitlistEvent(requestId, "email-send-success", {
+          provider: "resend",
+          resendId: emailResult.resendId,
           destination: "support@smartreplypro.ai",
+          waitlistEntryId: result.id,
         });
       } catch (emailError) {
+        const isResendError = emailError instanceof ResendEmailError;
         logWaitlistEvent(
           requestId,
-          "email-send-result",
+          "email-send-failure",
           {
-            id: result.id,
-            success: false,
+            provider: "resend",
+            hasResendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
             message: emailError instanceof Error ? emailError.message : "Unknown email error",
+            httpStatus: isResendError ? emailError.httpStatus : null,
+            providerResponse: isResendError ? emailError.resendPayload : null,
+            waitlistEntryId: result.id,
           },
           "error",
         );

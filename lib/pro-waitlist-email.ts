@@ -23,7 +23,25 @@ function getEmailFromAddress() {
   return process.env.WAITLIST_FROM_EMAIL?.trim() || "Smart Reply Pro <no-reply@smartreplypro.ai>";
 }
 
-export async function sendProWaitlistEmailToSupport(input: SendProWaitlistEmailInput) {
+export type SendProWaitlistEmailResult = {
+  resendId: string | null;
+};
+
+export class ResendEmailError extends Error {
+  httpStatus: number;
+  resendPayload: unknown;
+
+  constructor(message: string, httpStatus: number, resendPayload: unknown) {
+    super(message);
+    this.name = "ResendEmailError";
+    this.httpStatus = httpStatus;
+    this.resendPayload = resendPayload;
+  }
+}
+
+export async function sendProWaitlistEmailToSupport(
+  input: SendProWaitlistEmailInput,
+): Promise<SendProWaitlistEmailResult> {
   const apiKey = requireResendApiKey();
 
   const subject = `Pro waitlist submission • ${input.waitlistEmail}`;
@@ -57,7 +75,13 @@ export async function sendProWaitlistEmailToSupport(input: SendProWaitlistEmailI
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    const message = payload?.message || payload?.error || "Failed to send support notification email";
-    throw new Error(message);
+    const message =
+      (typeof payload?.message === "string" ? payload.message : null) ||
+      (typeof payload?.error === "string" ? payload.error : null) ||
+      `Resend HTTP ${response.status}`;
+    throw new ResendEmailError(message, response.status, payload);
   }
+
+  const successPayload = await response.json().catch(() => null);
+  return { resendId: successPayload?.id ?? null };
 }
