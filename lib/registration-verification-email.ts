@@ -81,13 +81,14 @@ function buildVerificationEmailHtml(params: {
                           <tr>
                             <td style="vertical-align:middle;">
                               <svg width="56" height="34" viewBox="0 0 56 34" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Smart Reply Pro logo">
-                                <path d="M8 17C8 10.9249 12.9249 6 19 6H37C43.0751 6 48 10.9249 48 17C48 23.0751 43.0751 28 37 28H19C12.9249 28 8 23.0751 8 17Z" fill="url(#srpMonoGlow)"/>
-                                <path d="M17 12.3H31.8C34.2 12.3 36 13.8 36 16C36 18.4 34.2 19.7 31.8 19.7H23.6C22.9 19.7 22.4 20.1 22.4 20.7C22.4 21.4 23 21.7 23.6 21.7H35.2V24.2H22.8C20.2 24.2 18.6 22.8 18.6 20.8C18.6 18.8 20.3 17.4 22.8 17.4H31.5C32.4 17.4 33 17 33 16.2C33 15.4 32.4 14.9 31.5 14.9H17V12.3Z" fill="#0B1330"/>
-                                <path d="M36.8 12.3H43.8C46.5 12.3 48 13.5 48 15.9C48 17.3 47.4 18.3 46.1 18.9L48.5 24.2H44.8L42.9 19.8H40V24.2H36.8V12.3ZM40 14.9V17.3H43.3C44.1 17.3 44.7 16.9 44.7 16.1C44.7 15.3 44.1 14.9 43.3 14.9H40Z" fill="#0B1330"/>
+                                <circle cx="28" cy="17" r="15" fill="#102144"/>
+                                <path d="M19.5 17C19.5 12.58 23.08 9 27.5 9H34.5C38.92 9 42.5 12.58 42.5 17C42.5 21.42 38.92 25 34.5 25H27.5C23.08 25 19.5 21.42 19.5 17Z" fill="url(#srpRing)"/>
+                                <path d="M22.3 13.1H30.1C31.8 13.1 32.9 14 32.9 15.4C32.9 16.8 31.8 17.7 30.1 17.7H26.3C25.9 17.7 25.7 17.9 25.7 18.2C25.7 18.6 25.9 18.8 26.3 18.8H32.9V20.8H25.7C23.8 20.8 22.6 19.8 22.6 18.3C22.6 16.8 23.8 15.8 25.7 15.8H29.9C30.4 15.8 30.7 15.6 30.7 15.2C30.7 14.8 30.4 14.6 29.9 14.6H22.3V13.1Z" fill="#0F1E3E"/>
+                                <path d="M33.8 13.1H37.5C39.1 13.1 40 13.9 40 15.3C40 16.1 39.6 16.7 38.9 17L40.2 20.8H38.1L37 17.6H35.4V20.8H33.8V13.1ZM35.4 14.6V16.1H37.2C37.7 16.1 38 15.8 38 15.4C38 14.9 37.7 14.6 37.2 14.6H35.4Z" fill="#0F1E3E"/>
                                 <defs>
-                                  <linearGradient id="srpMonoGlow" x1="8" y1="6" x2="48" y2="28" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#4FB3FF"/>
-                                    <stop offset="1" stop-color="#9FE870"/>
+                                  <linearGradient id="srpRing" x1="19.5" y1="9" x2="42.5" y2="25" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#3FAEFF"/>
+                                    <stop offset="1" stop-color="#95E65E"/>
                                   </linearGradient>
                                 </defs>
                               </svg>
