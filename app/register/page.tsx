@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -98,7 +96,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Account created. Redirecting to sign in...");
+      setSuccess("Account created. Check your inbox to confirm your email before signing in.");
       setLoading(false);
 
       setUsername("");
@@ -106,10 +104,7 @@ export default function RegisterPage() {
       setPassword("");
       setConfirmPassword("");
 
-      // Auto-redirect to login after 1 second
-      setTimeout(() => {
-        router.push("/login");
-      }, 1000);
+      // Keep user on this page so they can review verification instructions.
     } catch (e) {
       console.error("Register error:", e);
       setError("Network error. Please try again.");
@@ -144,7 +139,7 @@ export default function RegisterPage() {
               <span className="text-lg">✓</span>
               <div>
                 <p className="text-sm font-medium text-emerald-200">{success}</p>
-                <p className="mt-1 text-xs text-emerald-300/70">Redirecting...</p>
+                <p className="mt-1 text-xs text-emerald-300/70">After verifying, continue to sign in.</p>
               </div>
             </div>
           ) : null}

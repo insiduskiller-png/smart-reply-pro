@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
   const [showResetSuccessMessage, setShowResetSuccessMessage] = useState(false);
+  const [showVerifiedMessage, setShowVerifiedMessage] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const [cooldownSecondsLeft, setCooldownSecondsLeft] = useState(0);
 
@@ -66,6 +67,10 @@ export default function LoginPage() {
       return "We couldn’t sign you in right now. Please try again in a moment.";
     }
 
+    if (status === 403 || normalized.includes("verify your email") || normalized.includes("email not confirmed")) {
+      return "Please verify your email before signing in.";
+    }
+
     if (normalized.includes("email and password required")) {
       return "Enter your email and password to continue.";
     }
@@ -81,6 +86,7 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     setShowExpiredMessage(params.get("expired") === "1");
     setShowResetSuccessMessage(params.get("reset") === "success");
+    setShowVerifiedMessage(params.get("verified") === "1");
 
     const storedUntil = Number(window.sessionStorage.getItem(LOGIN_COOLDOWN_STORAGE_KEY) || "0");
     if (storedUntil > Date.now()) {
@@ -317,6 +323,12 @@ export default function LoginPage() {
           {showResetSuccessMessage && !error ? (
             <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
               Password updated successfully. Sign in with your new password.
+            </div>
+          ) : null}
+
+          {showVerifiedMessage && !error ? (
+            <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+              Email verified successfully. You can now sign in.
             </div>
           ) : null}
 

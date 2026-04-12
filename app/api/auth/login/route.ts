@@ -36,6 +36,16 @@ function isCredentialFailure(error: { status?: number; message?: string } | null
   return normalized.includes("invalid login credentials") || normalized.includes("invalid credentials");
 }
 
+function isEmailNotConfirmedFailure(error: { status?: number; message?: string } | null | undefined) {
+  if (!error) return false;
+  const normalized = String(error.message ?? "").toLowerCase();
+  return (
+    normalized.includes("email not confirmed") ||
+    normalized.includes("email not verified") ||
+    normalized.includes("confirm your email")
+  );
+}
+
 function clearLoginAttemptState(fingerprint: string) {
   loginAttemptState.delete(fingerprint);
 }
@@ -115,6 +125,13 @@ export async function POST(req: Request) {
     if (error) {
       console.error("Supabase auth error:", error);
 
+      if (isEmailNotConfirmedFailure(error)) {
+        return NextResponse.json(
+          { error: "Please verify your email before signing in." },
+          { status: 403 },
+        );
+      }
+
       if (isCredentialFailure(error)) {
         const state = registerFailedAttempt(fingerprint);
 
@@ -144,6 +161,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "We couldn’t sign you in right now. Please try again in a moment." },
         { status: 500 }
+      );
+    }
+
+    if (!data.user?.email_confirmed_at) {
+      return NextResponse.json(
+        { error: "Please verify your email before signing in." },
+        { status: 403 },
       );
     }
 
