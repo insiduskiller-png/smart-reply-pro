@@ -8,6 +8,7 @@ import {
   ProWaitlistError,
   updateProWaitlistNotificationStatus,
 } from "@/lib/pro-waitlist";
+import { enforceRateLimit, extractRequestIp } from "@/lib/rate-limit";
 
 type WaitlistApiResponse = {
   success: boolean;
@@ -106,10 +107,27 @@ export async function POST(request: Request) {
     crypto.randomUUID();
 
   try {
-    const envDiagnostics = getSupabaseEnvDiagnostics();
-    logWaitlistEvent(requestId, "supabase-env-diagnostics", envDiagnostics);
+    // IP-based rate limit: max 5 waitlist submissions per IP per 15 minutes.
+    const ip = extractRequestIp(request);
+    const waitlistRate = enforceRateLimit(`waitlist:${ip}`, 5, 900_000);
+    if (!waitlistRate.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          saved: false,
+          duplicate: false,
+          message: "Too many requests. Please try again later.",
+          errorCode: "RATE_LIMITED",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(waitlistRate.retryAfter ?? 900) },
+        }
+      );
+    }
 
     if (!hasRequiredWaitlistEnv()) {
+      const envDiagnostics = getSupabaseEnvDiagnostics();
       logWaitlistEvent(
         requestId,
         "env-misconfigured",
@@ -267,11 +285,7 @@ export async function POST(request: Request) {
           process.env.WAITLIST_FROM_EMAIL?.trim() || "Smart Reply Pro <no-reply@smartreplypro.ai>";
         logWaitlistEvent(requestId, "email-send-attempt", {
           provider: "resend",
-          destination: "support@smartreplypro.ai",
-          fromAddress: emailFromAddress,
-          hasResendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
           waitlistEntryId: result.id,
-          waitlistEmail: result.email,
         });
 
         const emailResult = await sendProWaitlistEmailToSupport({

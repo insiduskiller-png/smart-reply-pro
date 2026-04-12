@@ -1,3 +1,7 @@
+// WARNING: This rate limiter uses in-memory storage.
+// State resets on serverless cold starts and is NOT shared across concurrent instances.
+// For a high-traffic production deployment, replace `requests` with a Redis-backed
+// store such as @upstash/ratelimit to get consistent, durable rate limiting.
 const requests = new Map<string, { count: number; resetAt: number }>();
 
 export interface RateLimitOptions {
@@ -73,5 +77,25 @@ export function getTierRateLimit(isPro: boolean) {
     limit: isPro ? 30 : 10,
     windowMs: 60_000, // 1 minute
   };
+}
+
+/**
+ * Extract the best-available client IP from a request's headers.
+ *
+ * On Vercel/Cloudflare the `x-forwarded-for` header is set by the edge network
+ * and can be trusted. If you run behind a custom reverse-proxy that does NOT
+ * strip this header, an attacker could spoof it — in that case replace this
+ * function with one that reads from your trusted proxy header only.
+ *
+ * @param req - Standard Web API Request object (works with Next.js App Router)
+ * @returns IP string, e.g. "1.2.3.4", or "unknown" as fallback
+ */
+export function extractRequestIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    // x-forwarded-for can be a comma-separated list; leftmost is the originating client
+    return xff.split(",")[0].trim();
+  }
+  return req.headers.get("x-real-ip") ?? "unknown";
 }
 

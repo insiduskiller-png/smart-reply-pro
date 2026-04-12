@@ -43,7 +43,32 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { profile } = await bootstrapUserProfile(user, { source: "api-usage:post" });
+    const isPro = hasProAccess(profile.subscription_status);
+    const limit = isPro ? 100 : 5;
+
     const today = new Date().toISOString().split("T")[0];
+
+    // Read current usage first so we can enforce hard daily caps.
+    const { data: existing, error: existingError } = await supabaseService
+      .from("usage")
+      .select("count")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .single();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      console.error("Usage read error:", existingError);
+      return NextResponse.json({ error: existingError.message }, { status: 400 });
+    }
+
+    const currentCount = existing?.count ?? 0;
+    if (currentCount >= limit) {
+      return NextResponse.json(
+        { error: "Daily usage limit reached", count: currentCount, limit, plan: isPro ? "pro" : "free" },
+        { status: 429 }
+      );
+    }
 
     // Increment usage count for today
     const { data, error } = await supabaseService
@@ -72,7 +97,7 @@ export async function POST() {
       return NextResponse.json({ error: incrementError.message }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, count: data.count + 1 });
+    return NextResponse.json({ success: true, count: data.count + 1, limit, plan: isPro ? "pro" : "free" });
   } catch (err) {
     console.error("Usage update error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

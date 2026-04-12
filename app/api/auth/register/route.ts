@@ -6,6 +6,7 @@ import {
   RegistrationVerificationEmailError,
   sendRegistrationVerificationEmail,
 } from "@/lib/registration-verification-email";
+import { enforceRateLimit, extractRequestIp } from "@/lib/rate-limit";
 
 function normalizeEmail(value: unknown) {
   return String(value ?? "").trim().toLowerCase();
@@ -34,6 +35,20 @@ function resolveAppUrl(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    // IP-based rate limit: max 5 registration attempts per IP per hour.
+    // This prevents account-creation spam and resource exhaustion.
+    const ip = extractRequestIp(req);
+    const regRate = enforceRateLimit(`register:${ip}`, 5, 3_600_000);
+    if (!regRate.allowed) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(regRate.retryAfter ?? 3600) },
+        }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const email = normalizeEmail(body.email);
     const password = String(body.password ?? "");
@@ -94,11 +109,6 @@ export async function POST(req: Request) {
 
     console.info("register api: verification email send attempt", {
       userId: signupUser.id,
-      hasResendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
-      toAddress: email,
-      fromAddress: "Smart Reply Pro <no-reply@smartreplypro.ai>",
-      replyTo: "support@smartreplypro.ai",
-      redirectTo: verificationRedirectTo,
     });
 
     try {
