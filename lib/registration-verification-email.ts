@@ -54,6 +54,9 @@ function buildVerificationEmailHtml(params: {
   verificationUrl: string;
 }) {
   const greetingName = params.username ? `Hello ${escapeHtml(params.username)},` : "Hello,";
+  const headingMarkup = params.username
+    ? `Welcome to Smart Reply Pro, <span style="color:#7CC6FF;">${escapeHtml(params.username)}!</span>`
+    : params.heading;
 
   return `
 <!doctype html>
@@ -64,14 +67,13 @@ function buildVerificationEmailHtml(params: {
     <title>Confirm your email</title>
   </head>
   <body style="margin:0;padding:0;background:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e5e7eb;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:18px 10px;background:#111827;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:16px 10px;background:#111827;">
       <tr>
         <td align="center">
-          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;border:1px solid #223047;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#0f172a 0%,#121d34 55%,#0f172a 100%);box-shadow:0 10px 30px rgba(2,6,23,0.38);">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;border:1px solid #223047;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#0f172a 0%,#121d34 55%,#0f172a 100%);box-shadow:0 10px 28px rgba(2,6,23,0.36);">
             <tr>
               <td style="padding:0;background:linear-gradient(90deg,#131d34 0%,#112642 52%,#14365f 100%);border-bottom:1px solid #2b3a58;">
-                <div style="height:10px;background:linear-gradient(90deg,#ff9b54 0%,#8b7bff 52%,#54d1ff 100%);"></div>
-                <div style="padding:16px 22px 14px;">
+                <div style="padding:14px 22px 12px;">
                   <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                     <tr>
                       <td style="vertical-align:middle;">
@@ -95,11 +97,12 @@ function buildVerificationEmailHtml(params: {
                     </tr>
                   </table>
                 </div>
+                <div style="height:4px;background:linear-gradient(90deg,#FFB26B 0%,#8577F4 52%,#56CBFF 100%);"></div>
               </td>
             </tr>
             <tr>
-              <td style="padding:24px 26px 22px;">
-                <h1 style="margin:0 0 12px;font-size:46px;line-height:1.12;font-weight:700;color:#f8fafc;letter-spacing:-0.02em;">${params.heading}</h1>
+              <td style="padding:22px 24px 20px;">
+                <h1 style="margin:0 0 12px;font-size:44px;line-height:1.12;font-weight:700;color:#f8fafc;letter-spacing:-0.02em;">${headingMarkup}</h1>
                 <p style="margin:0 0 10px;font-size:16px;line-height:1.45;color:#e2e8f0;font-weight:500;">${greetingName}</p>
                 <p style="margin:0 0 10px;font-size:16px;line-height:1.5;color:#d7e0ef;">Thank you for signing up for Smart Reply Pro. Please confirm your email address to activate your account and continue using the platform.</p>
                 <p style="margin:0 0 10px;font-size:16px;line-height:1.5;color:#d7e0ef;">Top Key Benefits of Smart Reply Pro are:</p>
