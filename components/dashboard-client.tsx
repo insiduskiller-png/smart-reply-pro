@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import html2canvas from "html2canvas";
 import EditableReplyPanel from "@/components/editable-reply-panel";
 import ProFeaturePreview from "@/components/pro-feature-preview";
@@ -19,6 +19,7 @@ type Profile = {
 type Reply = {
   id: string;
   input: string;
+  context?: string | null;
   tone: string;
   reply: string;
   created_at: string;
@@ -243,58 +244,49 @@ export default function DashboardClient({
     setGeneratedReplyAction(index, { isProcessing: true });
 
     try {
-      let replyId = canReuseExistingReply ? currentState?.replyId : undefined;
-
-      if (!replyId) {
-        const saveResponse = await fetch("/api/replies/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            input,
-            context: context || undefined,
-            tone: `${tone} • ${getReplyVariantLabel(index)}`,
-            reply: replyText,
-          }),
-        });
-
-        const savePayload = await saveResponse.json().catch(() => null);
-        if (saveResponse.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-
-        if (!saveResponse.ok || !savePayload?.reply?.id) {
-          throw new Error(savePayload?.error || "Unable to save reply.");
-        }
-
-        replyId = savePayload.reply.id as string;
-      }
-
-      const favoriteResponse = await fetch("/api/replies/favorite", {
+      const saveResponse = await fetch("/api/replies/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ replyId, favorite: true }),
+        body: JSON.stringify({
+          input,
+          context: context || undefined,
+          tone: `${tone} • ${getReplyVariantLabel(index)}`,
+          reply: replyText,
+          favorite: true,
+        }),
       });
-      const favoritePayload = await favoriteResponse.json().catch(() => null);
 
-      if (favoriteResponse.status === 401) {
+      const savePayload = await saveResponse.json().catch(() => null);
+
+      if (saveResponse.status === 401) {
         window.location.href = "/login";
         return;
       }
 
-      if (!favoriteResponse.ok) {
-        throw new Error(favoritePayload?.error || "Unable to favorite reply.");
+      if (!saveResponse.ok || !savePayload?.reply?.id) {
+        throw new Error(savePayload?.error || "Unable to save reply.");
       }
 
+      const savedReply = savePayload.reply as Reply;
+
+      setFavorites((prev) => upsertReplyById(prev, savedReply));
+      setHistory((prev) => upsertReplyById(prev, savedReply).slice(0, 30));
+
       replaceGeneratedReplyAction(index, {
-        replyId,
+        replyId: savedReply.id,
         savedText: replyText,
         favorited: true,
         isProcessing: false,
-        feedback: { message: "Saved.", tone: "success" },
+        feedback: {
+          message: savePayload?.duplicate ? "Already in Favorites." : "Saved to Favorites.",
+          tone: "success",
+        },
       });
 
-      showReplyFeedback(index, { message: "Saved.", tone: "success" });
+      showReplyFeedback(index, {
+        message: savePayload?.duplicate ? "Already in Favorites." : "Saved to Favorites.",
+        tone: "success",
+      });
     } catch {
       setGeneratedReplyAction(index, { isProcessing: false });
       showReplyFeedback(index, { message: "Save failed.", tone: "info" });
@@ -521,46 +513,55 @@ export default function DashboardClient({
     }
   }, [activeProfileId]);
 
+  const fetchHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const response = await fetch("/api/replies/history");
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.replies) {
+        setHistory(data.replies);
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  const fetchFavorites = useCallback(async () => {
+    setFavoritesLoading(true);
+    try {
+      const response = await fetch("/api/replies/favorites");
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.replies) {
+        setFavorites(data.replies);
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setFavoritesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (tab === "history") {
-      async function fetchHistory() {
-        setHistoryLoading(true);
-        try {
-          const response = await fetch("/api/replies/history");
-          const data = await response.json().catch(() => null);
-          if (response.ok && data?.replies) {
-            setHistory(data.replies);
-          }
-        } catch {
-          // Silent fail
-        } finally {
-          setHistoryLoading(false);
-        }
-      }
-      fetchHistory();
+      void fetchHistory();
     } else if (tab === "favorites") {
-      async function fetchFavorites() {
-        setFavoritesLoading(true);
-        try {
-          const response = await fetch("/api/replies/favorites");
-          const data = await response.json().catch(() => null);
-          if (response.ok && data?.replies) {
-            setFavorites(data.replies);
-          }
-        } catch {
-          // Silent fail
-        } finally {
-          setFavoritesLoading(false);
-        }
-      }
-      fetchFavorites();
+      void fetchFavorites();
     }
-  }, [tab]);
+  }, [fetchFavorites, fetchHistory, tab]);
 
   function handleUpgrade() {
     if (isPro) return;
     setUpgradeReason("rewrite");
     setShowUpgradeModal(true);
+  }
+
+  function upsertReplyById(items: Reply[], reply: Reply) {
+    const filtered = items.filter((item) => item.id !== reply.id);
+    return [reply, ...filtered].sort((left, right) => {
+      return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
+    });
   }
 
   async function toggleFavorite(replyId: string, currentFavorite: boolean) {
@@ -570,13 +571,32 @@ export default function DashboardClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ replyId, favorite: !currentFavorite }),
       });
-      if (response.ok) {
-        // Update local state
-        if (tab === "history") {
-          setHistory(history.map(r => r.id === replyId ? { ...r, favorite: !currentFavorite } : r));
-        } else if (tab === "favorites") {
-          setFavorites(favorites.map(r => r.id === replyId ? { ...r, favorite: !currentFavorite } : r));
-        }
+      const payload = await response.json().catch(() => null);
+      if (response.ok && payload?.reply) {
+        const updatedReply = payload.reply as Reply;
+
+        setHistory((prev) => prev.map((item) => (item.id === replyId ? { ...item, favorite: updatedReply.favorite } : item)));
+        setFavorites((prev) => {
+          if (updatedReply.favorite) {
+            return upsertReplyById(prev, updatedReply);
+          }
+
+          return prev.filter((item) => item.id !== replyId);
+        });
+
+        setGeneratedReplyActions((prev) => {
+          const next = { ...prev };
+          for (const key of Object.keys(next)) {
+            const index = Number(key);
+            if (next[index]?.replyId === replyId) {
+              next[index] = {
+                ...next[index],
+                favorited: updatedReply.favorite,
+              };
+            }
+          }
+          return next;
+        });
       }
     } catch {
       // Silent fail
@@ -755,19 +775,22 @@ export default function DashboardClient({
             body: JSON.stringify({
               input,
               context: context || undefined,
-              tone,
+              tone: `${tone} • ${getReplyVariantLabel(0)}`,
               reply: data.outputs[0],
+              favorite: false,
             }),
           });
           const savePayload = await saveResponse.json().catch(() => null);
           if (saveResponse.ok && savePayload?.reply?.id) {
+            const savedReply = savePayload.reply as Reply;
             replaceGeneratedReplyAction(0, {
-              replyId: savePayload.reply.id as string,
+              replyId: savedReply.id,
               savedText: data.outputs[0],
-              favorited: false,
+              favorited: Boolean(savedReply.favorite),
               isProcessing: false,
               feedback: null,
             });
+            setHistory((prev) => upsertReplyById(prev, savedReply).slice(0, 30));
           }
         } catch {
           // Silent fail - don't block generation
@@ -1360,7 +1383,7 @@ export default function DashboardClient({
           {historyLoading ? (
             <p className="text-sm text-slate-400">Loading history...</p>
           ) : history.length === 0 ? (
-            <p className="text-sm text-slate-400">No replies yet.</p>
+            <p className="text-sm text-slate-400">No recent replies from the last 2 days.</p>
           ) : (
             history.map((item) => (
               <div key={item.id} className="card p-4">

@@ -9,12 +9,15 @@ export async function GET() {
   }
 
   try {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
     const { data, error } = await supabaseService
       .from("replies")
       .select("*")
       .eq("user_id", user.id)
+      .gte("created_at", twoDaysAgo)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(30);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
