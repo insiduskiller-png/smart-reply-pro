@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { requireUser } from "@/lib/auth";
-import { getSupabaseEnv } from "@/lib/env";
-import { sanitizeText } from "@/lib/security";
+import { getSupabaseEnv, resolveAppUrl } from "@/lib/env";
+import { isValidEmail, normalizeEmail } from "@/lib/security";
 
 function authHeaders(bearer: string) {
   const { supabaseAnonKey } = getSupabaseEnv();
@@ -25,10 +25,18 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const email = sanitizeText(body.email, 320);
+  const email = normalizeEmail(body.email);
 
-  if (!email) {
-    return NextResponse.json({ error: "Email is required" }, { status: 400 });
+  if (!email || !isValidEmail(email)) {
+    return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
+  }
+
+  if (!user.email) {
+    return NextResponse.json({ error: "Current user email not found" }, { status: 400 });
+  }
+
+  if (email === String(user.email).toLowerCase()) {
+    return NextResponse.json({ error: "Enter a different email address" }, { status: 400 });
   }
 
   const store = await cookies();
@@ -39,11 +47,11 @@ export async function POST(request: Request) {
 
   try {
     const { supabaseUrl } = getSupabaseEnv();
-    const origin = new URL(request.url).origin;
+    const emailRedirectTo = new URL("/account?email_change=verified", resolveAppUrl(request)).toString();
     const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
       method: "PUT",
       headers: authHeaders(accessToken),
-      body: JSON.stringify({ email, email_redirect_to: `${origin}/account` }),
+      body: JSON.stringify({ email, email_redirect_to: emailRedirectTo }),
       cache: "no-store",
     });
 
@@ -51,7 +59,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: await parseError(response) }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      verificationRequired: true,
+      pendingEmail: email,
+      message: "Check your inbox to verify this email change. Your current email stays active until verification is complete.",
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to update email" },

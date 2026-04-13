@@ -227,7 +227,7 @@ export default function AccountClient() {
         setError(payload?.error || "Unable to send reset email.");
         return;
       }
-      setSuccess("Password reset email sent.");
+      setSuccess(payload?.message || "Password reset email sent.");
     } catch {
       setError("Unable to send reset email.");
     } finally {
@@ -255,7 +255,7 @@ export default function AccountClient() {
         setError(payload?.error || "Unable to update email.");
         return;
       }
-      setSuccess("Email update requested. Please confirm via email.");
+      setSuccess(payload?.message || "Email update requested. Please confirm via email.");
     } catch {
       setError("Unable to update email.");
     } finally {
@@ -367,21 +367,29 @@ export default function AccountClient() {
               </div>
 
               {editingSection === "email" ? (
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  <input
-                    className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Email"
-                  />
-                  <button
-                    type="button"
-                    className="h-11 rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
-                    onClick={handleEmailChange}
-                    disabled={savingEmail}
-                  >
-                    {savingEmail ? "Saving..." : "Save Email"}
-                  </button>
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <input
+                      className="h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-sm"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="Email"
+                    />
+                    <button
+                      type="button"
+                      className="h-11 rounded-md bg-white px-4 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:bg-slate-200 disabled:opacity-60"
+                      onClick={handleEmailChange}
+                      disabled={savingEmail}
+                    >
+                      {savingEmail ? "Sending..." : "Verify New Email"}
+                    </button>
+                  </div>
+                  <p className="text-sm text-slate-400">
+                    For security, your current email stays active until the new email is verified.
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    Need help? Contact <a href="mailto:support@smartreplypro.ai" className="text-sky-400 hover:text-sky-300">support@smartreplypro.ai</a>
+                  </p>
                 </div>
               ) : null}
             </div>
@@ -401,6 +409,12 @@ export default function AccountClient() {
                   {sendingReset ? "Sending..." : "Send Reset Link"}
                 </button>
               </div>
+              <p className="mt-3 text-sm text-slate-400">
+                We’ll email a secure password reset link to your current address.
+              </p>
+              <p className="mt-1 text-sm text-slate-400">
+                Need help? Contact <a href="mailto:support@smartreplypro.ai" className="text-sky-400 hover:text-sky-300">support@smartreplypro.ai</a>
+              </p>
             </div>
           </div>
         </section>

@@ -46,6 +46,28 @@ export function getStripeEnv() {
   };
 }
 
+export function resolveAppUrl(request?: Request) {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configured) {
+    try {
+      return new URL(configured).origin;
+    } catch {
+      // fall through to request origin
+    }
+  }
+
+  if (request) {
+    try {
+      return new URL(request.url).origin;
+    } catch {
+      // fall through to default
+    }
+  }
+
+  return "https://smartreplypro.ai";
+}
+
 export function validateProductionEnv() {
   getSupabaseEnv();
   getOpenAiEnv();

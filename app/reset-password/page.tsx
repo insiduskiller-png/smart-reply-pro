@@ -216,6 +216,10 @@ export default function ResetPasswordPage() {
               Request password reset
             </Link>
           </div>
+
+          <div className="mt-3 text-center text-sm text-slate-400">
+            Need help? Contact <a href="mailto:support@smartreplypro.ai" className="font-medium text-sky-400 transition hover:text-sky-300">support@smartreplypro.ai</a>
+          </div>
         </form>
       </div>
     </main>

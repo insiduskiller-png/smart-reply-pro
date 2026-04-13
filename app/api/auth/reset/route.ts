@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { sendPasswordResetEmail } from "@/lib/supabase-auth";
+import { sendPasswordResetEmail } from "@/lib/password-reset-email";
+import { resolveAppUrl } from "@/lib/env";
 import { isValidEmail, normalizeEmail } from "@/lib/security";
 
 export async function POST(request: Request) {
@@ -11,9 +12,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
     }
 
-    const requestOrigin = new URL(request.url).origin;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestOrigin;
-    const redirectUrl = new URL("/reset-password", appUrl).toString();
+    const redirectUrl = new URL("/reset-password", resolveAppUrl(request)).toString();
 
     try {
       await sendPasswordResetEmail(email, redirectUrl);
