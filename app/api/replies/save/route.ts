@@ -6,6 +6,7 @@ import { sanitizeText } from "@/lib/security";
 export async function POST(request: Request) {
   const user = await requireUser();
   if (!user) {
+    console.info("[replies.save] unauthorized");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -16,6 +17,15 @@ export async function POST(request: Request) {
     const tone = sanitizeText(body.tone, 64);
     const reply = sanitizeText(body.reply, 4000);
     const favorite = body.favorite === true;
+
+    console.info("[replies.save] request", {
+      userId: user.id,
+      hasInput: Boolean(input),
+      hasReply: Boolean(reply),
+      hasContext: Boolean(context),
+      tone: tone || "Professional",
+      favorite,
+    });
 
     if (!input || !reply) {
       return NextResponse.json(
@@ -41,10 +51,18 @@ export async function POST(request: Request) {
     const { data: existingReply, error: existingError } = await existingQuery.maybeSingle();
 
     if (existingError) {
+      console.error("[replies.save] existing lookup failed", { userId: user.id, message: existingError.message });
       return NextResponse.json({ error: existingError.message }, { status: 400 });
     }
 
     if (existingReply) {
+      console.info("[replies.save] existing reply found", {
+        userId: user.id,
+        replyId: existingReply.id,
+        alreadyFavorite: Boolean(existingReply.favorite),
+        requestedFavorite: favorite,
+      });
+
       if (favorite && !existingReply.favorite) {
         const { data: updatedReply, error: updateError } = await supabaseService
           .from("replies")
@@ -54,12 +72,16 @@ export async function POST(request: Request) {
           .single();
 
         if (updateError) {
+          console.error("[replies.save] favorite update failed", { userId: user.id, replyId: existingReply.id, message: updateError.message });
           return NextResponse.json({ error: updateError.message }, { status: 400 });
         }
+
+        console.info("[replies.save] favorite update complete", { userId: user.id, replyId: updatedReply.id });
 
         return NextResponse.json({ reply: updatedReply, success: true, created: false, duplicate: false });
       }
 
+      console.info("[replies.save] duplicate reply returned", { userId: user.id, replyId: existingReply.id });
       return NextResponse.json({ reply: existingReply, success: true, created: false, duplicate: true });
     }
 
@@ -77,8 +99,11 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
+      console.error("[replies.save] insert failed", { userId: user.id, message: error.message });
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    console.info("[replies.save] insert complete", { userId: user.id, replyId: data.id, favorite: Boolean(data.favorite) });
 
     return NextResponse.json({ reply: data, success: true, created: true, duplicate: false });
   } catch (err) {

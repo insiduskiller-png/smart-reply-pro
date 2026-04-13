@@ -5,6 +5,7 @@ import { supabaseService } from "@/lib/supabase";
 export async function POST(request: Request) {
   const user = await requireUser();
   if (!user) {
+    console.info("[replies.favorite] unauthorized");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -12,6 +13,8 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const replyId = body.replyId as string;
     const favorite = body.favorite as boolean;
+
+    console.info("[replies.favorite] request", { userId: user.id, replyId, favorite });
 
     if (!replyId) {
       return NextResponse.json(
@@ -29,6 +32,7 @@ export async function POST(request: Request) {
       .single();
 
     if (checkError || !existingReply) {
+      console.error("[replies.favorite] reply not found", { userId: user.id, replyId, message: checkError?.message });
       return NextResponse.json(
         { error: "Reply not found" },
         { status: 404 }
@@ -44,8 +48,11 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
+      console.error("[replies.favorite] update failed", { userId: user.id, replyId, message: error.message });
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    console.info("[replies.favorite] update complete", { userId: user.id, replyId, favorite: data.favorite });
 
     return NextResponse.json({ reply: data, success: true });
   } catch (err) {

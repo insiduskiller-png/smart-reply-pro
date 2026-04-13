@@ -5,10 +5,13 @@ import { supabaseService } from "@/lib/supabase";
 export async function GET() {
   const user = await requireUser();
   if (!user) {
+    console.info("[replies.favorites] unauthorized");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    console.info("[replies.favorites] request", { userId: user.id });
+
     const { data, error } = await supabaseService
       .from("replies")
       .select("*")
@@ -18,8 +21,11 @@ export async function GET() {
       .limit(20);
 
     if (error) {
+      console.error("[replies.favorites] query failed", { userId: user.id, message: error.message });
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    console.info("[replies.favorites] query complete", { userId: user.id, count: data?.length ?? 0 });
 
     return NextResponse.json({ replies: data || [] });
   } catch (err) {
