@@ -208,13 +208,29 @@ export default function DashboardClient({
       body: replyText,
     });
 
-    window.location.href = `mailto:?${params.toString()}`;
+    // Use a temporary link element so window.location is never mutated.
+    // Mutating window.location.href with a mailto: URI can navigate the page
+    // away on browsers/OS configurations that don't handle the scheme natively.
+    const link = document.createElement("a");
+    link.href = `mailto:?${params.toString()}`;
+    link.setAttribute("rel", "noopener noreferrer");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
     showReplyFeedback(index, { message: "Email draft opened.", tone: "info" });
   }
 
   async function saveGeneratedReply(index: number) {
     const replyText = outputs[index];
     if (!replyText?.trim()) return;
+
+    // Do not start a save/favorite while generation is already in flight.
+    // A concurrent 401 from the save API would redirect to login mid-generation.
+    if (loading) {
+      showReplyFeedback(index, { message: "Wait for generation to finish.", tone: "info" });
+      return;
+    }
 
     const currentState = generatedReplyActions[index];
     const canReuseExistingReply = Boolean(currentState?.replyId) && currentState?.savedText === replyText;
@@ -678,6 +694,13 @@ export default function DashboardClient({
       setLastSubmittedInput(input);
     }
 
+    console.info("[generate] started", {
+      profileId: activeProfileId,
+      tone,
+      hasInput: Boolean(input?.trim()),
+      hasContext: Boolean(context?.trim()),
+    });
+
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -691,8 +714,23 @@ export default function DashboardClient({
           template: selectedTemplate || undefined,
         }),
       });
+
+      console.info("[generate] response", { status: response.status, ok: response.ok });
+
       const data = await response.json().catch(() => null);
+
+      // Session expired or cookie missing – redirect cleanly instead of
+      // surfacing the raw "Unauthorized" API error string to the user.
+      if (response.status === 401) {
+        console.info("[generate] 401 – session expired, redirecting to login");
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?expired=1";
+        }
+        return;
+      }
+
       if (!response.ok) {
+        console.info("[generate] error", { status: response.status, error: data?.error });
         setError(data?.error || "Generation failed.");
         return;
       }
