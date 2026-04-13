@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
+import EditableReplyPanel from "@/components/editable-reply-panel";
 import ProFeaturePreview from "@/components/pro-feature-preview";
 import TemplateSelector, { type TemplateType } from "@/components/template-selector";
 import { hasProAccess, PRO_ENABLED, PRO_WAITLIST_HREF } from "@/lib/billing";
@@ -54,6 +55,19 @@ type ReplyAnalysis = {
   tone_detected: string;
   pressure_level: number;
   manipulation_risk: "None" | "Low" | "Medium" | "High";
+};
+
+type ReplyCardFeedback = {
+  message: string;
+  tone: "success" | "info";
+};
+
+type GeneratedReplyActionState = {
+  replyId?: string;
+  savedText?: string;
+  favorited?: boolean;
+  isProcessing?: boolean;
+  feedback?: ReplyCardFeedback | null;
 };
 
 type RewriteMode = "Lawyer Mode" | "Negotiator Mode" | "Manager Mode";
@@ -118,10 +132,164 @@ export default function DashboardClient({
   });
   const [lastSubmittedInput, setLastSubmittedInput] = useState("");
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const replyFeedbackTimeoutsRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const [generatedReplyActions, setGeneratedReplyActions] = useState<Record<number, GeneratedReplyActionState>>({});
 
   const isPro = hasProAccess(profile.subscription_status);
   const isProAvailable = PRO_ENABLED;
   const isPremiumStyle = preTones.includes(tone);
+
+  function setGeneratedReplyAction(index: number, updates: Partial<GeneratedReplyActionState>) {
+    setGeneratedReplyActions((prev) => ({
+      ...prev,
+      [index]: {
+        ...prev[index],
+        ...updates,
+      },
+    }));
+  }
+
+  function replaceGeneratedReplyAction(index: number, nextState: GeneratedReplyActionState) {
+    setGeneratedReplyActions((prev) => ({
+      ...prev,
+      [index]: nextState,
+    }));
+  }
+
+  function clearGeneratedReplyActions() {
+    Object.values(replyFeedbackTimeoutsRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
+    replyFeedbackTimeoutsRef.current = {};
+    setGeneratedReplyActions({});
+  }
+
+  function getReplyVariantLabel(index: number) {
+    return ["Calm", "Assertive", "Strategic"][index] || `Reply ${index + 1}`;
+  }
+
+  function showReplyFeedback(index: number, feedback: ReplyCardFeedback) {
+    const existingTimeout = replyFeedbackTimeoutsRef.current[index];
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    setGeneratedReplyAction(index, { feedback });
+    replyFeedbackTimeoutsRef.current[index] = setTimeout(() => {
+      setGeneratedReplyAction(index, { feedback: null });
+      delete replyFeedbackTimeoutsRef.current[index];
+    }, 2200);
+  }
+
+  function updateOutputText(index: number, nextText: string) {
+    setOutputs((prev) => {
+      const next = [...prev];
+      next[index] = nextText;
+      return next;
+    });
+  }
+
+  async function copyGeneratedReply(index: number) {
+    const replyText = outputs[index];
+    if (!replyText) return;
+
+    try {
+      await navigator.clipboard.writeText(replyText);
+      showReplyFeedback(index, { message: "Copied.", tone: "success" });
+    } catch {
+      showReplyFeedback(index, { message: "Copy failed.", tone: "info" });
+    }
+  }
+
+  function openGeneratedReplyEmailDraft(index: number) {
+    const replyText = outputs[index];
+    if (!replyText || typeof window === "undefined") return;
+
+    const params = new URLSearchParams({
+      subject: `Smart Reply Pro • ${getReplyVariantLabel(index)} draft`,
+      body: replyText,
+    });
+
+    window.location.href = `mailto:?${params.toString()}`;
+    showReplyFeedback(index, { message: "Email draft opened.", tone: "info" });
+  }
+
+  async function saveGeneratedReply(index: number) {
+    const replyText = outputs[index];
+    if (!replyText?.trim()) return;
+
+    const currentState = generatedReplyActions[index];
+    const canReuseExistingReply = Boolean(currentState?.replyId) && currentState?.savedText === replyText;
+
+    if (currentState?.favorited && canReuseExistingReply) {
+      showReplyFeedback(index, { message: "Already saved.", tone: "success" });
+      return;
+    }
+
+    setGeneratedReplyAction(index, { isProcessing: true });
+
+    try {
+      let replyId = canReuseExistingReply ? currentState?.replyId : undefined;
+
+      if (!replyId) {
+        const saveResponse = await fetch("/api/replies/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            input,
+            context: context || undefined,
+            tone: `${tone} • ${getReplyVariantLabel(index)}`,
+            reply: replyText,
+          }),
+        });
+
+        const savePayload = await saveResponse.json().catch(() => null);
+        if (saveResponse.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+
+        if (!saveResponse.ok || !savePayload?.reply?.id) {
+          throw new Error(savePayload?.error || "Unable to save reply.");
+        }
+
+        replyId = savePayload.reply.id as string;
+      }
+
+      const favoriteResponse = await fetch("/api/replies/favorite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ replyId, favorite: true }),
+      });
+      const favoritePayload = await favoriteResponse.json().catch(() => null);
+
+      if (favoriteResponse.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+
+      if (!favoriteResponse.ok) {
+        throw new Error(favoritePayload?.error || "Unable to favorite reply.");
+      }
+
+      replaceGeneratedReplyAction(index, {
+        replyId,
+        savedText: replyText,
+        favorited: true,
+        isProcessing: false,
+        feedback: { message: "Saved.", tone: "success" },
+      });
+
+      showReplyFeedback(index, { message: "Saved.", tone: "success" });
+    } catch {
+      setGeneratedReplyAction(index, { isProcessing: false });
+      showReplyFeedback(index, { message: "Save failed.", tone: "info" });
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      Object.values(replyFeedbackTimeoutsRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
+    };
+  }, []);
 
   async function fetchProfiles(preferredProfileId?: string) {
     setProfilesLoading(true);
@@ -244,6 +412,7 @@ export default function DashboardClient({
         setContext("");
         setOutputs([]);
         setOriginalOutputs([]);
+        clearGeneratedReplyActions();
         setToneDetection("");
         setGenerationAnalyses([]);
         setRecommendedIndex(null);
@@ -502,6 +671,7 @@ export default function DashboardClient({
     setError("");
     setStyleWarning("");
     setQuickRewriteLoading(null);
+    clearGeneratedReplyActions();
 
     if (input !== lastSubmittedInput) {
       setRewriteCounts({ calm: 0, assertive: 0, strategic: 0 });
@@ -541,7 +711,7 @@ export default function DashboardClient({
       // Save first reply to history
       if (data?.outputs?.[0]) {
         try {
-          await fetch("/api/replies/save", {
+          const saveResponse = await fetch("/api/replies/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -551,6 +721,16 @@ export default function DashboardClient({
               reply: data.outputs[0],
             }),
           });
+          const savePayload = await saveResponse.json().catch(() => null);
+          if (saveResponse.ok && savePayload?.reply?.id) {
+            replaceGeneratedReplyAction(0, {
+              replyId: savePayload.reply.id as string,
+              savedText: data.outputs[0],
+              favorited: false,
+              isProcessing: false,
+              feedback: null,
+            });
+          }
         } catch {
           // Silent fail - don't block generation
         }
@@ -620,6 +800,8 @@ export default function DashboardClient({
         return updated;
       });
 
+      setGeneratedReplyAction(targetIndex, { favorited: false });
+
       setOriginalOutputs((prev) => {
         const updated = [...prev];
         updated[targetIndex] = nextOutputs[targetIndex];
@@ -687,6 +869,8 @@ export default function DashboardClient({
         return next;
       });
 
+      setGeneratedReplyAction(index, { favorited: false });
+
       try {
         await fetch("/api/replies/save", {
           method: "POST",
@@ -709,7 +893,7 @@ export default function DashboardClient({
   }
 
   async function quickRewriteOutput(index: number, mode: QuickRewriteMode) {
-    const sourceReply = originalOutputs[index] ?? outputs[index];
+    const sourceReply = outputs[index] ?? originalOutputs[index];
     if (!sourceReply) return;
 
     setQuickRewriteLoading({ index, mode });
@@ -747,6 +931,8 @@ export default function DashboardClient({
         next[index] = rewrittenReply;
         return next;
       });
+
+      setGeneratedReplyAction(index, { favorited: false });
     } catch {
       setError("Network error while quick rewriting.");
     } finally {
@@ -1063,29 +1249,16 @@ export default function DashboardClient({
                     </div>
                   )}
                   
-                  <p className="mb-4 whitespace-pre-wrap text-base leading-relaxed text-slate-100 md:text-sm md:leading-normal">{output}</p>
-
-                  {/* Copy/Share Actions */}
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    <button 
-                      onClick={() => navigator.clipboard.writeText(output)}
-                      className="flex items-center gap-2 rounded-md bg-sky-500/20 px-3 py-2 text-xs font-medium text-sky-300 hover:bg-sky-500/30 transition-colors"
-                    >
-                      📋 Copy Reply
-                    </button>
-                    <button 
-                      onClick={() => shareReply(output)}
-                      className="flex items-center gap-2 rounded-md border border-slate-600 px-3 py-2 text-xs font-medium text-slate-300 hover:border-slate-500 hover:text-slate-200 transition-colors"
-                    >
-                      📤 Share
-                    </button>
-                    <button 
-                      onClick={() => exportAsImage(output, tone)}
-                      className="hidden flex-items-center gap-2 rounded-md border border-slate-600 px-3 py-2 text-xs font-medium text-slate-300 hover:border-slate-500 hover:text-slate-200 transition-colors md:flex"
-                    >
-                      🖼️ Export
-                    </button>
-                  </div>
+                  <EditableReplyPanel
+                    text={output}
+                    onTextChange={(nextText) => updateOutputText(index, nextText)}
+                    onCopy={() => copyGeneratedReply(index)}
+                    onSave={() => saveGeneratedReply(index)}
+                    onOpenEmailDraft={() => openGeneratedReplyEmailDraft(index)}
+                    isSaving={Boolean(generatedReplyActions[index]?.isProcessing)}
+                    isSaved={Boolean(generatedReplyActions[index]?.favorited && generatedReplyActions[index]?.savedText === output)}
+                    feedback={generatedReplyActions[index]?.feedback ?? null}
+                  />
 
                     <div className="space-y-3">
                     <div className="rounded-md border border-slate-600 bg-slate-900/60 p-3 shadow-sm">
