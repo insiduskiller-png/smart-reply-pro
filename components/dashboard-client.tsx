@@ -689,6 +689,38 @@ export default function DashboardClient({
     }
   }
 
+  async function deleteFromHistory(replyId: string) {
+    try {
+      const response = await fetch("/api/replies/history-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ replyId }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (response.ok && payload?.success) {
+        setHistory((prev) => prev.filter((item) => item.id !== replyId));
+      }
+    } catch {
+      // Silent fail
+    }
+  }
+
+  async function deleteFromFavorites(replyId: string) {
+    try {
+      const response = await fetch("/api/replies/favorite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ replyId, favorite: false }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (response.ok && payload?.success) {
+        setFavorites((prev) => prev.filter((item) => item.id !== replyId));
+      }
+    } catch {
+      // Silent fail
+    }
+  }
+
   async function suggestBestTone(message: string) {
     if (!message.trim() || message.length < 10) return;
 
@@ -1516,29 +1548,11 @@ export default function DashboardClient({
                   </div>
                   <div className="flex gap-2">
                     <button
-                      className={`text-lg ${item.favorite ? "text-yellow-400" : "text-slate-400 hover:text-yellow-400"}`}
-                      onClick={() => toggleFavorite(item.id, item.favorite || false)}
-                      title={item.favorite ? "Remove from favorites" : "Add to favorites"}
+                      className="text-xs text-rose-400 hover:text-rose-300"
+                      onClick={() => deleteFromHistory(item.id)}
+                      title="Delete from history"
                     >
-                      ★
-                    </button>
-                    <button
-                      className="text-xs text-sky-400 hover:text-sky-300"
-                      onClick={() => navigator.clipboard.writeText(item.reply)}
-                    >
-                      Copy
-                    </button>
-                    <button
-                      className="text-xs text-sky-400 hover:text-sky-300"
-                      onClick={() => shareReply(item.reply)}
-                    >
-                      Share
-                    </button>
-                    <button
-                      className="text-xs text-sky-400 hover:text-sky-300"
-                      onClick={() => exportAsImage(item.reply, item.tone)}
-                    >
-                      Export
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -1573,29 +1587,11 @@ export default function DashboardClient({
                   </div>
                   <div className="flex gap-2">
                     <button
-                      className={`text-lg ${item.favorite ? "text-yellow-400" : "text-slate-400 hover:text-yellow-400"}`}
-                      onClick={() => toggleFavorite(item.id, item.favorite || false)}
-                      title={item.favorite ? "Remove from favorites" : "Add to favorites"}
+                      className="text-xs text-rose-400 hover:text-rose-300"
+                      onClick={() => deleteFromFavorites(item.id)}
+                      title="Delete from favorites"
                     >
-                      ★
-                    </button>
-                    <button
-                      className="text-xs text-sky-400 hover:text-sky-300"
-                      onClick={() => navigator.clipboard.writeText(item.reply)}
-                    >
-                      Copy
-                    </button>
-                    <button
-                      className="text-xs text-sky-400 hover:text-sky-300"
-                      onClick={() => shareReply(item.reply)}
-                    >
-                      Share
-                    </button>
-                    <button
-                      className="text-xs text-sky-400 hover:text-sky-300"
-                      onClick={() => exportAsImage(item.reply, item.tone)}
-                    >
-                      Export
+                      Delete
                     </button>
                   </div>
                 </div>
