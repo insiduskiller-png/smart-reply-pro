@@ -4,6 +4,7 @@ import { FAVORITE_CONTEXT_PREFIX, isMissingFavoriteColumnError, serializeReplyRo
 import { supabaseService } from "@/lib/supabase";
 
 export async function GET() {
+  console.info("favorites-read-route-hit", { route: "/api/replies/favorites" });
   const user = await requireUser();
   if (!user) {
     console.info("[replies.favorites] unauthorized");
@@ -24,6 +25,7 @@ export async function GET() {
 
     if (!queryWithFavoriteColumn.error) {
       console.info("[replies.favorites] query complete", { userId: user.id, count: queryWithFavoriteColumn.data?.length ?? 0, strategy: "favorite-column" });
+      console.info("favorites-read-result-count", { userId: user.id, count: queryWithFavoriteColumn.data?.length ?? 0, strategy: "favorite-column" });
       console.info("favorites-read-result", {
         route: "/api/replies/favorites",
         userId: user.id,
@@ -69,6 +71,7 @@ export async function GET() {
     }
 
     console.info("[replies.favorites] query complete", { userId: user.id, count: fallbackQuery.data?.length ?? 0, strategy: "context-marker" });
+    console.info("favorites-read-result-count", { userId: user.id, count: fallbackQuery.data?.length ?? 0, strategy: "context-marker" });
     console.info("favorites-read-result", {
       route: "/api/replies/favorites",
       userId: user.id,
@@ -79,6 +82,7 @@ export async function GET() {
     return NextResponse.json({ replies: (fallbackQuery.data || []).map((row) => serializeReplyRow(row as ReplyRow, false)) });
   } catch (err) {
     console.error("Fetch favorites error:", err);
+    console.info("favorites-read-result-count", { userId: user.id, count: 0, error: "exception" });
     console.info("favorites-read-result", { route: "/api/replies/favorites", userId: user.id, ok: false, error: "exception" });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

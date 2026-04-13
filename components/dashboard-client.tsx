@@ -253,6 +253,23 @@ export default function DashboardClient({
     setGeneratedReplyAction(index, { isProcessing: true });
 
     try {
+      const saveRequestPayload = {
+        input,
+        context: context || undefined,
+        tone: `${tone} • ${getReplyVariantLabel(index)}`,
+        reply: replyText,
+        favorite: true,
+      };
+
+      console.info("save-request-payload", {
+        index,
+        hasInput: Boolean(saveRequestPayload.input?.trim()),
+        hasContext: Boolean(saveRequestPayload.context?.trim()),
+        tone: saveRequestPayload.tone,
+        replyLength: saveRequestPayload.reply.length,
+        favorite: saveRequestPayload.favorite,
+      });
+
       console.info("favorite-write-attempt", {
         index,
         hasInput: Boolean(input?.trim()),
@@ -264,16 +281,19 @@ export default function DashboardClient({
       const saveResponse = await fetch("/api/replies/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          input,
-          context: context || undefined,
-          tone: `${tone} • ${getReplyVariantLabel(index)}`,
-          reply: replyText,
-          favorite: true,
-        }),
+        body: JSON.stringify(saveRequestPayload),
       });
 
       const savePayload = await saveResponse.json().catch(() => null);
+
+      console.info("save-response-payload", {
+        index,
+        status: saveResponse.status,
+        ok: saveResponse.ok,
+        error: savePayload?.error || null,
+        hasReply: Boolean(savePayload?.reply),
+        replyId: savePayload?.reply?.id || null,
+      });
 
       console.info("favorite-write-result", {
         index,
@@ -314,6 +334,11 @@ export default function DashboardClient({
         tone: "success",
       });
     } catch {
+      console.info("save-response-payload", {
+        index,
+        ok: false,
+        error: "network-or-client-error",
+      });
       console.info("favorite-write-result", {
         index,
         ok: false,
@@ -836,6 +861,22 @@ export default function DashboardClient({
       // Save first reply to history
       if (data?.outputs?.[0]) {
         try {
+          const historyWritePayload = {
+            input,
+            context: context || undefined,
+            tone: `${tone} • ${getReplyVariantLabel(0)}`,
+            reply: data.outputs[0],
+            favorite: false,
+          };
+
+          console.info("history-write-trigger", {
+            hasInput: Boolean(historyWritePayload.input?.trim()),
+            hasContext: Boolean(historyWritePayload.context?.trim()),
+            tone: historyWritePayload.tone,
+            replyLength: historyWritePayload.reply.length,
+            favorite: historyWritePayload.favorite,
+          });
+
           console.info("history-write-attempt", {
             hasInput: Boolean(input?.trim()),
             hasContext: Boolean(context?.trim()),
@@ -846,13 +887,7 @@ export default function DashboardClient({
           const saveResponse = await fetch("/api/replies/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              input,
-              context: context || undefined,
-              tone: `${tone} • ${getReplyVariantLabel(0)}`,
-              reply: data.outputs[0],
-              favorite: false,
-            }),
+            body: JSON.stringify(historyWritePayload),
           });
           const savePayload = await saveResponse.json().catch(() => null);
 

@@ -4,6 +4,7 @@ import { serializeReplyRow, type ReplyRow } from "@/lib/reply-persistence";
 import { supabaseService } from "@/lib/supabase";
 
 export async function GET() {
+  console.info("history-read-route-hit", { route: "/api/replies/history" });
   const user = await requireUser();
   if (!user) {
     console.info("[replies.history] unauthorized");
@@ -36,6 +37,7 @@ export async function GET() {
     }
 
     console.info("[replies.history] query complete", { userId: user.id, count: data?.length ?? 0 });
+    console.info("history-read-result-count", { userId: user.id, count: data?.length ?? 0 });
     console.info("history-read-result", {
       route: "/api/replies/history",
       userId: user.id,
@@ -46,6 +48,7 @@ export async function GET() {
     return NextResponse.json({ replies: (data || []).map((row) => serializeReplyRow(row as ReplyRow, Boolean((row as ReplyRow).favorite !== undefined))) });
   } catch (err) {
     console.error("Fetch replies error:", err);
+    console.info("history-read-result-count", { userId: user.id, count: 0, error: "exception" });
     console.info("history-read-result", { route: "/api/replies/history", userId: user.id, ok: false, error: "exception" });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
