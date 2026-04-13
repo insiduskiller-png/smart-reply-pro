@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase";
-import { bootstrapUserProfile } from "@/lib/profile-service";
+import { updateBootstrappedUserProfile } from "@/lib/profile-service";
 import { trackEvent } from "@/lib/analytics";
 import {
   RegistrationVerificationEmailError,
@@ -147,18 +147,18 @@ export async function POST(req: Request) {
 
     // Ensure profile exists for user
     try {
-      const bootstrap = await bootstrapUserProfile(
+      await updateBootstrappedUserProfile(
         {
           id: signupUser.id,
           email,
           user_metadata: { username },
         },
+        { username },
         { source: "auth-register" },
       );
-      console.info("register api: profile bootstrap complete", {
+      console.info("register api: profile bootstrap and username pinned", {
         userId: signupUser.id,
-        created: bootstrap.created,
-        repaired: bootstrap.repaired,
+        username,
       });
     } catch (profileErr) {
       console.error("register api: profile bootstrap failed", {
