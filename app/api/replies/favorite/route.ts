@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import {
+  encodeFavoriteContext,
+  isMissingFavoriteColumnError,
+  serializeReplyRow,
+  stripFavoriteMarker,
+  type ReplyRow,
+} from "@/lib/reply-persistence";
 import { supabaseService } from "@/lib/supabase";
 
 export async function POST(request: Request) {
@@ -23,10 +30,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify the reply belongs to the user
     const { data: existingReply, error: checkError } = await supabaseService
       .from("replies")
-      .select("id")
+      .select("*")
       .eq("id", replyId)
       .eq("user_id", user.id)
       .single();
@@ -39,22 +45,37 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update favorite status
-    const { data, error } = await supabaseService
+    const updateWithFavoriteColumn = await supabaseService
       .from("replies")
       .update({ favorite })
       .eq("id", replyId)
-      .select()
+      .select("*")
       .single();
 
-    if (error) {
-      console.error("[replies.favorite] update failed", { userId: user.id, replyId, message: error.message });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (!updateWithFavoriteColumn.error) {
+      console.info("[replies.favorite] update complete", { userId: user.id, replyId, favorite, strategy: "favorite-column" });
+      return NextResponse.json({ reply: serializeReplyRow(updateWithFavoriteColumn.data as ReplyRow, true), success: true });
     }
 
-    console.info("[replies.favorite] update complete", { userId: user.id, replyId, favorite: data.favorite });
+    if (!isMissingFavoriteColumnError(updateWithFavoriteColumn.error)) {
+      console.error("[replies.favorite] update failed", { userId: user.id, replyId, message: updateWithFavoriteColumn.error.message });
+      return NextResponse.json({ error: updateWithFavoriteColumn.error.message }, { status: 400 });
+    }
 
-    return NextResponse.json({ reply: data, success: true });
+    const fallbackUpdate = await supabaseService
+      .from("replies")
+      .update({ context: encodeFavoriteContext(stripFavoriteMarker((existingReply as ReplyRow).context), favorite) })
+      .eq("id", replyId)
+      .select("*")
+      .single();
+
+    if (fallbackUpdate.error) {
+      console.error("[replies.favorite] fallback update failed", { userId: user.id, replyId, message: fallbackUpdate.error.message });
+      return NextResponse.json({ error: fallbackUpdate.error.message }, { status: 400 });
+    }
+
+    console.info("[replies.favorite] update complete", { userId: user.id, replyId, favorite, strategy: "context-marker" });
+    return NextResponse.json({ reply: serializeReplyRow(fallbackUpdate.data as ReplyRow, false), success: true });
   } catch (err) {
     console.error("Toggle favorite error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

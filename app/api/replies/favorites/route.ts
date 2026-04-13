@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { FAVORITE_CONTEXT_PREFIX, isMissingFavoriteColumnError, serializeReplyRow, type ReplyRow } from "@/lib/reply-persistence";
 import { supabaseService } from "@/lib/supabase";
 
 export async function GET() {
@@ -12,7 +13,7 @@ export async function GET() {
   try {
     console.info("[replies.favorites] request", { userId: user.id });
 
-    const { data, error } = await supabaseService
+    const queryWithFavoriteColumn = await supabaseService
       .from("replies")
       .select("*")
       .eq("user_id", user.id)
@@ -20,14 +21,31 @@ export async function GET() {
       .order("created_at", { ascending: false })
       .limit(20);
 
-    if (error) {
-      console.error("[replies.favorites] query failed", { userId: user.id, message: error.message });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (!queryWithFavoriteColumn.error) {
+      console.info("[replies.favorites] query complete", { userId: user.id, count: queryWithFavoriteColumn.data?.length ?? 0, strategy: "favorite-column" });
+      return NextResponse.json({ replies: (queryWithFavoriteColumn.data || []).map((row) => serializeReplyRow(row as ReplyRow, true)) });
     }
 
-    console.info("[replies.favorites] query complete", { userId: user.id, count: data?.length ?? 0 });
+    if (!isMissingFavoriteColumnError(queryWithFavoriteColumn.error)) {
+      console.error("[replies.favorites] query failed", { userId: user.id, message: queryWithFavoriteColumn.error.message });
+      return NextResponse.json({ error: queryWithFavoriteColumn.error.message }, { status: 400 });
+    }
 
-    return NextResponse.json({ replies: data || [] });
+    const fallbackQuery = await supabaseService
+      .from("replies")
+      .select("*")
+      .eq("user_id", user.id)
+      .like("context", `${FAVORITE_CONTEXT_PREFIX}%`)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (fallbackQuery.error) {
+      console.error("[replies.favorites] fallback query failed", { userId: user.id, message: fallbackQuery.error.message });
+      return NextResponse.json({ error: fallbackQuery.error.message }, { status: 400 });
+    }
+
+    console.info("[replies.favorites] query complete", { userId: user.id, count: fallbackQuery.data?.length ?? 0, strategy: "context-marker" });
+    return NextResponse.json({ replies: (fallbackQuery.data || []).map((row) => serializeReplyRow(row as ReplyRow, false)) });
   } catch (err) {
     console.error("Fetch favorites error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

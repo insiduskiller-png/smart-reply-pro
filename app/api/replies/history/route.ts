@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { serializeReplyRow, type ReplyRow } from "@/lib/reply-persistence";
 import { supabaseService } from "@/lib/supabase";
 
 export async function GET() {
@@ -28,7 +29,7 @@ export async function GET() {
 
     console.info("[replies.history] query complete", { userId: user.id, count: data?.length ?? 0 });
 
-    return NextResponse.json({ replies: data || [] });
+    return NextResponse.json({ replies: (data || []).map((row) => serializeReplyRow(row as ReplyRow, Boolean((row as ReplyRow).favorite !== undefined))) });
   } catch (err) {
     console.error("Fetch replies error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
