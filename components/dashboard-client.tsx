@@ -226,6 +226,15 @@ export default function DashboardClient({
     const replyText = outputs[index];
     if (!replyText?.trim()) return;
 
+    console.info("save-click", {
+      index,
+      hasInput: Boolean(input?.trim()),
+      hasContext: Boolean(context?.trim()),
+      replyLength: replyText.length,
+      isEdited: replyText !== (originalOutputs[index] || ""),
+      existingReplyId: generatedReplyActions[index]?.replyId || null,
+    });
+
     // Do not start a save/favorite while generation is already in flight.
     // A concurrent 401 from the save API would redirect to login mid-generation.
     if (loading) {
@@ -244,6 +253,14 @@ export default function DashboardClient({
     setGeneratedReplyAction(index, { isProcessing: true });
 
     try {
+      console.info("favorite-write-attempt", {
+        index,
+        hasInput: Boolean(input?.trim()),
+        hasContext: Boolean(context?.trim()),
+        tone: `${tone} • ${getReplyVariantLabel(index)}`,
+        replyLength: replyText.length,
+      });
+
       const saveResponse = await fetch("/api/replies/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -257,6 +274,15 @@ export default function DashboardClient({
       });
 
       const savePayload = await saveResponse.json().catch(() => null);
+
+      console.info("favorite-write-result", {
+        index,
+        status: saveResponse.status,
+        ok: saveResponse.ok,
+        error: savePayload?.error || null,
+        replyId: savePayload?.reply?.id || null,
+        favorite: savePayload?.reply?.favorite ?? null,
+      });
 
       if (saveResponse.status === 401) {
         window.location.href = "/login";
@@ -288,6 +314,11 @@ export default function DashboardClient({
         tone: "success",
       });
     } catch {
+      console.info("favorite-write-result", {
+        index,
+        ok: false,
+        error: "network-or-client-error",
+      });
       setGeneratedReplyAction(index, { isProcessing: false });
       showReplyFeedback(index, { message: "Save failed.", tone: "info" });
     }
@@ -516,32 +547,62 @@ export default function DashboardClient({
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
+      console.info("history-read-attempt", {
+        tab,
+      });
+
       const response = await fetch("/api/replies/history");
       const data = await response.json().catch(() => null);
+
+      console.info("history-read-result", {
+        status: response.status,
+        ok: response.ok,
+        count: Array.isArray(data?.replies) ? data.replies.length : null,
+        error: data?.error || null,
+      });
+
       if (response.ok && data?.replies) {
         setHistory(data.replies);
       }
     } catch {
-      // Silent fail
+      console.info("history-read-result", {
+        ok: false,
+        error: "network-or-client-error",
+      });
     } finally {
       setHistoryLoading(false);
     }
-  }, []);
+  }, [tab]);
 
   const fetchFavorites = useCallback(async () => {
     setFavoritesLoading(true);
     try {
+      console.info("favorites-read-attempt", {
+        tab,
+      });
+
       const response = await fetch("/api/replies/favorites");
       const data = await response.json().catch(() => null);
+
+      console.info("favorites-read-result", {
+        status: response.status,
+        ok: response.ok,
+        count: Array.isArray(data?.replies) ? data.replies.length : null,
+        error: data?.error || null,
+      });
+
       if (response.ok && data?.replies) {
         setFavorites(data.replies);
       }
     } catch {
-      // Silent fail
+      console.info("favorites-read-result", {
+        ok: false,
+        error: "network-or-client-error",
+      });
     } finally {
       setFavoritesLoading(false);
     }
-  }, []);
+  }, [tab]);
 
   useEffect(() => {
     if (tab === "history") {
@@ -765,10 +826,23 @@ export default function DashboardClient({
       setToneDetection(data?.detectedTone || "");
       setGenerationAnalyses(data?.analyses || []);
       setRecommendedIndex(typeof data?.recommendedIndex === "number" ? data.recommendedIndex : null);
+
+      console.info("generate-finished", {
+        profileId: resolvedProfileId || null,
+        outputsCount: Array.isArray(data?.outputs) ? data.outputs.length : 0,
+        detectedTone: data?.detectedTone || null,
+      });
       
       // Save first reply to history
       if (data?.outputs?.[0]) {
         try {
+          console.info("history-write-attempt", {
+            hasInput: Boolean(input?.trim()),
+            hasContext: Boolean(context?.trim()),
+            tone: `${tone} • ${getReplyVariantLabel(0)}`,
+            replyLength: data.outputs[0].length,
+          });
+
           const saveResponse = await fetch("/api/replies/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -781,6 +855,14 @@ export default function DashboardClient({
             }),
           });
           const savePayload = await saveResponse.json().catch(() => null);
+
+          console.info("history-write-result", {
+            status: saveResponse.status,
+            ok: saveResponse.ok,
+            error: savePayload?.error || null,
+            replyId: savePayload?.reply?.id || null,
+          });
+
           if (saveResponse.ok && savePayload?.reply?.id) {
             const savedReply = savePayload.reply as Reply;
             replaceGeneratedReplyAction(0, {
@@ -793,7 +875,10 @@ export default function DashboardClient({
             setHistory((prev) => upsertReplyById(prev, savedReply).slice(0, 30));
           }
         } catch {
-          // Silent fail - don't block generation
+          console.info("history-write-result", {
+            ok: false,
+            error: "network-or-client-error",
+          });
         }
       }
       

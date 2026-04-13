@@ -22,6 +22,12 @@ export async function POST(request: Request) {
     const favorite = body.favorite as boolean;
 
     console.info("[replies.favorite] request", { userId: user.id, replyId, favorite });
+    console.info("favorite-write-attempt", {
+      route: "/api/replies/favorite",
+      userId: user.id,
+      replyId,
+      favorite,
+    });
 
     if (!replyId) {
       return NextResponse.json(
@@ -39,6 +45,15 @@ export async function POST(request: Request) {
 
     if (checkError || !existingReply) {
       console.error("[replies.favorite] reply not found", { userId: user.id, replyId, message: checkError?.message });
+      console.info("favorite-write-result", {
+        route: "/api/replies/favorite",
+        userId: user.id,
+        replyId,
+        ok: false,
+        stage: "lookup",
+        error: checkError?.message || "Reply not found",
+        code: (checkError as { code?: string } | undefined)?.code || null,
+      });
       return NextResponse.json(
         { error: "Reply not found" },
         { status: 404 }
@@ -54,11 +69,27 @@ export async function POST(request: Request) {
 
     if (!updateWithFavoriteColumn.error) {
       console.info("[replies.favorite] update complete", { userId: user.id, replyId, favorite, strategy: "favorite-column" });
+      console.info("favorite-write-result", {
+        route: "/api/replies/favorite",
+        userId: user.id,
+        replyId,
+        ok: true,
+        strategy: "favorite-column",
+      });
       return NextResponse.json({ reply: serializeReplyRow(updateWithFavoriteColumn.data as ReplyRow, true), success: true });
     }
 
     if (!isMissingFavoriteColumnError(updateWithFavoriteColumn.error)) {
       console.error("[replies.favorite] update failed", { userId: user.id, replyId, message: updateWithFavoriteColumn.error.message });
+      console.info("favorite-write-result", {
+        route: "/api/replies/favorite",
+        userId: user.id,
+        replyId,
+        ok: false,
+        stage: "favorite-column-update",
+        error: updateWithFavoriteColumn.error.message,
+        code: (updateWithFavoriteColumn.error as { code?: string }).code || null,
+      });
       return NextResponse.json({ error: updateWithFavoriteColumn.error.message }, { status: 400 });
     }
 
@@ -71,13 +102,30 @@ export async function POST(request: Request) {
 
     if (fallbackUpdate.error) {
       console.error("[replies.favorite] fallback update failed", { userId: user.id, replyId, message: fallbackUpdate.error.message });
+      console.info("favorite-write-result", {
+        route: "/api/replies/favorite",
+        userId: user.id,
+        replyId,
+        ok: false,
+        stage: "context-marker-update",
+        error: fallbackUpdate.error.message,
+        code: (fallbackUpdate.error as { code?: string }).code || null,
+      });
       return NextResponse.json({ error: fallbackUpdate.error.message }, { status: 400 });
     }
 
     console.info("[replies.favorite] update complete", { userId: user.id, replyId, favorite, strategy: "context-marker" });
+    console.info("favorite-write-result", {
+      route: "/api/replies/favorite",
+      userId: user.id,
+      replyId,
+      ok: true,
+      strategy: "context-marker",
+    });
     return NextResponse.json({ reply: serializeReplyRow(fallbackUpdate.data as ReplyRow, false), success: true });
   } catch (err) {
     console.error("Toggle favorite error:", err);
+    console.info("favorite-write-result", { route: "/api/replies/favorite", userId: user.id, ok: false, error: "exception" });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

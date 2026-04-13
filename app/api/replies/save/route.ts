@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     const tone = sanitizeText(body.tone, 64) || "Professional";
     const reply = sanitizeText(body.reply, 4000);
     const favorite = body.favorite === true;
+    const operation = favorite ? "favorite-write" : "history-write";
 
     console.info("[replies.save] request", {
       userId: user.id,
@@ -33,6 +34,28 @@ export async function POST(request: Request) {
       tone,
       favorite,
     });
+
+    if (favorite) {
+      console.info("favorite-write-attempt", {
+        route: "/api/replies/save",
+        operation,
+        userId: user.id,
+        hasInput: Boolean(input),
+        hasReply: Boolean(reply),
+        hasContext: Boolean(context),
+        tone,
+      });
+    } else {
+      console.info("history-write-attempt", {
+        route: "/api/replies/save",
+        operation,
+        userId: user.id,
+        hasInput: Boolean(input),
+        hasReply: Boolean(reply),
+        hasContext: Boolean(context),
+        tone,
+      });
+    }
 
     if (!input || !reply) {
       return NextResponse.json(
@@ -53,6 +76,27 @@ export async function POST(request: Request) {
 
     if (existingError) {
       console.error("[replies.save] existing lookup failed", { userId: user.id, message: existingError.message });
+      if (favorite) {
+        console.info("favorite-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: false,
+          stage: "existing-lookup",
+          error: existingError.message,
+          code: (existingError as { code?: string }).code || null,
+        });
+      } else {
+        console.info("history-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: false,
+          stage: "existing-lookup",
+          error: existingError.message,
+          code: (existingError as { code?: string }).code || null,
+        });
+      }
       return NextResponse.json({ error: existingError.message }, { status: 400 });
     }
 
@@ -88,6 +132,15 @@ export async function POST(request: Request) {
 
         if (!isMissingFavoriteColumnError(updateWithFavoriteColumn.error)) {
           console.error("[replies.save] favorite update failed", { userId: user.id, replyId: existingReply.id, message: updateWithFavoriteColumn.error.message });
+          console.info("favorite-write-result", {
+            route: "/api/replies/save",
+            operation,
+            userId: user.id,
+            ok: false,
+            stage: "favorite-update",
+            error: updateWithFavoriteColumn.error.message,
+            code: (updateWithFavoriteColumn.error as { code?: string }).code || null,
+          });
           return NextResponse.json({ error: updateWithFavoriteColumn.error.message }, { status: 400 });
         }
 
@@ -100,10 +153,28 @@ export async function POST(request: Request) {
 
         if (fallbackUpdate.error) {
           console.error("[replies.save] fallback favorite update failed", { userId: user.id, replyId: existingReply.id, message: fallbackUpdate.error.message });
+          console.info("favorite-write-result", {
+            route: "/api/replies/save",
+            operation,
+            userId: user.id,
+            ok: false,
+            stage: "favorite-update-fallback",
+            error: fallbackUpdate.error.message,
+            code: (fallbackUpdate.error as { code?: string }).code || null,
+          });
           return NextResponse.json({ error: fallbackUpdate.error.message }, { status: 400 });
         }
 
         console.info("[replies.save] favorite update complete", { userId: user.id, replyId: fallbackUpdate.data.id, strategy: "context-marker" });
+        console.info("favorite-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: true,
+          stage: "favorite-update-fallback",
+          strategy: "context-marker",
+          replyId: fallbackUpdate.data.id,
+        });
         return NextResponse.json({
           reply: serializeReplyRow(fallbackUpdate.data as ReplyRow, false),
           success: true,
@@ -136,6 +207,27 @@ export async function POST(request: Request) {
 
     if (!insertWithFavoriteColumn.error) {
       console.info("[replies.save] insert complete", { userId: user.id, replyId: insertWithFavoriteColumn.data.id, favorite, strategy: "favorite-column" });
+      if (favorite) {
+        console.info("favorite-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: true,
+          stage: "insert",
+          strategy: "favorite-column",
+          replyId: insertWithFavoriteColumn.data.id,
+        });
+      } else {
+        console.info("history-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: true,
+          stage: "insert",
+          strategy: "favorite-column",
+          replyId: insertWithFavoriteColumn.data.id,
+        });
+      }
       return NextResponse.json({
         reply: serializeReplyRow(insertWithFavoriteColumn.data as ReplyRow, true),
         success: true,
@@ -146,6 +238,27 @@ export async function POST(request: Request) {
 
     if (!isMissingFavoriteColumnError(insertWithFavoriteColumn.error)) {
       console.error("[replies.save] insert failed", { userId: user.id, message: insertWithFavoriteColumn.error.message });
+      if (favorite) {
+        console.info("favorite-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: false,
+          stage: "insert",
+          error: insertWithFavoriteColumn.error.message,
+          code: (insertWithFavoriteColumn.error as { code?: string }).code || null,
+        });
+      } else {
+        console.info("history-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: false,
+          stage: "insert",
+          error: insertWithFavoriteColumn.error.message,
+          code: (insertWithFavoriteColumn.error as { code?: string }).code || null,
+        });
+      }
       return NextResponse.json({ error: insertWithFavoriteColumn.error.message }, { status: 400 });
     }
 
@@ -163,10 +276,52 @@ export async function POST(request: Request) {
 
     if (fallbackInsert.error) {
       console.error("[replies.save] fallback insert failed", { userId: user.id, message: fallbackInsert.error.message });
+      if (favorite) {
+        console.info("favorite-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: false,
+          stage: "insert-fallback",
+          error: fallbackInsert.error.message,
+          code: (fallbackInsert.error as { code?: string }).code || null,
+        });
+      } else {
+        console.info("history-write-result", {
+          route: "/api/replies/save",
+          operation,
+          userId: user.id,
+          ok: false,
+          stage: "insert-fallback",
+          error: fallbackInsert.error.message,
+          code: (fallbackInsert.error as { code?: string }).code || null,
+        });
+      }
       return NextResponse.json({ error: fallbackInsert.error.message }, { status: 400 });
     }
 
     console.info("[replies.save] insert complete", { userId: user.id, replyId: fallbackInsert.data.id, favorite, strategy: "context-marker" });
+    if (favorite) {
+      console.info("favorite-write-result", {
+        route: "/api/replies/save",
+        operation,
+        userId: user.id,
+        ok: true,
+        stage: "insert-fallback",
+        strategy: "context-marker",
+        replyId: fallbackInsert.data.id,
+      });
+    } else {
+      console.info("history-write-result", {
+        route: "/api/replies/save",
+        operation,
+        userId: user.id,
+        ok: true,
+        stage: "insert-fallback",
+        strategy: "context-marker",
+        replyId: fallbackInsert.data.id,
+      });
+    }
     return NextResponse.json({
       reply: serializeReplyRow(fallbackInsert.data as ReplyRow, false),
       success: true,
@@ -175,6 +330,8 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Save reply error:", err);
+    console.info("favorite-write-result", { route: "/api/replies/save", ok: false, stage: "exception" });
+    console.info("history-write-result", { route: "/api/replies/save", ok: false, stage: "exception" });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -13,6 +13,7 @@ export async function GET() {
   try {
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
     console.info("[replies.history] request", { userId: user.id, since: twoDaysAgo });
+    console.info("history-read-attempt", { route: "/api/replies/history", userId: user.id, since: twoDaysAgo });
 
     const { data, error } = await supabaseService
       .from("replies")
@@ -24,14 +25,28 @@ export async function GET() {
 
     if (error) {
       console.error("[replies.history] query failed", { userId: user.id, message: error.message });
+      console.info("history-read-result", {
+        route: "/api/replies/history",
+        userId: user.id,
+        ok: false,
+        error: error.message,
+        code: (error as { code?: string }).code || null,
+      });
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     console.info("[replies.history] query complete", { userId: user.id, count: data?.length ?? 0 });
+    console.info("history-read-result", {
+      route: "/api/replies/history",
+      userId: user.id,
+      ok: true,
+      count: data?.length ?? 0,
+    });
 
     return NextResponse.json({ replies: (data || []).map((row) => serializeReplyRow(row as ReplyRow, Boolean((row as ReplyRow).favorite !== undefined))) });
   } catch (err) {
     console.error("Fetch replies error:", err);
+    console.info("history-read-result", { route: "/api/replies/history", userId: user.id, ok: false, error: "exception" });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
