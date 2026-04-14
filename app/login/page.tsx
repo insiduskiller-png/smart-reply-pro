@@ -304,6 +304,16 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md">
         <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/88 p-6 shadow-[0_24px_80px_rgba(2,6,23,0.55)] backdrop-blur md:p-8">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-2xl font-semibold tracking-tight text-white">Smart Reply Pro</p>
+              <div className="mt-8 flex items-center gap-3 text-slate-400">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-700 border-t-sky-400" />
+                <span className="text-base">Signing in...</span>
+              </div>
+            </div>
+          ) : (
+          <>
           <div className="mb-6 text-center">
             <div className="inline-flex rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">
               Secure sign in
@@ -452,6 +462,8 @@ export default function LoginPage() {
               Create one
             </Link>
           </div>
+          </>
+          )}
         </div>
       </div>
     </main>
