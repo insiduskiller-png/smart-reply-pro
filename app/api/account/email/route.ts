@@ -1,49 +1,8 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { requireUser } from "@/lib/auth";
-import { getSupabaseEnv, resolveAppUrl } from "@/lib/env";
+import { resolveAppUrl } from "@/lib/env";
 import { isValidEmail, normalizeEmail } from "@/lib/security";
-
-// Supabase GoTrue v2 returns errors as { msg, error_code, code }.
-// Older OAuth2 endpoints may use { error_description, message }.
-// We check all known field names so the real error is never swallowed.
-type GoTrueError = {
-  msg?: string;
-  message?: string;
-  error?: string;
-  error_description?: string;
-  error_code?: string;
-  code?: number;
-};
-
-function authHeaders(bearer: string) {
-  const { supabaseAnonKey } = getSupabaseEnv();
-  return {
-    apikey: supabaseAnonKey,
-    Authorization: `Bearer ${bearer}`,
-    "Content-Type": "application/json",
-  };
-}
-
-async function parseError(response: Response): Promise<string> {
-  let rawText = "";
-  let payload: GoTrueError = {};
-  try {
-    rawText = await response.text();
-    payload = JSON.parse(rawText) as GoTrueError;
-  } catch {
-    // non-JSON body — rawText still holds the raw response for logging
-  }
-  const human =
-    payload.error_description ||
-    payload.msg ||
-    payload.message ||
-    payload.error ||
-    (payload.error_code ? `Supabase error: ${payload.error_code}` : "") ||
-    rawText ||
-    "Supabase auth request failed";
-  return human || "Supabase auth request failed";
-}
+import { sendEmailChangeConfirmation } from "@/lib/email-change-email";
 
 export async function POST(request: Request) {
   console.info("route-hit", { route: "/api/account/email", method: "POST" });
@@ -69,49 +28,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Enter a different email address" }, { status: 400 });
   }
 
-  const store = await cookies();
-  const accessToken = store.get("srp_session")?.value;
-  if (!accessToken) {
-    console.warn("email-change-auth-fail", { route: "/api/account/email", reason: "srp_session-cookie-missing" });
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const { supabaseUrl } = getSupabaseEnv();
     const appOrigin = resolveAppUrl(request);
-    const emailRedirectTo = new URL("/account?email_change=verified", appOrigin).toString();
+    const redirectTo = new URL("/account?email_change=verified", appOrigin).toString();
 
-    console.info("email-change-supabase-request", {
+    console.info("email-change-request", {
       route: "/api/account/email",
-      supabaseUrl,
       appOrigin,
-      emailRedirectTo,
-      tokenPresent: Boolean(accessToken),
-      tokenPrefix: accessToken.slice(0, 12) + "...",
+      redirectTo,
     });
 
-    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      method: "PUT",
-      headers: authHeaders(accessToken),
-      body: JSON.stringify({ email, email_redirect_to: emailRedirectTo }),
-      cache: "no-store",
-    });
+    // Uses admin.generateLink (no Supabase email) + sends branded Resend email.
+    await sendEmailChangeConfirmation(String(user.email), email, redirectTo);
 
-    if (!response.ok) {
-      const errorMessage = await parseError(response);
-      console.error("email-change-supabase-error", {
-        route: "/api/account/email",
-        supabaseStatus: response.status,
-        supabaseStatusText: response.statusText,
-        errorMessage,
-        emailRedirectTo,
-        appOrigin,
-        note: "If error is 'Redirect URL not allowed', add emailRedirectTo to Supabase Auth > URL Configuration > Additional Redirect URLs",
-      });
-      return NextResponse.json({ error: errorMessage }, { status: 400 });
-    }
-
-    console.info("email-change-supabase-success", { route: "/api/account/email", supabaseStatus: response.status });
     return NextResponse.json({
       success: true,
       verificationRequired: true,
