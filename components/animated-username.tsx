@@ -92,18 +92,6 @@ export default function AnimatedUsername({
       return;
     }
 
-    if (!isPro) {
-      setLocalTransitioning(false);
-      setPreviousPreset(null);
-      const normalizedPreset = normalizeUsernamePreset(colorPreset);
-      setActivePreset(normalizedPreset);
-      previousPresetRef.current = normalizedPreset;
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
-      }
-      return;
-    }
-
     const normalizedPreset = normalizeUsernamePreset(colorPreset);
     if (previousPresetRef.current === normalizedPreset) {
       return;
@@ -125,10 +113,10 @@ export default function AnimatedUsername({
     timeoutRef.current = window.setTimeout(() => {
       finishTransition();
     }, durationMs);
-  }, [colorPreset, durationMs, finishTransition, isControlled, isPro, onTransitionStateChange]);
+  }, [colorPreset, durationMs, finishTransition, isControlled, onTransitionStateChange]);
 
   useEffect(() => {
-    if (!isControlled || !isPro) {
+    if (!isControlled) {
       return;
     }
 
@@ -168,7 +156,8 @@ export default function AnimatedUsername({
   // wash in every time they load the page (greeting animation).
   const mountDoneRef = useRef(false);
   useEffect(() => {
-    if (!playOnMount || isControlled || !isPro || mountDoneRef.current) {
+    // Wait until the profile has loaded (colorPreset will be non-null/non-empty).
+    if (!playOnMount || isControlled || !colorPreset || mountDoneRef.current) {
       return;
     }
     mountDoneRef.current = true;
@@ -177,7 +166,7 @@ export default function AnimatedUsername({
     // Update the tracker first so the colorPreset-change effect doesn't also fire.
     previousPresetRef.current = normalizedPreset;
     // Always animate from "default" so there's a visible ink-wash reveal
-    // even when the user's chosen colour is the default blue-purple.
+    // even when the user's chosen colour is already the default blue-purple.
     setPreviousPreset("default");
     setActivePreset(normalizedPreset);
     setLocalTransitioning(true);
@@ -185,7 +174,7 @@ export default function AnimatedUsername({
 
     timeoutRef.current = window.setTimeout(finishTransition, durationMs);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPro]); // intentionally only re-run when isPro changes (profile loaded)
+  }, [colorPreset]); // fires once when the profile first loads and colorPreset becomes known
 
   const nextStops = useMemo(() => getGradientStops(resolvedActiveTheme), [resolvedActiveTheme]);
   const previousStops = useMemo(() => getGradientStops(resolvedPreviousTheme), [resolvedPreviousTheme]);
