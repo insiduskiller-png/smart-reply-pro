@@ -201,6 +201,15 @@ export async function POST(req: Request) {
       path: "/",
     });
 
+    // Store the refresh token so requireUser() can silently renew expired access tokens.
+    response.cookies.set("srp_refresh", data.session.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+
     console.info("login api: login finished", { success: true, userId: data.user?.id ?? null });
 
     return response;

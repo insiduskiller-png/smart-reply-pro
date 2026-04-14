@@ -117,7 +117,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    setProfileState(null);
+    setProfile((current) => {
+      // Only clear the profile if there was nothing to begin with.
+      // Transient failures (stale cookie, network hiccup) should not wipe a
+      // valid profile that was already set from the login response.
+      return current ?? null;
+    });
     console.info("profile fetch completed", { userId, ok: false, source: "api", exhausted: true });
     return null;
   }, [setProfileState]);
@@ -141,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const syncServerSession = useCallback(async (accessToken?: string) => {
+  const syncServerSession = useCallback(async (accessToken?: string, refreshToken?: string) => {
     if (!accessToken) {
       await fetch("/api/auth/session", { method: "DELETE" });
       return null;
@@ -150,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accessToken }),
+      body: JSON.stringify({ accessToken, ...(refreshToken ? { refreshToken } : {}) }),
     });
 
     if (!response.ok) {
@@ -252,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           touchTemporarySessionActivity();
         }
 
-        const bootstrap = await syncServerSession(currentSession.access_token);
+        const bootstrap = await syncServerSession(currentSession.access_token, currentSession.refresh_token ?? undefined);
         if (bootstrap?.profile) {
           setProfileState(bootstrap.profile);
         } else {
@@ -298,7 +303,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           touchTemporarySessionActivity();
         }
 
-        const bootstrap = await syncServerSession(nextSession.access_token);
+        const bootstrap = await syncServerSession(nextSession.access_token, nextSession.refresh_token ?? undefined);
         if (bootstrap?.profile) {
           setProfileState(bootstrap.profile);
         } else {

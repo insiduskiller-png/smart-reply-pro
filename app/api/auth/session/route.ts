@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clearSessionCookie, setSessionCookie } from "@/lib/auth";
+import { clearSessionCookie, setRefreshCookie, setSessionCookie } from "@/lib/auth";
 import { sanitizeText } from "@/lib/security";
 import { getSupabaseUser } from "@/lib/supabase";
 import { bootstrapUserProfile } from "@/lib/profile-service";
@@ -8,6 +8,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const accessToken = sanitizeText(body.accessToken, 3000);
+    const refreshToken = sanitizeText(body.refreshToken, 3000);
 
     if (!accessToken) {
       return NextResponse.json({ error: "Access token is required" }, { status: 400 });
@@ -21,6 +22,9 @@ export async function POST(request: Request) {
     }
 
     await setSessionCookie(accessToken);
+    if (refreshToken) {
+      await setRefreshCookie(refreshToken);
+    }
 
     try {
       const bootstrap = await bootstrapUserProfile(user, { source: "auth-session" });
