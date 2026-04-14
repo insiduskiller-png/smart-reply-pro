@@ -38,6 +38,25 @@ export async function POST(request: Request) {
     }
   }
 
+  if (event.type === "customer.subscription.updated") {
+    const subscription = event.data.object;
+    const stripeStatus = typeof subscription.status === "string" ? subscription.status : "";
+    const metadata = (subscription.metadata ?? {}) as Record<string, unknown>;
+    const userId = typeof metadata.user_id === "string" ? metadata.user_id : "";
+    const customerId = typeof subscription.customer === "string" ? subscription.customer : "";
+
+    // Map Stripe subscription statuses to app subscription statuses.
+    // "active" and "trialing" are the only states that grant Pro access.
+    // "past_due", "unpaid", "canceled", "paused", "incomplete", "incomplete_expired" all revoke Pro.
+    const newStatus = stripeStatus === "active" || stripeStatus === "trialing" ? "pro" : "free";
+
+    if (userId) {
+      await patchUserProfile(userId, { subscription_status: newStatus });
+    } else if (customerId) {
+      await patchUserProfileByStripeCustomerId(customerId, { subscription_status: newStatus });
+    }
+  }
+
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
     const metadata = (subscription.metadata ?? {}) as Record<string, unknown>;

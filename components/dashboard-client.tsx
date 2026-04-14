@@ -685,7 +685,7 @@ export default function DashboardClient({
         });
       }
     } catch {
-      // Silent fail
+      setError("Failed to update favorite. Please try again.");
     }
   }
 
@@ -699,9 +699,11 @@ export default function DashboardClient({
       const payload = await response.json().catch(() => null);
       if (response.ok && payload?.success) {
         setHistory((prev) => prev.filter((item) => item.id !== replyId));
+      } else if (!response.ok) {
+        setError("Failed to delete reply. Please try again.");
       }
     } catch {
-      // Silent fail
+      setError("Failed to delete reply. Please try again.");
     }
   }
 
@@ -715,9 +717,11 @@ export default function DashboardClient({
       const payload = await response.json().catch(() => null);
       if (response.ok && payload?.success) {
         setFavorites((prev) => prev.filter((item) => item.id !== replyId));
+      } else if (!response.ok) {
+        setError("Failed to remove favorite. Please try again.");
       }
     } catch {
-      // Silent fail
+      setError("Failed to remove favorite. Please try again.");
     }
   }
 
@@ -786,7 +790,7 @@ export default function DashboardClient({
           <div style="color: #94a3b8; font-size: 12px; margin-bottom: 12px;">Generated with Smart Reply Pro</div>
           <div style="color: #0ea5e9; font-size: 13px; margin-bottom: 16px; font-weight: 500;">Tone: ${tone}</div>
           <div style="color: #f1f5f9; font-size: 15px; white-space: pre-wrap; line-height: 1.7;">${reply}</div>
-          <div style="color: #64748b; font-size: 11px; margin-top: 20px; border-top: 1px solid #334155; padding-top: 12px;">smartreply.pro</div>
+          <div style="color: #64748b; font-size: 11px; margin-top: 20px; border-top: 1px solid #334155; padding-top: 12px;">smartreplypro.ai</div>
         </div>
       `;
       document.body.appendChild(tempContainer);
@@ -807,7 +811,7 @@ export default function DashboardClient({
       link.download = `smart-reply-${Date.now()}.png`;
       link.click();
     } catch {
-      // Silent fail
+      setError("Failed to export image. Please try again.");
     }
   }
 

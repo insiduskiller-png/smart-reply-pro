@@ -14,22 +14,21 @@ export async function GET() {
     const { profile } = await bootstrapUserProfile(user, { source: "api-messages-usage" });
     const isPro = hasProAccess(profile.subscription_status);
 
-    // Calculate 24 hours ago
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const today = new Date().toISOString().split("T")[0];
 
-    // Count generations in the last 24 hours
-    const { data: limitData, error: limitError, count } = await supabaseService
-      .from("usage_limits")
-      .select("id", { count: "exact" })
+    const { data, error } = await supabaseService
+      .from("usage")
+      .select("count")
       .eq("user_id", user.id)
-      .gte("created_at", twentyFourHoursAgo);
+      .eq("date", today)
+      .single();
 
-    if (limitError) {
-      console.error("Usage count error:", limitError);
-      return NextResponse.json({ error: limitError.message }, { status: 400 });
+    if (error && error.code !== "PGRST116") {
+      console.error("Messages usage count error:", error);
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const messagesUsed = count ?? 0;
+    const messagesUsed = data?.count ?? 0;
     const limit = isPro ? 100 : 5;
 
     return NextResponse.json({

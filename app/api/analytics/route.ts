@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase";
+import { enforceRateLimit, extractRequestIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  // Rate-limit by IP: max 60 events per minute. Return 202 even when throttled
+  // so the client-side fire-and-forget pattern never sees errors.
+  const ip = extractRequestIp(request);
+  const rate = enforceRateLimit(`analytics:${ip}`, 60, 60_000);
+  if (!rate.allowed) {
+    return NextResponse.json({ success: true }, { status: 202 });
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const { event, userId, metadata, timestamp } = body;

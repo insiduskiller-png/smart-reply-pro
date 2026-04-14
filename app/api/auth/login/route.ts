@@ -1,27 +1,10 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseService } from "@/lib/supabase";
 import { bootstrapUserProfile } from "@/lib/profile-service";
+import { extractRequestIp } from "@/lib/rate-limit";
 
 const FAILED_LOGIN_THRESHOLD = 5;
 const LOGIN_COOLDOWN_MS = 30_000;
-
-type LoginAttemptState = {
-  failedCount: number;
-  cooldownUntil: number;
-};
-
-const loginAttemptState = new Map<string, LoginAttemptState>();
-
-function getClientFingerprint(req: Request) {
-  const forwardedFor = req.headers.get("x-forwarded-for") || "";
-  const ip = forwardedFor.split(",")[0]?.trim() || "unknown-ip";
-  const userAgent = req.headers.get("user-agent") || "unknown-ua";
-  return `${ip}:${userAgent}`;
-}
-
-function getRetryAfterSeconds(cooldownUntil: number) {
-  return Math.max(1, Math.ceil((cooldownUntil - Date.now()) / 1000));
-}
 
 function isCredentialFailure(error: { status?: number; message?: string } | null | undefined) {
   if (!error) return false;
@@ -46,53 +29,50 @@ function isEmailNotConfirmedFailure(error: { status?: number; message?: string }
   );
 }
 
-function clearLoginAttemptState(fingerprint: string) {
-  loginAttemptState.delete(fingerprint);
+/**
+ * Count failed login attempts from this IP within the LOGIN_COOLDOWN_MS window.
+ * Queries analytics_events so the count persists across serverless cold starts
+ * and is shared across all concurrent function instances.
+ */
+async function countRecentFailedAttempts(ip: string): Promise<number> {
+  const windowStart = new Date(Date.now() - LOGIN_COOLDOWN_MS).toISOString();
+  try {
+    const { count } = await supabaseService
+      .from("analytics_events")
+      .select("id", { count: "exact", head: true })
+      .eq("event", "login_failed_attempt")
+      .eq("ip_address", ip)
+      .gte("timestamp", windowStart);
+    return count ?? 0;
+  } catch {
+    return 0; // fail open — never block logins if the DB check itself fails
+  }
 }
 
-function registerFailedAttempt(fingerprint: string) {
-  const current = loginAttemptState.get(fingerprint) ?? {
-    failedCount: 0,
-    cooldownUntil: 0,
-  };
-
-  const now = Date.now();
-  if (current.cooldownUntil && current.cooldownUntil <= now) {
-    current.cooldownUntil = 0;
-    current.failedCount = 0;
+/** Persist a failed login attempt so it survives restarts and is visible to all instances. */
+async function recordFailedAttempt(ip: string, userAgent: string) {
+  try {
+    await supabaseService.from("analytics_events").insert({
+      event: "login_failed_attempt",
+      user_id: null,
+      metadata: {},
+      timestamp: new Date().toISOString(),
+      ip_address: ip,
+      user_agent: userAgent,
+    });
+  } catch {
+    // Silently swallow — don't break the login flow if recording fails
   }
-
-  current.failedCount += 1;
-
-  if (current.failedCount >= FAILED_LOGIN_THRESHOLD) {
-    current.cooldownUntil = now + LOGIN_COOLDOWN_MS;
-    current.failedCount = 0;
-  }
-
-  loginAttemptState.set(fingerprint, current);
-  return current;
-}
-
-function getActiveCooldown(fingerprint: string) {
-  const state = loginAttemptState.get(fingerprint);
-  if (!state?.cooldownUntil) return null;
-
-  if (state.cooldownUntil <= Date.now()) {
-    loginAttemptState.delete(fingerprint);
-    return null;
-  }
-
-  return state.cooldownUntil;
 }
 
 export async function POST(req: Request) {
   try {
     console.info("login api: login started");
-    const fingerprint = getClientFingerprint(req);
-    const activeCooldownUntil = getActiveCooldown(fingerprint);
+    const ip = extractRequestIp(req);
+    const recentFailures = await countRecentFailedAttempts(ip);
 
-    if (activeCooldownUntil) {
-      const retryAfter = getRetryAfterSeconds(activeCooldownUntil);
+    if (recentFailures >= FAILED_LOGIN_THRESHOLD) {
+      const retryAfter = Math.ceil(LOGIN_COOLDOWN_MS / 1000);
       return NextResponse.json(
         {
           error: `Too many failed attempts. Try again in ${retryAfter} seconds.`,
@@ -133,10 +113,11 @@ export async function POST(req: Request) {
       }
 
       if (isCredentialFailure(error)) {
-        const state = registerFailedAttempt(fingerprint);
+        await recordFailedAttempt(ip, req.headers.get("user-agent") ?? "");
+        const newCount = recentFailures + 1;
 
-        if (state.cooldownUntil > Date.now()) {
-          const retryAfter = getRetryAfterSeconds(state.cooldownUntil);
+        if (newCount >= FAILED_LOGIN_THRESHOLD) {
+          const retryAfter = Math.ceil(LOGIN_COOLDOWN_MS / 1000);
           return NextResponse.json(
             {
               error: `Too many failed attempts. Try again in ${retryAfter} seconds.`,
@@ -172,14 +153,12 @@ export async function POST(req: Request) {
     }
 
     if (!data.session) {
-      registerFailedAttempt(fingerprint);
+      await recordFailedAttempt(ip, req.headers.get("user-agent") ?? "");
       return NextResponse.json(
         { error: "No session created" },
         { status: 400 }
       );
     }
-
-    clearLoginAttemptState(fingerprint);
 
     console.info("login api: supabase auth success", { userId: data.user?.id ?? null });
     console.info("login api: session received", { hasAccessToken: Boolean(data.session.access_token) });

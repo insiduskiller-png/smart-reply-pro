@@ -7,6 +7,7 @@ import {
   sendRegistrationVerificationEmail,
 } from "@/lib/registration-verification-email";
 import { enforceRateLimit, extractRequestIp } from "@/lib/rate-limit";
+import { resolveAppUrl } from "@/lib/env";
 
 function normalizeEmail(value: unknown) {
   return String(value ?? "").trim().toLowerCase();
@@ -14,23 +15,6 @@ function normalizeEmail(value: unknown) {
 
 function normalizeUsername(value: unknown) {
   return String(value ?? "").trim().slice(0, 80);
-}
-
-function resolveAppUrl(req: Request) {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (configured) {
-    try {
-      return new URL(configured).origin;
-    } catch {
-      // fallback to request origin
-    }
-  }
-
-  try {
-    return new URL(req.url).origin;
-  } catch {
-    return "https://smartreplypro.ai";
-  }
 }
 
 export async function POST(req: Request) {

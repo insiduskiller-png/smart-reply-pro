@@ -16,11 +16,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Reply ID required" }, { status: 400 });
     }
 
-    const archivedAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
-
     const { data, error } = await supabaseService
       .from("replies")
-      .update({ created_at: archivedAt })
+      .delete()
       .eq("id", replyId)
       .eq("user_id", user.id)
       .select("id")

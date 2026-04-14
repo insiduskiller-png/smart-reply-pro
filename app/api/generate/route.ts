@@ -372,19 +372,18 @@ export async function POST(request: Request) {
       content: input,
     });
 
-    await insertProfileMessage({
-      profileId: activeProfile.id,
-      userId: user.id,
-      role: "assistant_suggestion",
-      content: outputs[0],
-    });
-
-    await insertProfileMessage({
-      profileId: activeProfile.id,
-      userId: user.id,
-      role: "user_reply",
-      content: outputs[0],
-    });
+    // Save all 3 generated variants as assistant suggestions so the profile
+    // memory sees the full range of options, not just the first variant.
+    // user_reply is intentionally omitted here — it should be recorded only
+    // when the user explicitly picks and copies/saves a specific reply.
+    for (const output of outputs) {
+      await insertProfileMessage({
+        profileId: activeProfile.id,
+        userId: user.id,
+        role: "assistant_suggestion",
+        content: output,
+      });
+    }
 
     await touchReplyProfileActivity(activeProfile.id, user.id);
 
