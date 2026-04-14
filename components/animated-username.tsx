@@ -18,6 +18,8 @@ type AnimatedUsernameProps = {
   isTransitioning?: boolean;
   onTransitionStateChange?: (isTransitioning: boolean) => void;
   onTransitionComplete?: () => void;
+  /** When true, plays the ink-wash reveal once every time the component mounts. */
+  playOnMount?: boolean;
 };
 
 function getGradientStops(theme?: string | null): [string, string, string] {
@@ -45,6 +47,7 @@ export default function AnimatedUsername({
   isTransitioning,
   onTransitionStateChange,
   onTransitionComplete,
+  playOnMount = false,
 }: AnimatedUsernameProps) {
   const componentId = useId().replace(/:/g, "");
   const [activePreset, setActivePreset] = useState<UsernameColorPreset>(normalizeUsernamePreset(colorPreset));
@@ -160,6 +163,29 @@ export default function AnimatedUsername({
       }
     };
   }, []);
+
+  // Plays the ink-wash reveal once per mount so the user sees their colour
+  // wash in every time they load the page (greeting animation).
+  const mountDoneRef = useRef(false);
+  useEffect(() => {
+    if (!playOnMount || isControlled || !isPro || mountDoneRef.current) {
+      return;
+    }
+    mountDoneRef.current = true;
+
+    const normalizedPreset = normalizeUsernamePreset(colorPreset);
+    // Update the tracker first so the colorPreset-change effect doesn't also fire.
+    previousPresetRef.current = normalizedPreset;
+    // Always animate from "default" so there's a visible ink-wash reveal
+    // even when the user's chosen colour is the default blue-purple.
+    setPreviousPreset("default");
+    setActivePreset(normalizedPreset);
+    setLocalTransitioning(true);
+    completeNotifiedRef.current = false;
+
+    timeoutRef.current = window.setTimeout(finishTransition, durationMs);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro]); // intentionally only re-run when isPro changes (profile loaded)
 
   const nextStops = useMemo(() => getGradientStops(resolvedActiveTheme), [resolvedActiveTheme]);
   const previousStops = useMemo(() => getGradientStops(resolvedPreviousTheme), [resolvedPreviousTheme]);

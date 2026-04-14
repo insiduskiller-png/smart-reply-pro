@@ -119,6 +119,7 @@ export default function NavbarUser() {
             isPro={isPro}
             colorPreset={usernameColor}
             className="text-sm font-semibold"
+            playOnMount
           />
 
           <span
