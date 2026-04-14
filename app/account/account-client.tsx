@@ -219,6 +219,11 @@ export default function AccountClient() {
     setSuccess("");
 
     try {
+      console.info("reset-request-start", {
+        source: "account-settings-send-reset-link",
+        targetRoute: "/api/account/password-reset",
+      });
+
       const response = await fetch("/api/account/password-reset", {
         method: "POST",
       });

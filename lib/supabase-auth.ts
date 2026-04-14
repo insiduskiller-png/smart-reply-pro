@@ -34,6 +34,14 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, redirectTo: string) {
+  console.warn("fallback/default-path-hit", {
+    helper: "lib/supabase-auth.sendPasswordResetEmail",
+    behavior: "legacy-helper-invoked-rerouting-to-branded-email-helper",
+  });
+  console.info("helper-used", {
+    helper: "lib/supabase-auth.sendPasswordResetEmail",
+    reroutedTo: "lib/password-reset-email.sendPasswordResetEmail",
+  });
   return sendBrandedPasswordResetEmail(email, redirectTo);
 }
 

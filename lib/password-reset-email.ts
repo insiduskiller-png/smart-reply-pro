@@ -27,6 +27,12 @@ const RESEND_API_BASE = "https://api.resend.com";
 const TO_SUPPORT_EMAIL = "support@smartreplypro.ai";
 const FROM_ADDRESS = "Smart Reply Pro <no-reply@smartreplypro.ai>";
 
+function maskEmail(email: string) {
+  const [local = "", domain = ""] = email.split("@");
+  if (!local || !domain) return "invalid-email";
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
 function requireResendApiKey() {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {
@@ -153,6 +159,18 @@ async function generatePasswordRecoveryLink(email: string, redirectTo: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, redirectTo: string): Promise<SendPasswordResetEmailResult> {
+  console.info("helper-used", {
+    helper: "lib/password-reset-email.sendPasswordResetEmail",
+    email: maskEmail(email),
+  });
+
+  console.info("branded-email-send-attempt", {
+    helper: "lib/password-reset-email.sendPasswordResetEmail",
+    from: FROM_ADDRESS,
+    replyTo: TO_SUPPORT_EMAIL,
+    email: maskEmail(email),
+  });
+
   const apiKey = requireResendApiKey();
   const resetUrl = await generatePasswordRecoveryLink(email, redirectTo);
   const html = buildPasswordResetEmailHtml(resetUrl);
@@ -185,6 +203,14 @@ export async function sendPasswordResetEmail(email: string, redirectTo: string):
   }
 
   const payload = await response.json().catch(() => null);
+  console.info("branded-email-send-success", {
+    helper: "lib/password-reset-email.sendPasswordResetEmail",
+    resendId: typeof payload?.id === "string" ? payload.id : null,
+    from: FROM_ADDRESS,
+    replyTo: TO_SUPPORT_EMAIL,
+    email: maskEmail(email),
+  });
+
   return {
     resendId: typeof payload?.id === "string" ? payload.id : null,
     fromAddress: FROM_ADDRESS,

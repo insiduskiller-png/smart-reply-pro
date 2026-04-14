@@ -32,6 +32,11 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
+      console.info("reset-request-start", {
+        source: "forgot-password-page",
+        targetRoute: "/api/auth/reset",
+      });
+
       const response = await fetch("/api/auth/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
