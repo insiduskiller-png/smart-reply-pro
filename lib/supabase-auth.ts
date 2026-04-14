@@ -1,4 +1,5 @@
 import { getSupabaseEnv } from "./env";
+import { sendPasswordResetEmail as sendBrandedPasswordResetEmail } from "./password-reset-email";
 
 type AuthError = { message?: string; error_description?: string };
 
@@ -33,27 +34,7 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, redirectTo: string) {
-  const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
-  
-  // Use Supabase Auth API endpoint with proper parameters
-  const response = await fetch(`${supabaseUrl}/auth/v1/recover`, {
-    method: "POST",
-    headers: {
-      apikey: supabaseAnonKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      redirect_to: redirectTo,
-    }),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response));
-  }
-
-  return response.json();
+  return sendBrandedPasswordResetEmail(email, redirectTo);
 }
 
 export async function updateUserPassword(accessToken: string, password: string) {
