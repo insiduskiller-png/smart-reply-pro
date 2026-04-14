@@ -178,15 +178,20 @@ export default function AnimatedUsername({
 
   const staticGradient = `linear-gradient(120deg, ${nextStops[0]} 0%, ${nextStops[1]} 50%, ${nextStops[2]} 100%)`;
 
-  // Always render the same outer element so the layout box never changes.
-  // During transition the SVG is overlaid absolutely — it never affects flow.
+  // Always render the same outer element structure — layout never changes between states.
+  // Static state: CSS gradient text. Transition state: invisible CSS text holds the layout
+  // box while the SVG (position:absolute, taken out of flow) paints the animated gradient.
+  //
+  // SVG height is calibrated to 1.32em: fontSize(100) / viewHeight(132) × 1.32em = 1.0em,
+  // which exactly matches the CSS font-size so both representations are the same visual size.
   return (
     <span
       className={className}
       style={{
+        // inline-block in BOTH states: gives a well-defined containing block so the
+        // absolutely-positioned SVG can resolve width/height relative to this span.
+        display: "inline-block",
         position: "relative",
-        // The text is always here to hold the correct layout width/height.
-        // During transition its colour is made transparent; the SVG paints on top.
         backgroundImage: resolvedTransitioning ? undefined : staticGradient,
         backgroundClip: resolvedTransitioning ? undefined : "text",
         WebkitBackgroundClip: resolvedTransitioning ? undefined : "text",
@@ -200,10 +205,15 @@ export default function AnimatedUsername({
           aria-hidden="true"
           style={{
             position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
+            // Centre vertically so the SVG text baseline aligns with the CSS text baseline.
+            top: "50%",
+            left: 0,
+            transform: "translateY(-50%)",
+            width: `${widthEm}em`,
+            // 1.32em = viewHeight(132) / fontSize(100) * 1em — makes SVG text = 1× CSS font-size.
+            height: "1.32em",
             overflow: "visible",
+            pointerEvents: "none",
           }}
           viewBox={`0 0 ${viewWidth} ${viewHeight}`}
           preserveAspectRatio="xMinYMid meet"

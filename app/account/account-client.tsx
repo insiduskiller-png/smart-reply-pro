@@ -299,9 +299,13 @@ export default function AccountClient() {
           <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-[0_0_24px_rgba(56,189,248,0.12)]">
             <AnimatedUsername
               text={displayName}
-              isPro={isPro}
+              isPro
               colorPreset={resolvedColor}
               className="text-3xl font-bold tracking-tight md:text-4xl"
+              durationMs={USERNAME_TRANSITION_DURATION_MS}
+              previousTheme={transitionPreviousTheme}
+              nextTheme={transitionNextTheme || resolvedColor}
+              isTransitioning={awaitingSavedTransition && isUsernameTransitioning}
             />
             <p className="mt-2 text-sm text-slate-300">{user?.email || "-"}</p>
             <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
