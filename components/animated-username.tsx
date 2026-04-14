@@ -178,34 +178,36 @@ export default function AnimatedUsername({
 
   const staticGradient = `linear-gradient(120deg, ${nextStops[0]} 0%, ${nextStops[1]} 50%, ${nextStops[2]} 100%)`;
 
-  if (!resolvedTransitioning) {
-    return (
-      <span
-        className={className}
-        style={{
-          backgroundImage: staticGradient,
-          backgroundClip: "text",
-          WebkitBackgroundClip: "text",
-          color: "transparent",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        {safeText}
-      </span>
-    );
-  }
-
+  // Always render the same outer element so the layout box never changes.
+  // During transition the SVG is overlaid absolutely — it never affects flow.
   return (
-    <span className={className} style={{ display: "inline-block", lineHeight: 1.1 }}>
-      <svg
-        width={`${widthEm}em`}
-        height="1.22em"
-        viewBox={`0 0 ${viewWidth} ${viewHeight}`}
-        preserveAspectRatio="xMinYMid meet"
-        role="img"
-        aria-label={safeText}
-        style={{ display: "block", overflow: "visible" }}
-      >
+    <span
+      className={className}
+      style={{
+        position: "relative",
+        // The text is always here to hold the correct layout width/height.
+        // During transition its colour is made transparent; the SVG paints on top.
+        backgroundImage: resolvedTransitioning ? undefined : staticGradient,
+        backgroundClip: resolvedTransitioning ? undefined : "text",
+        WebkitBackgroundClip: resolvedTransitioning ? undefined : "text",
+        color: "transparent",
+        WebkitTextFillColor: "transparent",
+      }}
+    >
+      {safeText}
+      {resolvedTransitioning && (
+        <svg
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            overflow: "visible",
+          }}
+          viewBox={`0 0 ${viewWidth} ${viewHeight}`}
+          preserveAspectRatio="xMinYMid meet"
+        >
         <defs>
           <linearGradient id={oldGradientId} x1="0%" y1="10%" x2="100%" y2="90%">
             <stop offset="0%" stopColor={previousStops[0]} />
@@ -339,6 +341,7 @@ export default function AnimatedUsername({
           />
         </g>
       </svg>
+      )}
     </span>
   );
 }

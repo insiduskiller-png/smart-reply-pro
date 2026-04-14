@@ -314,41 +314,34 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {showExpiredMessage && !error ? (
-            <div className="mb-4 rounded-xl border border-amber-700/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
-              Your session expired. Please sign in again.
-            </div>
-          ) : null}
-
-          {showResetSuccessMessage && !error ? (
-            <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
-              Password updated successfully. Sign in with your new password.
-            </div>
-          ) : null}
-
-          {showVerifiedMessage && !error ? (
-            <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
-              Email verified successfully. You can now sign in.
-            </div>
-          ) : null}
-
-          {isCooldownActive ? (
-            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
-              Too many failed attempts. Try again in <span className="font-semibold text-amber-200">{cooldownSecondsLeft}s</span>.
-            </div>
-          ) : null}
-
-          {error && !isCooldownActive ? (
-            <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
-              {error}
-            </div>
-          ) : null}
-
-          {statusMessage && !error ? (
-            <div className="mb-4 rounded-xl border border-sky-500/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-200">
-              {statusMessage}
-            </div>
-          ) : null}
+          {/* Reserved message area — always occupies space so the form never shifts. */}
+          <div className="mb-4 min-h-[3rem]">
+            {isCooldownActive ? (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+                Too many failed attempts. Try again in <span className="font-semibold text-amber-200">{cooldownSecondsLeft}s</span>.
+              </div>
+            ) : error ? (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
+                {error}
+              </div>
+            ) : statusMessage ? (
+              <div className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-200">
+                {statusMessage}
+              </div>
+            ) : showExpiredMessage ? (
+              <div className="rounded-xl border border-amber-700/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+                Your session expired. Please sign in again.
+              </div>
+            ) : showResetSuccessMessage ? (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+                Password updated successfully. Sign in with your new password.
+              </div>
+            ) : showVerifiedMessage ? (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+                Email verified successfully. You can now sign in.
+              </div>
+            ) : null}
+          </div>
 
           <form onSubmit={handleLogin} className="space-y-4" noValidate>
             <div>
