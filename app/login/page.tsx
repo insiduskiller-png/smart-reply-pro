@@ -293,7 +293,11 @@ export default function LoginPage() {
       if (!redirectAttempted && fallbackTimer) {
         clearTimeout(fallbackTimer);
       }
-      setLoading(false);
+      // If we're redirecting, keep loading=true so the "Signing in…" screen
+      // stays visible until the new page mounts. Only clear it on failure.
+      if (!redirectAttempted) {
+        setLoading(false);
+      }
       console.info("login finished");
     }
   }
