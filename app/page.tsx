@@ -130,47 +130,54 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 sm:px-6 md:py-14">
-        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-300">How it works</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-              Four steps from incoming message to a smarter reply.
-            </h2>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-400 md:text-base">
-              Fast enough for real conversations. Structured enough to give you better strategic options before you hit send.
+      <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-16 sm:px-6 md:py-24">
+        {/* Editorial header */}
+        <div className="mb-14 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-400">How it works</p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+            Four steps from incoming message<br className="hidden sm:block" /> to a smarter reply.
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-slate-400 md:text-base">
+            Fast enough for real conversations. Structured enough to give you better strategic options before you hit send.
+          </p>
+        </div>
+
+        {/* Step cards — horizontal flow */}
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Step 1 */}
+          <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-slate-900/60 px-6 py-7 shadow-[0_1px_2px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.04] transition-shadow duration-300 hover:shadow-[0_0_0_1px_rgba(56,189,248,0.12),0_8px_32px_rgba(0,0,0,0.45)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-400/[0.07] text-sm font-semibold text-sky-300">1</div>
+            <p className="mt-5 text-[0.9375rem] font-semibold leading-snug tracking-tight text-white">Create your profile</p>
+            <p className="mt-3 text-sm leading-[1.7] text-slate-400/90">
+              Set your tone, preferences, and communication style so the AI can generate replies that feel more natural, more authentic, and more like you.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">1</div>
-              <p className="mt-4 text-base font-semibold text-white">Create your profile</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                Set your tone, preferences, and communication style so the AI can generate replies that sound more natural, authentic, and closer to how you would actually respond.
-              </p>
-            </div>
-            <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">2</div>
-              <p className="mt-4 text-base font-semibold text-white">Paste the message</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                Drop in the exact text so the AI can assess what is being said and what is being implied.
-              </p>
-            </div>
-            <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">3</div>
-              <p className="mt-4 text-base font-semibold text-white">Choose the style or goal</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                Tell it whether you want calm, firm, warm, detached, boundary-setting, or strategically neutral.
-              </p>
-            </div>
-            <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">4</div>
-              <p className="mt-4 text-base font-semibold text-white">Get strategic replies instantly</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                Review polished reply options, refine the wording in the same reply box, and adjust details until the response feels right for you.
-              </p>
-            </div>
+          {/* Step 2 */}
+          <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-slate-900/60 px-6 py-7 shadow-[0_1px_2px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.04] transition-shadow duration-300 hover:shadow-[0_0_0_1px_rgba(56,189,248,0.12),0_8px_32px_rgba(0,0,0,0.45)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-400/[0.07] text-sm font-semibold text-sky-300">2</div>
+            <p className="mt-5 text-[0.9375rem] font-semibold leading-snug tracking-tight text-white">Paste the message</p>
+            <p className="mt-3 text-sm leading-[1.7] text-slate-400/90">
+              Drop in the exact text so the AI can assess what is being said and what is being implied.
+            </p>
+          </div>
+
+          {/* Step 3 */}
+          <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-slate-900/60 px-6 py-7 shadow-[0_1px_2px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.04] transition-shadow duration-300 hover:shadow-[0_0_0_1px_rgba(56,189,248,0.12),0_8px_32px_rgba(0,0,0,0.45)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-400/[0.07] text-sm font-semibold text-sky-300">3</div>
+            <p className="mt-5 text-[0.9375rem] font-semibold leading-snug tracking-tight text-white">Choose the style or goal</p>
+            <p className="mt-3 text-sm leading-[1.7] text-slate-400/90">
+              Tell it whether you want calm, firm, warm, detached, boundary-setting, or strategically neutral.
+            </p>
+          </div>
+
+          {/* Step 4 */}
+          <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-slate-900/60 px-6 py-7 shadow-[0_1px_2px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.04] transition-shadow duration-300 hover:shadow-[0_0_0_1px_rgba(56,189,248,0.12),0_8px_32px_rgba(0,0,0,0.45)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-400/[0.07] text-sm font-semibold text-sky-300">4</div>
+            <p className="mt-5 text-[0.9375rem] font-semibold leading-snug tracking-tight text-white">Get strategic replies instantly</p>
+            <p className="mt-3 text-sm leading-[1.7] text-slate-400/90">
+              Review polished reply options and refine them directly in the same reply box until the message feels right for you.
+            </p>
           </div>
         </div>
       </section>
