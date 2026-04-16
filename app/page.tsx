@@ -135,33 +135,40 @@ export default function Home() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-300">How it works</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-              Three steps from incoming message to a smarter reply.
+              Four steps from incoming message to a smarter reply.
             </h2>
             <p className="mt-4 max-w-lg text-sm leading-6 text-slate-400 md:text-base">
               Fast enough for real conversations. Structured enough to give you better strategic options before you hit send.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">1</div>
+              <p className="mt-4 text-base font-semibold text-white">Create your profile</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                Set your tone, preferences, and communication style so the AI can generate replies that sound more natural, authentic, and closer to how you would actually respond.
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">2</div>
               <p className="mt-4 text-base font-semibold text-white">Paste the message</p>
               <p className="mt-2 text-sm leading-6 text-slate-400">
                 Drop in the exact text so the AI can assess what is being said and what is being implied.
               </p>
             </div>
             <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">2</div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">3</div>
               <p className="mt-4 text-base font-semibold text-white">Choose the style or goal</p>
               <p className="mt-2 text-sm leading-6 text-slate-400">
                 Tell it whether you want calm, firm, warm, detached, boundary-setting, or strategically neutral.
               </p>
             </div>
             <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">3</div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-400/10 text-sm font-semibold text-sky-200">4</div>
               <p className="mt-4 text-base font-semibold text-white">Get strategic replies instantly</p>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Review multiple reply options designed to sound natural, socially sharp, and ready to send.
+                Review polished reply options, refine the wording in the same reply box, and adjust details until the response feels right for you.
               </p>
             </div>
           </div>
