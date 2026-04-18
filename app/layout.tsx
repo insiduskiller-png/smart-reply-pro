@@ -81,7 +81,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Desktop Header */}
           <header className="hidden border-b border-slate-800 bg-slate-950/90 backdrop-blur md:block">
             <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-              <Link href="/" className="text-lg font-semibold tracking-tight text-slate-100">Smart Reply Pro</Link>
+              <Link href="/" className="flex items-center gap-2.5 text-slate-100">
+                <img src="/srp-logo.png" alt="Smart Reply Pro logo" width={30} height={30} className="rounded-md" />
+                <span className="text-xl font-semibold tracking-tight">Smart Reply Pro</span>
+              </Link>
 
               <DesktopNavCenter />
 
