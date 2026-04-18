@@ -23,8 +23,8 @@ export default function MobileNav() {
       {/* Mobile Header */}
       <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/95 backdrop-blur md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/srp-icon.png" alt="Smart Reply Pro" className="h-9 w-auto mix-blend-screen" />
+          <Link href="/" className="flex items-center gap-1.5">
+            <img src="/srp-icon.png" alt="Smart Reply Pro" className="h-11 w-auto mix-blend-screen" />
             <span className="text-lg font-semibold tracking-tight text-slate-100">Smart Reply Pro</span>
           </Link>
           
