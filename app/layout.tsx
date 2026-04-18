@@ -82,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <header className="hidden border-b border-slate-800 bg-slate-950/90 backdrop-blur md:block">
             <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
               <Link href="/" className="flex items-center gap-2">
-                <img src="/srp-icon.png" alt="Smart Reply Pro" className="h-14 w-auto mix-blend-screen" />
+                <img src="/srp-icon.png" alt="Smart Reply Pro" className="h-14 w-auto mix-blend-lighten" />
                 <span className="text-xl font-semibold tracking-tight text-slate-100">Smart Reply Pro</span>
               </Link>
 
