@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforceRateLimit, getTierRateLimit } from "@/lib/rate-limit";
-import { detectTone, generateProfileSummary, generateReply, generateStyleSummary, powerScoreAnalysis } from "@/lib/openai";
+import { analyzeIncomingMessage, generateProfileSummary, generateReply, generateStyleSummary, powerScoreAnalysis } from "@/lib/openai";
+import type { MessageAnalysis } from "@/lib/openai";
 import { requireUser } from "@/lib/auth";
 import {
   incrementReplyProfileInteraction,
@@ -13,7 +14,13 @@ import {
   touchReplyProfileActivity,
   updateReplyProfileSummary,
   updateReplyProfileStyleMemory,
+  getUserPreferenceState,
+  getUserLearnedStyle,
+  seedUserLearnedStyle,
+  updateProfileIntelligenceModel,
 } from "@/lib/supabase";
+import { mergeEffectiveStyle } from "@/lib/style-learning";
+import type { UserPreferenceHint } from "@/lib/openai";
 import { sanitizeText } from "@/lib/security";
 import { trackEvent } from "@/lib/analytics";
 import { hasProAccess, PRO_ENABLED } from "@/lib/billing";
@@ -37,6 +44,7 @@ function buildOptionPlans(params: {
   baseTone: string;
   isProfessionalContext: boolean;
   isPro: boolean;
+  messageAnalysis?: MessageAnalysis;
 }): OptionPlan[] {
   const preferredBaseTone = !isPremiumTone(params.baseTone) || params.isPro ? params.baseTone : "Neutral";
 
@@ -46,6 +54,19 @@ function buildOptionPlans(params: {
     }
     return preferred;
   };
+
+  const analysis = params.messageAnalysis;
+
+  // When analysis reveals manipulation or disrespect, always include a boundary option
+  const hasBoundarySignal =
+    analysis &&
+    (analysis.manipulation_signals.length > 0 ||
+      analysis.respect_level === "disrespectful" ||
+      analysis.best_tactical_response === "set_boundary");
+
+  // When analysis signals repair intent, surface a repair option
+  const hasRepairSignal =
+    analysis && (analysis.intent === "repair" || analysis.best_tactical_response === "repair");
 
   if (params.isProfessionalContext) {
     return [
@@ -66,12 +87,15 @@ function buildOptionPlans(params: {
           "Tactic: direct control. Set frame and pace with calm command language. Be non-defensive and avoid polished manager-speak.",
       },
       {
-        label: "repair_with_action",
+        label: hasBoundarySignal ? "calm_boundary" : "repair_with_action",
         tone: proSafeTone("Direct", "Direct"),
         variant: "Calm",
-        openingStyle: "Start with brief accountability, then recovery action.",
-        directive:
-          "Tactic: repair with action. If trust or quality concern exists, acknowledge once and immediately provide concrete recovery step with timing.",
+        openingStyle: hasBoundarySignal
+          ? "Start with a calm, firm boundary statement."
+          : "Start with brief accountability, then recovery action.",
+        directive: hasBoundarySignal
+          ? "Tactic: calm boundary. State the limit clearly, one sentence, no apology. Keep professional composure."
+          : "Tactic: repair with action. If trust or quality concern exists, acknowledge once and immediately provide concrete recovery step with timing.",
       },
     ];
   }
@@ -94,12 +118,13 @@ function buildOptionPlans(params: {
         "Tactic: direct control. Reframe toward what will happen next. Avoid mirroring pressure, guilt, or manipulation.",
     },
     {
-      label: "warmer_reset",
+      label: hasRepairSignal ? "repair_with_action" : "warmer_reset",
       tone: proSafeTone("Friendly", "Friendly"),
       variant: "Strategic",
-      openingStyle: "Start with a warm reset line.",
-      directive:
-        "Tactic: warmer reset. Lower tension without surrendering position. Keep it natural and text-like, not formal.",
+      openingStyle: hasRepairSignal ? "Start with brief acknowledgment, then a concrete next step." : "Start with a warm reset line.",
+      directive: hasRepairSignal
+        ? "Tactic: repair with action. Brief accountability + one concrete corrective action. Keep warm but grounded."
+        : "Tactic: warmer reset. Lower tension without surrendering position. Keep it natural and text-like, not formal.",
     },
   ];
 }
@@ -227,12 +252,55 @@ export async function POST(request: Request) {
       })
       .join("\n");
 
-    const detectedTone = await detectTone(input);
+    // Structured message intelligence — replaces separate detectTone + heuristic inferStrategyLayer
+    const messageAnalysis = await analyzeIncomingMessage({
+      input,
+      context,
+      relationshipType: activeProfile.category || undefined,
+      template: template || undefined,
+    });
+    const detectedTone = messageAnalysis.detected_tone;
+
+    // Fetch user preference state + learned style in parallel (non-blocking if absent)
+    const [preferenceState, userLearnedStyle] = await Promise.all([
+      getUserPreferenceState(user.id),
+      getUserLearnedStyle(user.id),
+    ]);
+    const preferenceHint: UserPreferenceHint | undefined = preferenceState
+      ? (() => {
+          const tones = preferenceState.preferred_tones;
+          const variants = preferenceState.preferred_variants;
+          const counts = preferenceState.option_index_counts;
+
+          const topTone = Object.entries(tones).sort((a, b) => b[1] - a[1])[0]?.[0];
+          const topVariant = Object.entries(variants).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+          const idx0 = Number(counts["0"] ?? 0);
+          const idx1 = Number(counts["1"] ?? 0);
+          const idx2 = Number(counts["2"] ?? 0);
+          const maxCount = Math.max(idx0, idx1, idx2);
+          const total = idx0 + idx1 + idx2;
+          const dominanceRatio = total > 0 ? maxCount / total : 0;
+          let optionSkew: UserPreferenceHint["option_skew"] = "balanced";
+          if (dominanceRatio >= 0.6) {
+            if (maxCount === idx0) optionSkew = "prefers_first";
+            else if (maxCount === idx1) optionSkew = "prefers_second";
+            else optionSkew = "prefers_third";
+          }
+
+          return { top_tone: topTone, top_variant: topVariant, option_skew: optionSkew };
+        })()
+      : undefined;
+    // Phase 2: merge per-contact style_memory with cross-profile learned traits
+    const effectiveStyle = mergeEffectiveStyle(
+      activeProfile.style_memory,
+      userLearnedStyle,
+    );
     const styleContext = {
       contactName: activeProfile.profile_name,
       relationshipType: activeProfile.category || "Unspecified",
       contextNotes: activeProfile.context_notes ?? undefined,
-      styleSummary: activeProfile.style_memory ?? undefined,
+      styleSummary: effectiveStyle.text,
       profileSummary: activeProfile.profile_summary ?? undefined,
     };
 
@@ -240,6 +308,7 @@ export async function POST(request: Request) {
     const isProfessionalContext =
       template === "work" ||
       template === "customer_service" ||
+      messageAnalysis.context_category === "work" ||
       /\b(work|office|manager|leadership|client|vendor|team|business|project|executive|vp|director)\b/.test(
         professionalSignals,
       );
@@ -248,6 +317,7 @@ export async function POST(request: Request) {
       baseTone: tone,
       isProfessionalContext,
       isPro,
+      messageAnalysis,
     });
 
     let outputs = await Promise.all(
@@ -270,6 +340,8 @@ export async function POST(request: Request) {
           conversationHistory,
           template,
           profileContext: styleContext,
+          messageAnalysis,
+          preferenceHint,
         }),
       ),
     );
@@ -304,6 +376,8 @@ export async function POST(request: Request) {
             conversationHistory,
             template,
             profileContext: styleContext,
+            messageAnalysis,
+            preferenceHint,
           });
         }),
       );
@@ -351,6 +425,9 @@ export async function POST(request: Request) {
       return current.reply_score > arr[bestIndex].reply_score ? currentIndex : bestIndex;
     }, 0);
 
+    // Generate a stable ID that links all profile_messages from this generation batch
+    const generationId = crypto.randomUUID();
+
     await insertGeneration({
       user_id: user.id,
       input_text: input,
@@ -370,6 +447,7 @@ export async function POST(request: Request) {
       userId: user.id,
       role: "incoming",
       content: input,
+      generationId,
     });
 
     // Save all 3 generated variants as assistant suggestions so the profile
@@ -382,10 +460,24 @@ export async function POST(request: Request) {
         userId: user.id,
         role: "assistant_suggestion",
         content: output,
+        generationId,
       });
     }
 
     await touchReplyProfileActivity(activeProfile.id, user.id);
+
+    // Persist contact behaviour patterns to intelligence_model — runs async, non-blocking
+    updateProfileIntelligenceModel({
+      profileId: activeProfile.id,
+      userId: user.id,
+      analysis: {
+        intent: messageAnalysis.intent,
+        pressure_level: messageAnalysis.pressure_level,
+        manipulation_signals: messageAnalysis.manipulation_signals,
+        respect_level: messageAnalysis.respect_level,
+        emotional_state: messageAnalysis.emotional_state,
+      },
+    }).catch((err) => console.debug("intelligence_model update skipped:", err));
 
     const interactionUpdate = await incrementReplyProfileInteraction({
       profileId: activeProfile.id,
@@ -431,6 +523,16 @@ export async function POST(request: Request) {
             userId: user.id,
             styleMemory: parsedStyle?.summary,
           });
+          // Phase 2: seed cross-profile learned style from full style JSON (fire-and-forget)
+          seedUserLearnedStyle(user.id, parsedStyle).catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error("[Phase2:style-seed] failed", {
+              userId: user.id,
+              profileId: activeProfile.id,
+              error: msg,
+              ts: new Date().toISOString(),
+            });
+          });
         }
       }
 
@@ -472,6 +574,15 @@ export async function POST(request: Request) {
       analyses,
       recommendedIndex,
       profileId: activeProfile.id,
+      generationId,
+      totalSelections: preferenceState?.total_selections ?? 0,
+      messageAnalysis: {
+        intent: messageAnalysis.intent,
+        pressure_level: messageAnalysis.pressure_level,
+        manipulation_signals: messageAnalysis.manipulation_signals,
+        best_tactical_response: messageAnalysis.best_tactical_response,
+        context_category: messageAnalysis.context_category,
+      },
     });
   } catch (error) {
     return NextResponse.json(

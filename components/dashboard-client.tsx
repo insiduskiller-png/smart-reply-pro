@@ -133,6 +133,11 @@ export default function DashboardClient({
     strategic: 0,
   });
   const [lastSubmittedInput, setLastSubmittedInput] = useState("");
+  // Phase 3: generation-scoped metadata needed to fire /api/replies/select
+  const [currentGenerationId, setCurrentGenerationId] = useState<string | null>(null);
+  const [currentOptionPlans, setCurrentOptionPlans] = useState<Array<{ label: string; tone: string; variant: string }>>([]);
+  const [currentContextCategory, setCurrentContextCategory] = useState<string>("general");
+  const [totalSelections, setTotalSelections] = useState<number>(0);
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const replyFeedbackTimeoutsRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const [generatedReplyActions, setGeneratedReplyActions] = useState<Record<number, GeneratedReplyActionState>>({});
@@ -204,6 +209,32 @@ export default function DashboardClient({
       showReplyFeedback(index, { message: "Copied.", tone: "success" });
     } catch {
       showReplyFeedback(index, { message: "Copy failed.", tone: "info" });
+    }
+
+    // Phase 3: fire behavioral selection signal (fire-and-forget)
+    if (currentGenerationId && activeProfileId) {
+      const plan = currentOptionPlans[index];
+      fetch("/api/replies/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId:       activeProfileId,
+          generationId:    currentGenerationId,
+          selectedIndex:   index,
+          selectedText:    replyText,
+          tone,
+          variant:         getReplyVariantLabel(index),
+          contextCategory: currentContextCategory,
+          optionPlanLabel: plan?.label ?? "",
+          signalStrength:  0.8,
+          totalSelections,
+        }),
+      })
+        .then((r) => r.json())
+        .then((r) => {
+          if (r?.ok) setTotalSelections((n) => n + 1);
+        })
+        .catch(() => {}); // never block copy UX
     }
   }
 
@@ -340,6 +371,32 @@ export default function DashboardClient({
         message: savePayload?.duplicate ? "Already in Favorites." : "Saved to Favorites.",
         tone: "success",
       });
+
+      // Phase 3: save = strongest confirmation signal (signalStrength=1.0)
+      if (currentGenerationId && activeProfileId) {
+        const plan = currentOptionPlans[index];
+        fetch("/api/replies/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileId:       activeProfileId,
+            generationId:    currentGenerationId,
+            selectedIndex:   index,
+            selectedText:    replyText,
+            tone,
+            variant:         getReplyVariantLabel(index),
+            contextCategory: currentContextCategory,
+            optionPlanLabel: plan?.label ?? "",
+            signalStrength:  1.0,
+            totalSelections,
+          }),
+        })
+          .then((r) => r.json())
+          .then((r) => {
+            if (r?.ok) setTotalSelections((n) => n + 1);
+          })
+          .catch(() => {});
+      }
     } catch {
       console.info("save-response-payload", {
         index,
@@ -487,6 +544,10 @@ export default function DashboardClient({
         setToneDetection("");
         setGenerationAnalyses([]);
         setRecommendedIndex(null);
+        // Phase 3: clear generation-scoped behavioral signal state
+        setCurrentGenerationId(null);
+        setCurrentOptionPlans([]);
+        setCurrentContextCategory("general");
         setShowNewProfileModal(false);
         setNewProfileName("");
         setNewProfileRelationshipType("");
@@ -866,6 +927,11 @@ export default function DashboardClient({
     setStyleWarning("");
     setQuickRewriteLoading(null);
     clearGeneratedReplyActions();
+    // Phase 3: clear stale generation metadata immediately — prevents a brief
+    // window where copy/save on old outputs could fire against a new generation.
+    setCurrentGenerationId(null);
+    setCurrentOptionPlans([]);
+    setCurrentContextCategory("general");
 
     if (input !== lastSubmittedInput) {
       setRewriteCounts({ calm: 0, assertive: 0, strategic: 0 });
@@ -923,6 +989,15 @@ export default function DashboardClient({
       setToneDetection(data?.detectedTone || "");
       setGenerationAnalyses(data?.analyses || []);
       setRecommendedIndex(typeof data?.recommendedIndex === "number" ? data.recommendedIndex : null);
+      // Phase 3: store generation metadata for behavioral signal firing
+      setCurrentGenerationId(data?.generationId ?? null);
+      setCurrentOptionPlans(Array.isArray(data?.optionPlans) ? data.optionPlans : []);
+      setCurrentContextCategory(data?.messageAnalysis?.context_category ?? "general");
+      // Seed totalSelections from DB value so the sparsity guard is accurate
+      // for returning users, not just within a single session.
+      if (typeof data?.totalSelections === "number") {
+        setTotalSelections(data.totalSelections);
+      }
 
       console.info("generate-finished", {
         profileId: resolvedProfileId || null,
