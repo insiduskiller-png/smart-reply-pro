@@ -6,6 +6,7 @@ import html2canvas from "html2canvas";
 import EditableReplyPanel from "@/components/editable-reply-panel";
 import ProFeaturePreview from "@/components/pro-feature-preview";
 import TemplateSelector, { type TemplateType } from "@/components/template-selector";
+import FeedbackPopup from "@/components/feedback-popup";
 import { hasProAccess, PRO_ENABLED, PRO_WAITLIST_HREF } from "@/lib/billing";
 
 const freeTones = ["Neutral", "Direct", "Polite", "Friendly", "Confident"];
@@ -135,6 +136,12 @@ export default function DashboardClient({
   const suggestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const replyFeedbackTimeoutsRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const [generatedReplyActions, setGeneratedReplyActions] = useState<Record<number, GeneratedReplyActionState>>({});
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  // Prevents racing multiple status checks after rapid re-renders.
+  const feedbackCheckDoneRef = useRef(false);
+  // Set to true once the popup is dismissed or submitted — stops all future
+  // re-checks within this session so post-generation calls don't keep pinging.
+  const feedbackFinalizedRef = useRef(false);
 
   const isPro = hasProAccess(profile.subscription_status);
   const isProAvailable = PRO_ENABLED;
@@ -559,6 +566,35 @@ export default function DashboardClient({
     }
   }, [initialTemplateInput]);
 
+  // Track dashboard open as meaningful activity, throttled to once per 30 min.
+  // This prevents passive daily visits from continuously resetting last_activity_at
+  // and blocking legitimate inactivity emails.
+  useEffect(() => {
+    try {
+      const THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
+      const key = "srp_activity_ping";
+      const last = Number(localStorage.getItem(key) ?? "0");
+      if (Date.now() - last > THROTTLE_MS) {
+        fetch("/api/activity", { method: "POST" }).catch(() => {});
+        localStorage.setItem(key, String(Date.now()));
+      }
+    } catch {
+      // localStorage unavailable (e.g. private mode) — skip silently.
+    }
+  }, []);
+
+  // Check once on mount whether the feedback popup should be shown.
+  useEffect(() => {
+    if (feedbackCheckDoneRef.current) return;
+    feedbackCheckDoneRef.current = true;
+    fetch("/api/feedback/status")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.showPopup) setShowFeedbackPopup(true);
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetchProfiles();
   }, []);
@@ -953,6 +989,15 @@ export default function DashboardClient({
         }
       }
       
+      // Record activity and re-check feedback popup threshold after generation.
+      fetch("/api/activity", { method: "POST" }).catch(() => {});
+      if (!showFeedbackPopup && !feedbackFinalizedRef.current) {
+        fetch("/api/feedback/status")
+          .then((r) => r.json())
+          .then((data) => { if (data?.showPopup) setShowFeedbackPopup(true); })
+          .catch(() => {});
+      }
+
       await fetchProfiles();
       if (resolvedProfileId) {
         await fetchActiveMessages(resolvedProfileId);
@@ -1793,6 +1838,14 @@ export default function DashboardClient({
             </div>
           </div>
         </div>
+      ) : null}
+
+      {/* Feedback popup — shown once after the generation threshold is reached */}
+      {showFeedbackPopup ? (
+        <FeedbackPopup
+          onDismiss={() => { feedbackFinalizedRef.current = true; setShowFeedbackPopup(false); }}
+          onSubmitted={() => { feedbackFinalizedRef.current = true; setShowFeedbackPopup(false); }}
+        />
       ) : null}
     </div>
   );
